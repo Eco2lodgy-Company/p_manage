@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
       {
-        name: "Project-manager", // Nom de l'application
+        name: "project-manager", // Nom de l'application
         script: "npm",
         args: "start",
         env: {

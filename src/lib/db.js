@@ -3,11 +3,12 @@ require ('dotenv').config();
 
 const connectionPool = new Pool({
   // connectionString: process.env.POSTGRES_URL,
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  user: "p_manage",
+  host: "localhost",
+  database: "p_manage",
+  password: '2525',
+  port: "5432",
+  
 });
 
 export default connectionPool;
