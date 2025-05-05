@@ -6,7 +6,11 @@ export async function GET() {
     try{
         const client = await connectionPool.connect();
         console.log("connected!")
-        return NextResponse.json({message: "connected"});
+        const result = await client.query("SELECT * FROM users;")
+        const data = result.rows;
+        console.log("data",data);
+        client.release();
+        return NextResponse.json({data}, {status: 200});
     }catch(error){
         if (error instanceof Error) {
             return NextResponse.json({error: error.message}, {status: 500});
