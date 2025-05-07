@@ -51,7 +51,7 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold">Tableau de Bord</h1>
       </div>
       {/* Fixed row at the top with space-between */}
-      <div className="fixed top-16 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between z-10">
+      <div className=" mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between ">
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-red-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches Non Assignées</h1>
           <h1 className="text-3xl font-bold text-red-500">18</h1>
@@ -70,7 +70,7 @@ export default function Dashboard() {
         </div>
       </div>
       {/* Main content area with padding to avoid overlap with fixed row */}
-      <div className="flex-1 p-4 flex flex-row flex-wrap justify-around mt-42">
+      <div className="flex-1 p-4 flex flex-row flex-wrap justify-around ">
         {/* Tasks/Projects section */}
         <div className="bg-white border-l-4 border-sky-500 shadow-md rounded-lg p-6 max-w-md w-full mt-4 md:mt-0">
           <div className="flex flex-col space-y-6 w-full">
