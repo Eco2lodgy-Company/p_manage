@@ -8,6 +8,7 @@ import {
   User,
   Menu,
   X,
+  UsersRound,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -48,6 +49,7 @@ const Sidebar = () => {
     { icon: LayoutDashboard, label: "Dashboard", href: "/screens/dashboard" },
     { icon: Folder, label: "Projets", href: "/screens/projets" },
     { icon: CheckSquare, label: "Tâches", href: "/screens/taches" },
+    { icon: UsersRound, label: "Utilisateurs", href: "/screens/users" },
     { icon: User, label: "Profil", href: "/screens/profile" },
   ];
 

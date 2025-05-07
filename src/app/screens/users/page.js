@@ -20,8 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit,Share2, Eye } from "lucide-react";
-import { data } from "framer-motion/client";
+import { Trash2, Edit, Eye } from "lucide-react";
 
 export default function Projects() {
   const [projects, setProjects] = useState([
@@ -30,24 +29,17 @@ export default function Projects() {
       title: "Project Alpha",
       description: "Building a residential complex",
       amount: 250.0,
-      date_debut: "2023-01-01", 
-      responsable: "John Doe",
-      date_fin: "2023-06-01",
     },
     {
       id: "INV002",
       title: "Project Beta",
       description: "Commercial office renovation",
       amount: 500.0,
-      responsable: "John Doe",
-      date_debut: "2023-01-01", 
-      date_fin: "2023-06-01",
     },
   ]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -87,19 +79,6 @@ export default function Projects() {
     setSelectedProject(null);
   };
 
-
-  const handleShareProject = () => {
-    setProjects(
-      projects.map((p) =>
-        p.id === selectedProject.id
-          
-      )
-    );
-    setIsShareOpen(false);
-    setFormData({ id: "" });
-    setSelectedProject(null);
-  };
-
   const handleDeleteProject = () => {
     setProjects(projects.filter((p) => p.id !== selectedProject.id));
     setIsDeleteOpen(false);
@@ -117,17 +96,6 @@ export default function Projects() {
     setIsEditOpen(true);
   };
 
-  const openShareModal = (project) => {
-    setSelectedProject(project);
-    setFormData({
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      amount: project.amount.toString(),
-    });
-    setIsShareOpen(true);
-  };
-
   const openViewModal = (project) => {
     setSelectedProject(project);
     setIsViewOpen(true);
@@ -142,19 +110,19 @@ export default function Projects() {
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
       <div className="flex flex-col items-center justify-start p-6 h-full">
         <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
-          <h1 className="text-2xl font-bold">Projets</h1>
+          <h1 className="text-2xl font-bold">Utilisateurs</h1>
         </div>
         <div className="w-full max-w-4xl mt-20">
           <div className="flex justify-end mb-4">
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-sky-500 hover:bg-sky-600 text-white">
-                  Ajouter un Projet
+                  Ajouter un Utilisateur
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Ajouter un Projet</DialogTitle>
+                  <DialogTitle>Ajouter un Utilisateur</DialogTitle>
                   <DialogDescription>
                     Remplissez les détails du nouveau projet.
                   </DialogDescription>
@@ -226,13 +194,7 @@ export default function Projects() {
                       Description
                     </TableHead>
                     <TableHead className="text-right font-bold text-sky-700">
-                      Responsable
-                    </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Date de debut
-                    </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Date de fin 
+                      Montant ($)
                     </TableHead>
                     <TableHead className="text-right font-bold text-sky-700">
                       Actions
@@ -248,12 +210,8 @@ export default function Projects() {
                       <TableCell className="font-medium">{project.id}</TableCell>
                       <TableCell>{project.title}</TableCell>
                       <TableCell>{project.description}</TableCell>
-                      <TableCell>{project.responsable}</TableCell>
                       <TableCell className="text-right">
-                        {project.date_debut}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {project.date_fin}
+                        {project.amount.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -272,14 +230,6 @@ export default function Projects() {
                             className="text-sky-500 hover:text-sky-700"
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openShareModal(project)}
-                            className="text-sky-500 hover:text-sky-700"
-                          >
-                            <Share2 className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
@@ -310,31 +260,20 @@ export default function Projects() {
             </DialogHeader>
             {selectedProject && (
               <div className="grid gap-4 py-4">
-                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">ID</Label>
                   <span className="col-span-3">{selectedProject.id}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Titre</Label>
                   <span className="col-span-3">{selectedProject.title}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Description</Label>
                   <span className="col-span-3">{selectedProject.description}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Date de debut </Label>
-                  <span className="col-span-3">
-                    {selectedProject.amount.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Date de fin </Label>
+                  <Label className="text-right font-bold">Montant ($)</Label>
                   <span className="col-span-3">
                     {selectedProject.amount.toFixed(2)}
                   </span>
@@ -402,42 +341,6 @@ export default function Projects() {
                   className="col-span-3"
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={handleEditProject}
-                className="bg-sky-500 hover:bg-sky-600"
-              >
-                Enregistrer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-                  {/* Share Project Modal */}
-        <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Invitez</DialogTitle>
-              <DialogDescription>
-                Ceci lui donnera un accès total à ce projet.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-title" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="edit-title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="col-span-3"
-                />
-              </div>
-
-              
             </div>
             <DialogFooter>
               <Button
