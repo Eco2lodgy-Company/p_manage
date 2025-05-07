@@ -22,364 +22,548 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, Edit, Eye } from "lucide-react";
 
-export default function Projects() {
-  const [projects, setProjects] = useState([
+export default function Tasks() {
+  const [tasks, setTasks] = useState([
     {
-      id: "INV001",
-      title: "Project Alpha",
-      description: "Building a residential complex",
-      amount: 250.0,
+      id: "T001",
+      title: "Foundation Work",
+      description: "Lay foundation for residential complex",
+      project: "Project Alpha",
+      startDate: "2024-01-01",
+      endDate: "2024-02-15",
+      precedence: "None",
+      assignedTo: "Jean Dupont",
     },
     {
-      id: "INV002",
-      title: "Project Beta",
-      description: "Commercial office renovation",
-      amount: 500.0,
+      id: "T002",
+      title: "Structural Framing",
+      description: "Erect steel framework",
+      project: "Project Beta",
+      startDate: "2024-02-16",
+      endDate: "2024-04-01",
+      precedence: "T001",
+      assignedTo: "Marie Leclerc",
     },
+    ...Array.from({ length: 28 }, (_, i) => ({
+      id: `T${(i + 3).toString().padStart(3, "0")}`,
+      title: `Task ${i + 3}`,
+      description: `Description for task ${i + 3}`,
+      project: `Project ${String.fromCharCode(65 + ((i + 3) % 26))}`,
+      startDate: `2024-${String((i % 12) + 1).padStart(2, "0")}-01`,
+      endDate: `2024-${String((i % 12) + 1).padStart(2, "0")}-15`,
+      precedence: `T${(i + 2).toString().padStart(3, "0")}`,
+      assignedTo: `Person ${i + 3}`,
+    })),
   ]);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
-    id: "",
     title: "",
     description: "",
-    amount: "",
+    project: "",
+    startDate: "",
+    endDate: "",
+    precedence: "",
+    assignedTo: "",
   });
 
-  const handleAddProject = () => {
-    const newProject = {
-      id: `INV${(projects.length + 1).toString().padStart(3, "0")}`,
+  const handleAddTask = () => {
+    const newTask = {
+      id: `T${(tasks.length + 1).toString().padStart(3, "0")}`,
       title: formData.title,
       description: formData.description,
-      amount: parseFloat(formData.amount) || 0,
+      project: formData.project,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      precedence: formData.precedence,
+      assignedTo: formData.assignedTo,
     };
-    setProjects([...projects, newProject]);
-    setFormData({ id: "", title: "", description: "", amount: "" });
+    setTasks([...tasks, newTask]);
+    setFormData({
+      title: "",
+      description: "",
+      project: "",
+      startDate: "",
+      endDate: "",
+      precedence: "",
+      assignedTo: "",
+    });
     setIsAddOpen(false);
   };
 
-  const handleEditProject = () => {
-    setProjects(
-      projects.map((p) =>
-        p.id === selectedProject.id
+  const handleEditTask = () => {
+    setTasks(
+      tasks.map((t) =>
+        t.id === selectedTask.id
           ? {
-              ...p,
+              ...t,
               title: formData.title,
               description: formData.description,
-              amount: parseFloat(formData.amount) || p.amount,
+              project: formData.project,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
+              precedence: formData.precedence,
+              assignedTo: formData.assignedTo,
             }
-          : p
+          : t
       )
     );
     setIsEditOpen(false);
-    setFormData({ id: "", title: "", description: "", amount: "" });
-    setSelectedProject(null);
-  };
-
-  const handleDeleteProject = () => {
-    setProjects(projects.filter((p) => p.id !== selectedProject.id));
-    setIsDeleteOpen(false);
-    setSelectedProject(null);
-  };
-
-  const openEditModal = (project) => {
-    setSelectedProject(project);
     setFormData({
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      amount: project.amount.toString(),
+      title: "",
+      description: "",
+      project: "",
+      startDate: "",
+      endDate: "",
+      precedence: "",
+      assignedTo: "",
+    });
+    setSelectedTask(null);
+  };
+
+  const handleDeleteTask = () => {
+    setTasks(tasks.filter((t) => t.id !== selectedTask.id));
+    setIsDeleteOpen(false);
+    setSelectedTask(null);
+  };
+
+  const openEditModal = (task) => {
+    setSelectedTask(task);
+    setFormData({
+      title: task.title,
+      description: task.description,
+      project: task.project,
+      startDate: task.startDate,
+      endDate: task.endDate,
+      precedence: task.precedence,
+      assignedTo: task.assignedTo,
     });
     setIsEditOpen(true);
   };
 
-  const openViewModal = (project) => {
-    setSelectedProject(project);
+  const openViewModal = (task) => {
+    setSelectedTask(task);
     setIsViewOpen(true);
   };
 
-  const openDeleteModal = (project) => {
-    setSelectedProject(project);
+  const openDeleteModal = (task) => {
+    setSelectedTask(task);
     setIsDeleteOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
-      <div className="flex flex-col items-center justify-start p-6 h-full">
-        <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
-          <h1 className="text-2xl font-bold">Taches</h1>
-        </div>
-        <div className="w-full max-w-4xl mt-20">
-          <div className="flex justify-end mb-4">
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-sky-500 hover:bg-sky-600 text-white">
-                  Ajouter une Tache
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Ajouter un Projet</DialogTitle>
-                  <DialogDescription>
-                    Remplissez les détails du nouveau projet.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="title" className="text-right">
-                      Titre
-                    </Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="description" className="text-right">
-                      Description
-                    </Label>
-                    <Input
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="amount" className="text-right">
-                      Montant ($)
-                    </Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      value={formData.amount}
-                      onChange={(e) =>
-                        setFormData({ ...formData, amount: e.target.value })
-                      }
-                      className="col-span-3"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="submit"
-                    onClick={handleAddProject}
-                    className="bg-sky-500 hover:bg-sky-600"
-                  >
-                    Ajouter
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-sky-50">
-                    <TableHead className="w-[100px] font-bold text-sky-700">
-                      ID
-                    </TableHead>
-                    <TableHead className="font-bold text-sky-700">Titre</TableHead>
-                    <TableHead className="font-bold text-sky-700">
-                      Description
-                    </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Montant ($)
-                    </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projects.map((project) => (
-                    <TableRow
-                      key={project.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <TableCell className="font-medium">{project.id}</TableCell>
-                      <TableCell>{project.title}</TableCell>
-                      <TableCell>{project.description}</TableCell>
-                      <TableCell className="text-right">
-                        {project.amount.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openViewModal(project)}
-                            className="text-sky-500 hover:text-sky-700"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openEditModal(project)}
-                            className="text-sky-500 hover:text-sky-700"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openDeleteModal(project)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
-
-        {/* View Details Modal */}
-        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Détails du Projet</DialogTitle>
-              <DialogDescription>
-                Informations complètes sur le projet sélectionné.
-              </DialogDescription>
-            </DialogHeader>
-            {selectedProject && (
+      {/* Fixed header */}
+      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
+        <h1 className="text-2xl font-bold">Tâches</h1>
+      </div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col p-6 pt-20">
+        {/* Add Task Button */}
+        <div className="flex justify-end mb-4">
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-sky-500 hover:bg-sky-600 text-white">
+                Ajouter une Tâche
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Ajouter une Tâche</DialogTitle>
+                <DialogDescription>
+                  Remplissez les détails de la nouvelle tâche.
+                </DialogDescription>
+              </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">ID</Label>
-                  <span className="col-span-3">{selectedProject.id}</span>
+                  <Label htmlFor="title" className="text-right">
+                    Titre
+                  </Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Titre</Label>
-                  <span className="col-span-3">{selectedProject.title}</span>
+                  <Label htmlFor="description" className="text-right">
+                    Description
+                  </Label>
+                  <Input
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Description</Label>
-                  <span className="col-span-3">{selectedProject.description}</span>
+                  <Label htmlFor="project" className="text-right">
+                    Projet
+                  </Label>
+                  <Input
+                    id="project"
+                    value={formData.project}
+                    onChange={(e) =>
+                      setFormData({ ...formData, project: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Montant ($)</Label>
-                  <span className="col-span-3">
-                    {selectedProject.amount.toFixed(2)}
-                  </span>
+                  <Label htmlFor="startDate" className="text-right">
+                    Date de début
+                  </Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startDate: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="endDate" className="text-right">
+                    Date de fin
+                  </Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, endDate: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="precedence" className="text-right">
+                    Précédence
+                  </Label>
+                  <Input
+                    id="precedence"
+                    value={formData.precedence}
+                    onChange={(e) =>
+                      setFormData({ ...formData, precedence: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="assignedTo" className="text-right">
+                    Assignée à
+                  </Label>
+                  <Input
+                    id="assignedTo"
+                    value={formData.assignedTo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, assignedTo: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
                 </div>
               </div>
-            )}
-            <DialogFooter>
-              <Button
-                onClick={() => setIsViewOpen(false)}
-                className="bg-sky-500 hover:bg-sky-600"
-              >
-                Fermer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  onClick={handleAddTask}
+                  className="bg-sky-500 hover:bg-sky-600"
+                >
+                  Ajouter
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        {/* Table Container */}
+        <div className="flex-1 bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="w-full h-full overflow-auto">
+            <Table className="">
+              <TableHeader>
+                <TableRow className="bg-sky-50">
+                  <TableHead className="w-[100px] font-bold text-sky-700">
+                    ID
+                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">Titre</TableHead>
+                  <TableHead className="font-bold text-sky-700">
+                    Description
+                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">
+                    Projet
+                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">
+                    Date de début
+                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">
+                    Date de fin
+                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">
+                    Précédence
+                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">
+                    Assignée à
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-sky-700">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tasks.map((task) => (
+                  <TableRow
+                    key={task.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <TableCell className="font-medium">{task.id}</TableCell>
+                    <TableCell>{task.title}</TableCell>
+                    <TableCell>{task.description}</TableCell>
+                    <TableCell>{task.project}</TableCell>
+                    <TableCell>{task.startDate}</TableCell>
+                    <TableCell>{task.endDate}</TableCell>
+                    <TableCell>{task.precedence}</TableCell>
+                    <TableCell>{task.assignedTo}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openViewModal(task)}
+                          className="text-sky-500 hover:text-sky-700"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEditModal(task)}
+                          className="text-sky-500 hover:text-sky-700"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openDeleteModal(task)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
 
-        {/* Edit Project Modal */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Modifier le Projet</DialogTitle>
-              <DialogDescription>
-                Mettez à jour les détails du projet.
-              </DialogDescription>
-            </DialogHeader>
+      {/* View Details Modal */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Détails de la Tâche</DialogTitle>
+            <DialogDescription>
+              Informations complètes sur la tâche sélectionnée.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTask && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-title" className="text-right">
-                  Titre
-                </Label>
-                <Input
-                  id="edit-title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <Label className="text-right font-bold">ID</Label>
+                <span className="col-span-3">{selectedTask.id}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-description" className="text-right">
-                  Description
-                </Label>
-                <Input
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <Label className="text-right font-bold">Titre</Label>
+                <span className="col-span-3">{selectedTask.title}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-amount" className="text-right">
-                  Montant ($)
-                </Label>
-                <Input
-                  id="edit-amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <Label className="text-right font-bold">Description</Label>
+                <span className="col-span-3">{selectedTask.description}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Projet</Label>
+                <span className="col-span-3">{selectedTask.project}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Date de début</Label>
+                <span className="col-span-3">{selectedTask.startDate}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Date de fin</Label>
+                <span className="col-span-3">{selectedTask.endDate}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Précédence</Label>
+                <span className="col-span-3">{selectedTask.precedence}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Assignée à</Label>
+                <span className="col-span-3">{selectedTask.assignedTo}</span>
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                onClick={handleEditProject}
-                className="bg-sky-500 hover:bg-sky-600"
-              >
-                Enregistrer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={() => setIsViewOpen(false)}
+              className="bg-sky-500 hover:bg-sky-600"
+            >
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Confirmer la Suppression</DialogTitle>
-              <DialogDescription>
-                Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteOpen(false)}
-                className="border-sky-500 text-sky-500 hover:bg-sky-50"
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={handleDeleteProject}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                Supprimer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      {/* Edit Task Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Modifier la Tâche</DialogTitle>
+            <DialogDescription>
+              Mettez à jour les détails de la tâche.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-title" className="text-right">
+                Titre
+              </Label>
+              <Input
+                id="edit-title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-project" className="text-right">
+                Projet
+              </Label>
+              <Input
+                id="edit-project"
+                value={formData.project}
+                onChange={(e) =>
+                  setFormData({ ...formData, project: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-startDate" className="text-right">
+                Date de début
+              </Label>
+              <Input
+                id="edit-startDate"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, startDate: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-endDate" className="text-right">
+                Date de fin
+              </Label>
+              <Input
+                id="edit-endDate"
+                type="date"
+                value={formData.endDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, endDate: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-precedence" className="text-right">
+                Précédence
+              </Label>
+              <Input
+                id="edit-precedence"
+                value={formData.precedence}
+                onChange={(e) =>
+                  setFormData({ ...formData, precedence: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-assignedTo" className="text-right">
+                Assignée à
+              </Label>
+              <Input
+                id="edit-assignedTo"
+                value={formData.assignedTo}
+                onChange={(e) =>
+                  setFormData({ ...formData, assignedTo: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleEditTask}
+              className="bg-sky-500 hover:bg-sky-600"
+            >
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmer la Suppression</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteOpen(false)}
+              className="border-sky-500 text-sky-500 hover:bg-sky-50"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleDeleteTask}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
