@@ -7,7 +7,7 @@ const connectionPool = new Pool({
   host: "localhost",
   database: "p_manage",
   password: '2525',
-  port: "5432",
+  port: 5432,
   
 });
 
