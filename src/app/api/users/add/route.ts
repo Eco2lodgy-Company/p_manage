@@ -1,5 +1,4 @@
 import connectionPool from "@/lib/db"
-import { q } from "framer-motion/client";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -24,17 +23,19 @@ export async function POST(request: Request) {
             VALUES($1, $2, $3, $4, $5, $6)
             RETURNING *;
         `;
-        console.log("query",query);
-        // const values = [nom, prenom, telephone, mail, password, role];
         
-        // const result = await client.query(query, values);
-        // const data = result.rows[0]; // Récupérer le premier élément inséré
+        const values = [nom, prenom, telephone, mail, password, role];
+        
+        // Exécuter réellement la requête
+        const result = await client.query(query, values);
+        const data = result.rows[0]; // Récupérer le premier élément inséré
         
         client.release();
-        if(query){
         
-        return NextResponse.json({ message:"utilisateur créé avec succès" }, { status: 201 }); 
-        }// 201 pour création réussie
+        return NextResponse.json({ 
+            message: "Utilisateur créé avec succès",
+            data: data 
+        }, { status: 201 });
         
     } catch (error) {
         if (error instanceof Error) {
