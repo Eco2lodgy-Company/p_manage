@@ -6,7 +6,7 @@ export async function GET() {
     try{
         const client = await connectionPool.connect();
         console.log("connected!")
-        const result = await client.query("SELECT * FROM projects;")
+        const result = await client.query("SELECT * FROM projets;")
         const data = result.rows;
         console.log("data",data);
         client.release();
