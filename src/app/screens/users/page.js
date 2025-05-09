@@ -23,28 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Trash2, Edit, Eye, Plus } from "lucide-react";
 
 export default function Users() {
-  const [users, setUsers] = useState([
-    {
-      id: "USR001",
-      nom: "Dupont",
-      prenom: "Jean",
-      telephone: "+33612345678",
-      mail: "jean.dupont@example.com",
-      password: "hashed_password_1",
-      role: "Manager",
-      created_at: "2023-05-01",
-    },
-    {
-      id: "USR002",
-      nom: "Leclerc",
-      prenom: "Marie",
-      telephone: "+33687654321",
-      mail: "marie.leclerc@example.com",
-      password: "hashed_password_2",
-      role: "Employé",
-      created_at: "2023-06-15",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -323,7 +302,7 @@ export default function Users() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {users && users.map((user) => (
                   <TableRow
                     key={user.id}
                     className="hover:bg-gray-50 transition-colors"
