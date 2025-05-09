@@ -138,6 +138,7 @@ export default function Users() {
       role: formData.role,
       
     };
+
     try{
       const response = await fetch(`http://alphatek.fr:3110/api/users/edit`, {
         method: "PATCH",
@@ -186,7 +187,29 @@ export default function Users() {
     setSelectedUser(null);
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async() => {
+    try{
+      const response = await fetch(`http://alphatek.fr:3110/api/users/delete`, {
+        method: "DELETE",
+        body: JSON.stringify(formData),
+      });
+      console.log("Request body:", JSON.stringify(userToEdit));
+      console.log("Response:", response);
+      if (!response.ok) {
+        throw new Error("erreur de réseau");
+      }
+    
+       const data = await response.json();
+         toast.success(data.message);
+          setUsers(
+      
+    );
+      
+    }catch (error) {
+      console.error("Erreur lors de la supression de l\'utilisateur:", error);
+      toast.error("Erreur lors de la supression de l\'utilisateur:", error);
+
+    }
     setUsers(users.filter((u) => u.id !== selectedUser.id));
     setIsDeleteOpen(false);
     setSelectedUser(null);
@@ -213,6 +236,10 @@ export default function Users() {
 
   const openDeleteModal = (user) => {
     setSelectedUser(user);
+    setFormData({
+      id: user.id,
+
+    });
     setIsDeleteOpen(true);
   };
 
