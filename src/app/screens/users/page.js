@@ -129,7 +129,7 @@ export default function Users() {
     }
 
     const userToEdit = {
-      id: formData.id,
+      id: selectedUser.id,
       nom: formData.nom,
       prenom: formData.prenom,
       telephone: formData.telephone,
