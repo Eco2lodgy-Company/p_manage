@@ -46,8 +46,9 @@ export default function Users() {
       if (!response.ok) {
         throw new Error("erreur de réseau");
       }
-      setUsers(data.data);
-      // const data = await response.json();
+    
+       const data = await response.json();
+         setUsers(data.data);
       // if (data && Array.isArray(data)) {
       //   setUsers(data.data.map((user, index) => ({
       //     ...user,
