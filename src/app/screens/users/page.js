@@ -59,6 +59,27 @@ export default function Users() {
     role: "",
   });
 
+  const handleGetUsers = async () => {
+    try{
+      const response = await fetch(`http://alphatek.fr:3110/api/users/`, {
+        method: "GET"
+      });
+      if (!response.ok) {
+        throw new Error("erreur de réseau");
+      }
+      const data = await response.json();
+      if (data && Array.isArray(data)) {
+        setUsers(data.map((user, index) => ({
+          ...user,
+          id: `USR${(index + 1).toString().padStart(3, "0")}`,
+          created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
+        })));
+      }
+    }catch (error) {
+      console.error("Erreur lors de la recuperation des utilisateurs:", error);
+    }
+  }
+
   const handleAddUser = () => {
     // Basic validation
     if (!formData.nom || !formData.prenom || !formData.mail || !formData.role) {
