@@ -128,17 +128,27 @@ export default function Users() {
       return;
     }
 
+    const userToEdit = {
+      id: formData.id,
+      nom: formData.nom,
+      prenom: formData.prenom,
+      telephone: formData.telephone,
+      mail: formData.mail,
+      password: formData.password,
+      role: formData.role,
+      
+    };
     try{
       const response = await fetch(`http://alphatek.fr:3110/api/users/edit`, {
         method: "PATCH",
-        body: JSON.stringify(formData),
+        body: JSON.stringify(userToEdit),
       });
       if (!response.ok) {
         throw new Error("erreur de réseau");
       }
     
        const data = await response.json();
-         toast.success("Utilisateur modifié avec succès !");
+         toast.success(data.message);
           setUsers(
       users.map((u) =>
         u.id === selectedUser.id
