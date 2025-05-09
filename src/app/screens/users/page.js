@@ -48,7 +48,7 @@ export default function Users() {
       }
       const data = await response.json();
       if (data && Array.isArray(data)) {
-        setUsers(data.map((user, index) => ({
+        setUsers(data.data.map((user, index) => ({
           ...user,
           id: `USR${(index + 1).toString().padStart(3, "0")}`,
           created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
