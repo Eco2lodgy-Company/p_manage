@@ -1,5 +1,7 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -65,7 +67,7 @@ export default function Users() {
     handleGetUsers();
   }, []);
 
-  const handleAddUser = () => {
+  const handleAddUser = async() => {
     // Basic validation
     if (!formData.nom || !formData.prenom || !formData.mail || !formData.role) {
       alert("Veuillez remplir les champs obligatoires : Nom, Prénom, Email, Rôle.");
@@ -81,6 +83,31 @@ export default function Users() {
       role: formData.role,
       created_at: new Date().toISOString().split("T")[0],
     };
+
+    try{
+      const response = await fetch(`http://alphatek.fr:3110/api/users/add`, {
+        method: "POST",
+        body: JSON.stringify(newUser),
+      });
+      if (!response.ok) {
+        throw new Error("erreur de réseau");
+      }
+    
+       const data = await response.json();
+         setUsers(data.data);
+      // if (data && Array.isArray(data)) {
+      //   setUsers(data.data.map((user, index) => ({
+      //     ...user,
+      //     id: `USR${(index + 1).toString().padStart(3, "0")}`,
+      //     created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
+      //   })));
+      // }
+    }catch (error) {
+      console.error("Erreur lors de la recuperation des utilisateurs:", error);
+      toast("Erreur lors de la recuperation des utilisateurs:", error);
+
+    }
+
     setUsers([...users, newUser]);
     setFormData({
       nom: "",
@@ -161,6 +188,7 @@ export default function Users() {
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Utilisateurs</h1>
       </div>
+      <Toaster />
       {/* Main content */}
       <div className="flex-1 flex flex-col p-6 pt-20">
         {/* Add User Button */}
