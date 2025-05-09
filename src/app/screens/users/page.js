@@ -1,5 +1,13 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import {
@@ -352,15 +360,31 @@ export default function Users() {
                   <Label htmlFor="role" className="text-right">
                     Rôle
                   </Label>
-                  <Input
+                  {/* <Input
                     id="role"
                     value={formData.role}
                     onChange={(e) =>
                       setFormData({ ...formData, role: e.target.value })
                     }
+                    
                     className="col-span-3"
                     required
-                  />
+                  /> */}
+                  <Select
+                   value={formData.role}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, role: value })
+                    }>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="choisir role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrateur</SelectItem>
+                      <SelectItem value="user">Employé(é)</SelectItem>
+                      <SelectItem value="guest">Invité</SelectItem>
+                    </SelectContent>
+                  </Select>
+
                 </div>
               </div>
               <DialogFooter>
