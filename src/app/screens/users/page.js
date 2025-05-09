@@ -308,7 +308,8 @@ export default function Users() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users && users.map((user) => (
+                {users && users.length > 0 ? (
+                users.map((user) => (
                   <TableRow
                     key={user.id}
                     className="hover:bg-gray-50 transition-colors"
@@ -349,7 +350,13 @@ export default function Users() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-4">
+                      Aucun utilisateur trouvé
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
