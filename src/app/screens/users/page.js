@@ -314,6 +314,7 @@ export default function Users() {
                     onChange={(e) =>
                       setFormData({ ...formData, telephone: e.target.value })
                     }
+                    min={8}
                     className="col-span-3"
                   />
                 </div>
@@ -343,6 +344,7 @@ export default function Users() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
+                    min={8}
                     className="col-span-3"
                   />
                 </div>
