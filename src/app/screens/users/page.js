@@ -95,6 +95,7 @@ export default function Users() {
     
        const data = await response.json();
          setUsers(data.data);
+         toast.success("Utilisateur ajouté avec succès !");
       // if (data && Array.isArray(data)) {
       //   setUsers(data.data.map((user, index) => ({
       //     ...user,
@@ -104,7 +105,7 @@ export default function Users() {
       // }
     }catch (error) {
       console.error("Erreur lors de la recuperation des utilisateurs:", error);
-      toast("Erreur lors de la recuperation des utilisateurs:", error);
+      toast.error("Erreur lors de l'ajout  de l\'utilisateur:", error);
 
     }
 
