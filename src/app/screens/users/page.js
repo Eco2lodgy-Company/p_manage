@@ -188,10 +188,13 @@ export default function Users() {
   };
 
   const handleDeleteUser = async() => {
+    const userToDelete = {
+      id: selectedUser.id,
+    }
     try{
       const response = await fetch(`http://alphatek.fr:3110/api/users/delete`, {
         method: "DELETE",
-        body: JSON.stringify(formData),
+        body: JSON.stringify(userToDelete),
       });
       console.log("Request body:", JSON.stringify(userToEdit));
       console.log("Response:", response);
