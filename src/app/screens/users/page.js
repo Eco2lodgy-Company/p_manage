@@ -143,6 +143,8 @@ export default function Users() {
         method: "PATCH",
         body: JSON.stringify(userToEdit),
       });
+      console.log("Request body:", JSON.stringify(userToEdit));
+      console.log("Response:", response);
       if (!response.ok) {
         throw new Error("erreur de réseau");
       }
