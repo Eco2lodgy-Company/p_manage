@@ -121,13 +121,25 @@ export default function Users() {
     setIsAddOpen(false);
   };
 
-  const handleEditUser = () => {
+  const handleEditUser = async()  => {
     // Basic validation
     if (!formData.nom || !formData.prenom || !formData.mail || !formData.role) {
       alert("Veuillez remplir les champs obligatoires : Nom, Prénom, Email, Rôle.");
       return;
     }
-    setUsers(
+
+    try{
+      const response = await fetch(`http://alphatek.fr:3110/api/users/edit`, {
+        method: "PATCH",
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        throw new Error("erreur de réseau");
+      }
+    
+       const data = await response.json();
+         toast.success("Utilisateur modifié avec succès !");
+          setUsers(
       users.map((u) =>
         u.id === selectedUser.id
           ? {
@@ -142,6 +154,14 @@ export default function Users() {
           : u
       )
     );
+      
+    }catch (error) {
+      console.error("Erreur lors de la modification de l\'utilisateur:", error);
+      toast.error("Erreur lors de la modification de l\'utilisateur:", error);
+
+    }
+
+   
     setIsEditOpen(false);
     setFormData({
       nom: "",
