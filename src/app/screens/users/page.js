@@ -129,7 +129,7 @@ export default function Users() {
     }
 
     const userToEdit = {
-      id: selectedUser.id,
+      id: formData.id,
       nom: formData.nom,
       prenom: formData.prenom,
       telephone: formData.telephone,
@@ -195,6 +195,7 @@ export default function Users() {
   const openEditModal = (user) => {
     setSelectedUser(user);
     setFormData({
+      id: user.id,
       nom: user.nom,
       prenom: user.prenom,
       telephone: user.telephone,
