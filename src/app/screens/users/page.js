@@ -196,7 +196,7 @@ export default function Users() {
         method: "DELETE",
         body: JSON.stringify(userToDelete),
       });
-      console.log("Request body:", JSON.stringify(userToEdit));
+      console.log("Request body:", JSON.stringify(userToDelete));
       console.log("Response:", response);
       if (!response.ok) {
         throw new Error("erreur de réseau");
