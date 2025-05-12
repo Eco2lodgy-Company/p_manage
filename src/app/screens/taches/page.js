@@ -42,7 +42,7 @@ export default function Tasks() {
   const fetchTasks = async () => {
 
    try{
-        const response = await fetch(`http://alphatek.fr:3110/api/users/`, {
+        const response = await fetch(`http://alphatek.fr:3110/api/taks/`, {
           method: "GET"
         });
         if (!response.ok) {
@@ -51,6 +51,7 @@ export default function Tasks() {
       
          const data = await response.json();
            setTasks(data.data);
+           console.log(data.data);
         // if (data && Array.isArray(data)) {
         //   setUsers(data.data.map((user, index) => ({
         //     ...user,
