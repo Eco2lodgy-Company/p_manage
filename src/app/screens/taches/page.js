@@ -71,6 +71,10 @@ export default function Tasks() {
     }, []);
 
   const handleAddTask = async () => {
+    if (!formData.titre || !formData.description ) {
+      alert("Veuillez remplir les champs obligatoires : titre, description");
+      return;
+    }
     const newTask = {
       // id: `T${(tasks.length + 1).toString().padStart(3, "0")}`,
       titre: formData.titre,
@@ -94,13 +98,7 @@ export default function Tasks() {
        const data = await response.json();
          setUsers(data.data);
          toast.success("Tache ajoutée avec succès !");
-      // if (data && Array.isArray(data)) {
-      //   setUsers(data.data.map((user, index) => ({
-      //     ...user,
-      //     id: `USR${(index + 1).toString().padStart(3, "0")}`,
-      //     created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
-      //   })));
-      // }
+      
     }catch (error) {
       console.error("Erreur lors de l'ajout  de la tache:", error);
       toast.error("Erreur lors de l'ajout  de la tache:", error);
