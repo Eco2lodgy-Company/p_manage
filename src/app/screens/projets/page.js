@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import {
   Table,
   TableBody,
@@ -56,6 +56,28 @@ export default function Projects() {
     description: "",
     amount: "",
   });
+
+   const fetchProjects = async () => {
+
+   try{
+        const response = await fetch(`http://alphatek.fr:3110/api/projects/`, {
+          method: "GET"
+        });
+        if (!response.ok) {
+          throw new Error("erreur de réseau");
+        }
+         const data = await response.json();
+           setProjects(data.data);
+           console.log(data.data);
+      }catch (error) {
+        console.error("Erreur lors de la recuperation des taches:", error);
+      }
+    }
+    useEffect(() => {
+      fetchProjects();
+    }, []);
+
+  
 
   const handleAddProject = () => {
     const newProject = {
