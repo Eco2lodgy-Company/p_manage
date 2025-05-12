@@ -98,11 +98,11 @@ export default function Tasks() {
         t.id === selectedTask.id
           ? {
               ...t,
-              title: formData.titre,
+              titre: formData.titre,
               description: formData.description,
-              project: formData.id_projet,
-              startDate: formData.start_date,
-              endDate: formData.end_date,
+              id_projet: formData.id_projet,
+              start_date: formData.start_date,
+              end_date: formData.end_date,
               precedence: formData.precedence,
               assignedTo: formData.assignedTo,
             }
