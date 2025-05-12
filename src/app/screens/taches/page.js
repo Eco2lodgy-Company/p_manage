@@ -26,31 +26,31 @@ export default function Tasks() {
   const [tasks, setTasks] = useState([
     {
       id: "T001",
-      title: "Foundation Work",
+      titre: "Foundation Work",
       description: "Lay foundation for residential complex",
-      project: "Project Alpha",
-      startDate: "2024-01-01",
-      endDate: "2024-02-15",
+      id_projet: "id_projet Alpha",
+      start_date: "2024-01-01",
+      end_date: "2024-02-15",
       precedence: "None",
       assignedTo: "Jean Dupont",
     },
     {
       id: "T002",
-      title: "Structural Framing",
+      titre: "Structural Framing",
       description: "Erect steel framework",
-      project: "Project Beta",
-      startDate: "2024-02-16",
-      endDate: "2024-04-01",
+      id_projet: "Project Beta",
+      start_date: "2024-02-16",
+      end_date: "2024-04-01",
       precedence: "T001",
       assignedTo: "Marie Leclerc",
     },
     ...Array.from({ length: 28 }, (_, i) => ({
       id: `T${(i + 3).toString().padStart(3, "0")}`,
-      title: `Task ${i + 3}`,
+      titre: `Task ${i + 3}`,
       description: `Description for task ${i + 3}`,
       project: `Project ${String.fromCharCode(65 + ((i + 3) % 26))}`,
-      startDate: `2024-${String((i % 12) + 1).padStart(2, "0")}-01`,
-      endDate: `2024-${String((i % 12) + 1).padStart(2, "0")}-15`,
+      start_date: `2024-${String((i % 12) + 1).padStart(2, "0")}-01`,
+      end_date: `2024-${String((i % 12) + 1).padStart(2, "0")}-15`,
       precedence: `T${(i + 2).toString().padStart(3, "0")}`,
       assignedTo: `Person ${i + 3}`,
     })),
@@ -61,11 +61,11 @@ export default function Tasks() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
+    titre: "",
     description: "",
-    project: "",
-    startDate: "",
-    endDate: "",
+    id_projet: "",
+    start_date: "",
+    end_date: "",
     precedence: "",
     assignedTo: "",
   });
@@ -352,11 +352,11 @@ export default function Tasks() {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="font-medium">{task.id}</TableCell>
-                    <TableCell>{task.title}</TableCell>
+                    <TableCell>{task.titre}</TableCell>
                     <TableCell>{task.description}</TableCell>
-                    <TableCell>{task.project}</TableCell>
-                    <TableCell>{task.startDate}</TableCell>
-                    <TableCell>{task.endDate}</TableCell>
+                    <TableCell>{task.id_projet}</TableCell>
+                    <TableCell>{task.start_date}</TableCell>
+                    <TableCell>{task.end_date}</TableCell>
                     <TableCell>{task.precedence}</TableCell>
                     <TableCell>{task.assignedTo}</TableCell>
                     <TableCell className="text-right">
