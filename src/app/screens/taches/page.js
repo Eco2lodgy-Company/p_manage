@@ -42,7 +42,7 @@ export default function Tasks() {
   const fetchTasks = async () => {
 
    try{
-        const response = await fetch(`http://alphatek.fr:3110/api/taks/`, {
+        const response = await fetch(`http://alphatek.fr:3110/api/tasks/`, {
           method: "GET"
         });
         if (!response.ok) {
