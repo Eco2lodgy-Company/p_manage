@@ -23,38 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Trash2, Edit, Eye } from "lucide-react";
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState([
-    {
-      id: "T001",
-      titre: "Foundation Work",
-      description: "Lay foundation for residential complex",
-      id_projet: "id_projet Alpha",
-      start_date: "2024-01-01",
-      end_date: "2024-02-15",
-      precedence: "None",
-      assignedTo: "Jean Dupont",
-    },
-    {
-      id: "T002",
-      titre: "Structural Framing",
-      description: "Erect steel framework",
-      id_projet: "Project Beta",
-      start_date: "2024-02-16",
-      end_date: "2024-04-01",
-      precedence: "T001",
-      assignedTo: "Marie Leclerc",
-    },
-    ...Array.from({ length: 28 }, (_, i) => ({
-      id: `T${(i + 3).toString().padStart(3, "0")}`,
-      titre: `Task ${i + 3}`,
-      description: `Description for task ${i + 3}`,
-      project: `Project ${String.fromCharCode(65 + ((i + 3) % 26))}`,
-      start_date: `2024-${String((i % 12) + 1).padStart(2, "0")}-01`,
-      end_date: `2024-${String((i % 12) + 1).padStart(2, "0")}-15`,
-      precedence: `T${(i + 2).toString().padStart(3, "0")}`,
-      assignedTo: `Person ${i + 3}`,
-    })),
-  ]);
+  const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
