@@ -6,14 +6,6 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { titre, description, id_projet, start_date, end_date, precedence, asign_to } = body;
 
-        // Validation minimale
-        if (!titre || !id_projet) {
-            return NextResponse.json(
-                { error: "Le titre et l'ID du projet sont requis" },
-                { status: 400 }
-            );
-        }
-
         const client = await connectionPool.connect();
 
         try {
