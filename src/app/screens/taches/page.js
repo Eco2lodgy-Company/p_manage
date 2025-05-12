@@ -71,11 +71,11 @@ export default function Tasks() {
   const handleAddTask = async () => {
     const newTask = {
       // id: `T${(tasks.length + 1).toString().padStart(3, "0")}`,
-      title: formData.titre,
+      titre: formData.titre,
       description: formData.description,
-      project: formData.id_projet,
-      startDate: formData.start_date,
-      endDate: formData.end_date,
+      id_projet: formData.id_projet,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
       precedence: formData.precedence,
       assignedTo: formData.assignedTo,
     };
