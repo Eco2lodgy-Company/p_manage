@@ -14,7 +14,7 @@ export async function POST(request: Request) {
                 (titre, description, id_projet, start_date, end_date, precedence, asign_to)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING *`,
-                [titre, description, id_projet, start_date, end_date, precedence || [], asign_to]
+                [titre, description, id_projet, start_date, end_date, precedence, asign_to]
             );
 
             const newTache = result.rows[0];
