@@ -70,22 +70,22 @@ export default function Tasks() {
 
   const handleAddTask = () => {
     const newTask = {
-      id: `T${(tasks.length + 1).toString().padStart(3, "0")}`,
-      title: formData.title,
+      // id: `T${(tasks.length + 1).toString().padStart(3, "0")}`,
+      title: formData.titre,
       description: formData.description,
-      project: formData.project,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
+      project: formData.id_projet,
+      startDate: formData.start_date,
+      endDate: formData.end_date,
       precedence: formData.precedence,
       assignedTo: formData.assignedTo,
     };
     setTasks([...tasks, newTask]);
     setFormData({
-      title: "",
+      titre: "",
       description: "",
-      project: "",
-      startDate: "",
-      endDate: "",
+      id_projet: "",
+      start_date: "",
+      end_date: "",
       precedence: "",
       assignedTo: "",
     });
@@ -98,11 +98,11 @@ export default function Tasks() {
         t.id === selectedTask.id
           ? {
               ...t,
-              title: formData.title,
+              title: formData.titre,
               description: formData.description,
-              project: formData.project,
-              startDate: formData.startDate,
-              endDate: formData.endDate,
+              project: formData.id_projet,
+              startDate: formData.start_date,
+              endDate: formData.end_date,
               precedence: formData.precedence,
               assignedTo: formData.assignedTo,
             }
@@ -111,11 +111,11 @@ export default function Tasks() {
     );
     setIsEditOpen(false);
     setFormData({
-      title: "",
+      titre: "",
       description: "",
-      project: "",
-      startDate: "",
-      endDate: "",
+      id_projet: "",
+      start_date: "",
+      end_date: "",
       precedence: "",
       assignedTo: "",
     });
@@ -131,11 +131,11 @@ export default function Tasks() {
   const openEditModal = (task) => {
     setSelectedTask(task);
     setFormData({
-      title: task.title,
+      title: task.titre,
       description: task.description,
-      project: task.project,
-      startDate: task.startDate,
-      endDate: task.endDate,
+      project: task.id_projet,
+      startDate: task.start_date,
+      endDate: task.end_date,
       precedence: task.precedence,
       assignedTo: task.assignedTo,
     });
@@ -182,9 +182,9 @@ export default function Tasks() {
                   </Label>
                   <Input
                     id="title"
-                    value={formData.title}
+                    value={formData.titre}
                     onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
+                      setFormData({ ...formData, titre: e.target.value })
                     }
                     className="col-span-3"
                   />
@@ -208,9 +208,9 @@ export default function Tasks() {
                   </Label>
                   <Input
                     id="project"
-                    value={formData.project}
+                    value={formData.id_projet}
                     onChange={(e) =>
-                      setFormData({ ...formData, project: e.target.value })
+                      setFormData({ ...formData, id_projet: e.target.value })
                     }
                     className="col-span-3"
                   />
@@ -222,9 +222,9 @@ export default function Tasks() {
                   <Input
                     id="startDate"
                     type="date"
-                    value={formData.startDate}
+                    value={formData.start_date}
                     onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
+                      setFormData({ ...formData, start_date: e.target.value })
                     }
                     className="col-span-3"
                   />
@@ -236,9 +236,9 @@ export default function Tasks() {
                   <Input
                     id="endDate"
                     type="date"
-                    value={formData.endDate}
+                    value={formData.end_date}
                     onChange={(e) =>
-                      setFormData({ ...formData, endDate: e.target.value })
+                      setFormData({ ...formData, end_date: e.target.value })
                     }
                     className="col-span-3"
                   />
@@ -382,7 +382,7 @@ export default function Tasks() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Titre</Label>
-                <span className="col-span-3">{selectedTask.title}</span>
+                <span className="col-span-3">{selectedTask.titre}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Description</Label>
@@ -390,15 +390,15 @@ export default function Tasks() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Projet</Label>
-                <span className="col-span-3">{selectedTask.project}</span>
+                <span className="col-span-3">{selectedTask.id_projet}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Date de début</Label>
-                <span className="col-span-3">{selectedTask.startDate}</span>
+                <span className="col-span-3">{selectedTask.start_date}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Date de fin</Label>
-                <span className="col-span-3">{selectedTask.endDate}</span>
+                <span className="col-span-3">{selectedTask.end_date}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Précédence</Label>
@@ -437,9 +437,9 @@ export default function Tasks() {
               </Label>
               <Input
                 id="edit-title"
-                value={formData.title}
+                value={formData.titre}
                 onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
+                  setFormData({ ...formData, titre: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -463,9 +463,9 @@ export default function Tasks() {
               </Label>
               <Input
                 id="edit-project"
-                value={formData.project}
+                value={formData.id_projet}
                 onChange={(e) =>
-                  setFormData({ ...formData, project: e.target.value })
+                  setFormData({ ...formData, id_projet: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -477,9 +477,9 @@ export default function Tasks() {
               <Input
                 id="edit-startDate"
                 type="date"
-                value={formData.startDate}
+                value={formData.start_date}
                 onChange={(e) =>
-                  setFormData({ ...formData, startDate: e.target.value })
+                  setFormData({ ...formData, start_date: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -491,9 +491,9 @@ export default function Tasks() {
               <Input
                 id="edit-endDate"
                 type="date"
-                value={formData.endDate}
+                value={formData.end_date}
                 onChange={(e) =>
-                  setFormData({ ...formData, endDate: e.target.value })
+                  setFormData({ ...formData, end_date: e.target.value })
                 }
                 className="col-span-3"
               />
