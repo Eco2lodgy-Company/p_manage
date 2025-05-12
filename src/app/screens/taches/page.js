@@ -37,7 +37,7 @@ export default function Tasks() {
     id_projet: "",
     start_date: "",
     end_date: "",
-    precedence: "",
+    precedence: [],
     assignedTo: "",
   });
 
@@ -104,7 +104,7 @@ export default function Tasks() {
       id_projet: "",
       start_date: "",
       end_date: "",
-      precedence: "",
+      precedence: [],
       assignedTo: "",
     });
     setIsAddOpen(false);
@@ -134,7 +134,7 @@ export default function Tasks() {
       id_projet: "",
       start_date: "",
       end_date: "",
-      precedence: "",
+      precedence: [""],
       assignedTo: "",
     });
     setSelectedTask(null);
