@@ -50,17 +50,9 @@ export default function Tasks() {
         if (!response.ok) {
           throw new Error("erreur de réseau");
         }
-      
          const data = await response.json();
            setTasks(data.data);
            console.log(data.data);
-        // if (data && Array.isArray(data)) {
-        //   setUsers(data.data.map((user, index) => ({
-        //     ...user,
-        //     id: `USR${(index + 1).toString().padStart(3, "0")}`,
-        //     created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
-        //   })));
-        // }
       }catch (error) {
         console.error("Erreur lors de la recuperation des taches:", error);
       }

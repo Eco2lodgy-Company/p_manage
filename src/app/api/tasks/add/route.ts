@@ -17,19 +17,6 @@ export async function POST(request: Request) {
         const client = await connectionPool.connect();
 
         try {
-            // Vérifier que le projet existe
-            const projetExists = await client.query(
-                "SELECT id FROM projets WHERE id = $1",
-                [id_projet]
-            );
-
-            if (projetExists.rows.length === 0) {
-                return NextResponse.json(
-                    { error: "Le projet spécifié n'existe pas" },
-                    { status: 404 }
-                );
-            }
-
             const result = await client.query(
                 `INSERT INTO taches 
                 (titre, description, id_projet, start_date, end_date, precedence, asign_to)
