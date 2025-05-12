@@ -131,11 +131,11 @@ export default function Tasks() {
   const openEditModal = (task) => {
     setSelectedTask(task);
     setFormData({
-      title: task.titre,
+      titre: task.titre,
       description: task.description,
-      project: task.id_projet,
-      startDate: task.start_date,
-      endDate: task.end_date,
+      id_projet: task.id_projet,
+      start_date: task.start_date,
+      end_date: task.end_date,
       precedence: task.precedence,
       assignedTo: task.assignedTo,
     });
