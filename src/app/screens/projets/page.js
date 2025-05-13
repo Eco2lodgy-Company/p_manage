@@ -78,9 +78,9 @@ export default function Projects() {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects/add`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
         body: JSON.stringify(newProject),
       });
       console.log("Response:", response);
