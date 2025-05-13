@@ -37,8 +37,8 @@ export default function Tasks() {
     id_projet: "",
     start_date: "",
     end_date: "",
-    precedence: [],
-    assignedTo: "",
+    precedence: "1",
+    assignedTo: "0",
   });
 
   const fetchTasks = async () => {
