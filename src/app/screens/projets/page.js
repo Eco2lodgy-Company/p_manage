@@ -83,6 +83,7 @@ export default function Projects() {
         },
         body: JSON.stringify(newProject),
       });
+      console.log("Response:", response);
       if (!response.ok) {
         throw new Error("Erreur de réseau");
       }
