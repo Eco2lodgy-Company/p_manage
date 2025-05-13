@@ -84,12 +84,12 @@ export default function Tasks() {
         method: "POST",
         body: JSON.stringify(newTask),
       });
-      console.log("response",response);
       // console.log("response",response.);
       if (!response.ok) {
         throw new Error("erreur de réseau");
       }
-    
+      console.log("response",response);
+      
        const data = await response.json();
          setTasks(data.data);
          toast.success("Tache ajoutée avec succès !");
@@ -100,7 +100,6 @@ export default function Tasks() {
       toast.error("Erreur lors de l'ajout  de la tache:", error);
 
     }
-    setTasks([...tasks, newTask]);
     setFormData({
       titre: "",
       description: "",
@@ -114,22 +113,22 @@ export default function Tasks() {
   };
 
   const handleEditTask = async () => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === selectedTask.id
-          ? {
-              ...t,
-              titre: formData.titre,
-              description: formData.description,
-              id_projet: formData.id_projet,
-              start_date: formData.start_date,
-              end_date: formData.end_date,
-              precedence: formData.precedence,
-              assignedTo: formData.assignedTo,
-            }
-          : t
-      )
-    );
+    // setTasks(
+    //   tasks.map((t) =>
+    //     t.id === selectedTask.id
+    //       ? {
+    //           ...t,
+    //           titre: formData.titre,
+    //           description: formData.description,
+    //           id_projet: formData.id_projet,
+    //           start_date: formData.start_date,
+    //           end_date: formData.end_date,
+    //           precedence: formData.precedence,
+    //           assignedTo: formData.assignedTo,
+    //         }
+    //       : t
+    //   )
+    // );
      if (!formData.titre || !formData.description) {
           toast.error("Veuillez remplir les champs obligatoires : Titre, Description");
           return;
@@ -185,10 +184,10 @@ export default function Tasks() {
   };
 
   const handleDeleteTask = async () => {
-    setTasks(tasks.filter((t) => t.id !== selectedTask.id));
-    const taskToDelete = {
-          id: selectedTask.id,
-        };
+    // setTasks(tasks.filter((t) => t.id !== selectedTask.id));
+    // const taskToDelete = {
+    //       id: selectedTask.id,
+    //     };
     
         try {
           const response = await fetch(`http://alphatek.fr:3110/api/tasks/delete/?id=${taskToDelete.id}`, {
