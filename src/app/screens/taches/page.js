@@ -141,8 +141,32 @@ export default function Tasks() {
     setSelectedTask(null);
   };
 
-  const handleDeleteTask = () => {
+  const handleDeleteTask = async () => {
     setTasks(tasks.filter((t) => t.id !== selectedTask.id));
+    const taskToDelete = {
+          id: selectedTask.id,
+        };
+    
+        try {
+          const response = await fetch(`http://alphatek.fr:3110/api/tasks/delete/?id=${taskToDelete.id}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(taskToDelete),
+          });
+          if (!response.ok) {
+            throw new Error("Erreur de réseau");
+          }
+          const data = await response.json();
+          toast.success(data.message);
+          await fetchProjects(); // Refresh project list
+          setIsDeleteOpen(false);
+          setSelectedProject(null);
+        } catch (error) {
+          console.error("Erreur lors de la suppression du projet:", error);
+          toast.error("Erreur lors de la suppression du projet");
+        }
     setIsDeleteOpen(false);
     setSelectedTask(null);
   };
