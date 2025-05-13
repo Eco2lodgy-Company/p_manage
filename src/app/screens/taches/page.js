@@ -112,7 +112,7 @@ export default function Tasks() {
     setIsAddOpen(false);
   };
 
-  const handleEditTask = () => {
+  const handleEditTask = async () => {
     setTasks(
       tasks.map((t) =>
         t.id === selectedTask.id
@@ -129,11 +129,52 @@ export default function Tasks() {
           : t
       )
     );
+     if (!formData.titre || !formData.description) {
+          toast.error("Veuillez remplir les champs obligatoires : Titre, Description");
+          return;
+        }
+    
+        const taskToEdit = {
+          id: formData.id,
+          titre: formData.titre,
+          description: formData.description,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          assignedTo: formData.assignedTo,
+        };
+    
+        try {
+          const response = await fetch(`http://alphatek.fr:3110/api/tasks/edit`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(taskToEdit),
+          });
+          if (!response.ok) {
+            throw new Error("Erreur de réseau");
+          }
+          const data = await response.json();
+          toast.success(data.message);
+          await fetchTasks(); // Refresh project list
+          setIsEditOpen(false);
+          setFormData({
+            id: "",
+            titre: "",
+            description: "",
+            start_date: "",
+            end_date: "",
+            assignedTo: "",
+          });
+          setSelectedTask(null);
+        } catch (error) {
+          console.error("Erreur lors de la modification du projet:", error);
+          toast.error("Erreur lors de la modification du projet");
+        }
     setIsEditOpen(false);
     setFormData({
       titre: "",
       description: "",
-      id_projet: "",
       start_date: "",
       end_date: "",
       precedence: [""],
