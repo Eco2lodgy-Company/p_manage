@@ -62,7 +62,7 @@ export default function Projects() {
   }, []);
 
   const handleAddProject = async () => {
-    if (!formData.title || !formData.description || !formData.assign_to) {
+    if (!formData.title || !formData.description || !formData.start_date || !formData.end_date) {
       toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Responsable");
       return;
     }
