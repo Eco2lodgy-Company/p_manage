@@ -11,10 +11,10 @@ export async function POST(request: Request) {
         try {
             const result = await client.query(
                 `INSERT INTO taches 
-                (titre, description, id_projet, start_date, end_date, precedence, asign_to)
+                (titre, description, id_projet, start_date, end_date)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING *`,
-                [titre, description, id_projet, start_date, end_date, precedence, asign_to]
+                [titre, description, id_projet, start_date, end_date]
             );
 
             const newTache = result.rows[0];
