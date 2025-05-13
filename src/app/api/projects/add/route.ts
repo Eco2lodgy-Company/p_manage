@@ -21,7 +21,7 @@ export async function POST(request: Request) {
                 `INSERT INTO projets (title, description, start_date, end_date)
                  VALUES ($1, $2, $3, $4)
                  RETURNING *`,
-                [title, description, start_date, end_date, assign_to]
+                [title, description, start_date, end_date]
             );
 
             const newProject = result.rows[0];
