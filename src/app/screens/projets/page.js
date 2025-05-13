@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useStatem,useEffect,useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import {
@@ -22,8 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit,Share2, Eye } from "lucide-react";
-import { data } from "framer-motion/client";
+import { Trash2, Edit, Share2, Eye } from "lucide-react";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
@@ -42,75 +41,180 @@ export default function Projects() {
     assign_to: "",
   });
 
-   const fetchProjects = async () => {
-
-   try{
-        const response = await fetch(`http://alphatek.fr:3110/api/projects/`, {
-          method: "GET"
-        });
-        if (!response.ok) {
-          throw new Error("erreur de réseau");
-        }
-         const data = await response.json();
-           setProjects(data.data);
-           console.log(data.data);
-      }catch (error) {
-        console.error("Erreur lors de la recuperation des taches:", error);
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
       }
+      const data = await response.json();
+      setProjects(data.data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des projets:", error);
+      toast.error("Erreur lors de la récupération des projets");
     }
-    useEffect(() => {
-      fetchProjects();
-    }, []);
+  };
 
-  
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
-  const handleAddProject = () => {
+  const handleAddProject = async () => {
+    if (!formData.title || !formData.description || !formData.assign_to) {
+      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Responsable");
+      return;
+    }
+
     const newProject = {
-      id: `INV${(projects.length + 1).toString().padStart(3, "0")}`,
       title: formData.title,
       description: formData.description,
-      amount: parseFloat(formData.amount) || 0,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      assign_to: formData.assign_to,
     };
-    setProjects([...projects, newProject]);
-    setFormData({ id: "", title: "", description: "", amount: "" });
-    setIsAddOpen(false);
+
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newProject),
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      toast.success(data.message);
+      await fetchProjects(); // Refresh project list
+      setFormData({
+        id: "",
+        title: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        assign_to: "",
+      });
+      setIsAddOpen(false);
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du projet:", error);
+      toast.error("Erreur lors de l'ajout du projet");
+    }
   };
 
-  const handleEditProject = () => {
-    setProjects(
-      projects.map((p) =>
-        p.id === selectedProject.id
-          ? {
-              ...p,
-              title: formData.title,
-              description: formData.description,
-              amount: parseFloat(formData.amount) || p.amount,
-            }
-          : p
-      )
-    );
-    setIsEditOpen(false);
-    setFormData({ id: "", title: "", description: "", amount: "" });
-    setSelectedProject(null);
+  const handleEditProject = async () => {
+    if (!formData.title || !formData.description || !formData.assign_to) {
+      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Responsable");
+      return;
+    }
+
+    const projectToEdit = {
+      id: formData.id,
+      title: formData.title,
+      description: formData.description,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      assign_to: formData.assign_to,
+    };
+
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/edit`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(projectToEdit),
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      toast.success(data.message);
+      await fetchProjects(); // Refresh project list
+      setIsEditOpen(false);
+      setFormData({
+        id: "",
+        title: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        assign_to: "",
+      });
+      setSelectedProject(null);
+    } catch (error) {
+      console.error("Erreur lors de la modification du projet:", error);
+      toast.error("Erreur lors de la modification du projet");
+    }
   };
 
+  const handleShareProject = async () => {
+    if (!formData.assign_to) {
+      toast.error("Veuillez spécifier un email pour partager");
+      return;
+    }
 
-  const handleShareProject = () => {
-    setProjects(
-      projects.map((p) =>
-        p.id === selectedProject.id
-          
-      )
-    );
-    setIsShareOpen(false);
-    setFormData({ id: "" });
-    setSelectedProject(null);
+    const shareData = {
+      id: formData.id,
+      assign_to: formData.assign_to,
+    };
+
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/share`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(shareData),
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      toast.success(data.message);
+      await fetchProjects();
+      setIsShareOpen(false);
+      setFormData({
+        id: "",
+        title: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        assign_to: "",
+      });
+      setSelectedProject(null);
+    } catch (error) {
+      console.error("Erreur lors du partage du projet:", error);
+      toast.error("Erreur lors du partage du projet");
+    }
   };
 
-  const handleDeleteProject = () => {
-    setProjects(projects.filter((p) => p.id !== selectedProject.id));
-    setIsDeleteOpen(false);
-    setSelectedProject(null);
+  const handleDeleteProject = async () => {
+    const projectToDelete = {
+      id: selectedProject.id,
+    };
+
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(projectToDelete),
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      toast.success(data.message);
+      await fetchProjects(); // Refresh project list
+      setIsDeleteOpen(false);
+      setSelectedProject(null);
+    } catch (error) {
+      console.error("Erreur lors de la suppression du projet:", error);
+      toast.error("Erreur lors de la suppression du projet");
+    }
   };
 
   const openEditModal = (project) => {
@@ -119,7 +223,9 @@ export default function Projects() {
       id: project.id,
       title: project.title,
       description: project.description,
-      amount: project.amount.toString(),
+      start_date: project.start_date || "",
+      end_date: project.end_date || "",
+      assign_to: project.assign_to || "",
     });
     setIsEditOpen(true);
   };
@@ -130,7 +236,9 @@ export default function Projects() {
       id: project.id,
       title: project.title,
       description: project.description,
-      amount: project.amount.toString(),
+      start_date: project.start_date || "",
+      end_date: project.end_date || "",
+      assign_to: "",
     });
     setIsShareOpen(true);
   };
@@ -147,6 +255,7 @@ export default function Projects() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
+      <Toaster />
       <div className="flex flex-col items-center justify-start p-6 h-full">
         <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
           <h1 className="text-2xl font-bold">Projets</h1>
@@ -178,6 +287,7 @@ export default function Projects() {
                         setFormData({ ...formData, title: e.target.value })
                       }
                       className="col-span-3"
+                      required
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -191,20 +301,49 @@ export default function Projects() {
                         setFormData({ ...formData, description: e.target.value })
                       }
                       className="col-span-3"
+                      required
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="amount" className="text-right">
-                      Montant ($)
+                    <Label htmlFor="start_date" className="text-right">
+                      Date de début
                     </Label>
                     <Input
-                      id="amount"
-                      type="number"
-                      value={formData.amount}
+                      id="start_date"
+                      type="date"
+                      value={formData.start_date}
                       onChange={(e) =>
-                        setFormData({ ...formData, amount: e.target.value })
+                        setFormData({ ...formData, start_date: e.target.value })
                       }
                       className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="end_date" className="text-right">
+                      Date de fin
+                    </Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, end_date: e.target.value })
+                      }
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="assign_to" className="text-right">
+                      Responsable
+                    </Label>
+                    <Input
+                      id="assign_to"
+                      value={formData.assign_to}
+                      onChange={(e) =>
+                        setFormData({ ...formData, assign_to: e.target.value })
+                      }
+                      className="col-span-3"
+                      required
                     />
                   </div>
                 </div>
@@ -232,14 +371,14 @@ export default function Projects() {
                     <TableHead className="font-bold text-sky-700">
                       Description
                     </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
+                    <TableHead className="font-bold text-sky-700">
                       Responsable
                     </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Date de debut
+                    <TableHead className="font-bold text-sky-700">
+                      Date de début
                     </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Date de fin 
+                    <TableHead className="font-bold text-sky-700">
+                      Date de fin
                     </TableHead>
                     <TableHead className="text-right font-bold text-sky-700">
                       Actions
@@ -255,13 +394,9 @@ export default function Projects() {
                       <TableCell className="font-medium">{project.id}</TableCell>
                       <TableCell>{project.title}</TableCell>
                       <TableCell>{project.description}</TableCell>
-                      <TableCell>{project.responsable}</TableCell>
-                      <TableCell className="text-right">
-                        {project.date_debut}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {project.date_fin}
-                      </TableCell>
+                      <TableCell>{project.assign_to}</TableCell>
+                      <TableCell>{project.start_date}</TableCell>
+                      <TableCell>{project.end_date}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -317,34 +452,29 @@ export default function Projects() {
             </DialogHeader>
             {selectedProject && (
               <div className="grid gap-4 py-4">
-                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">ID</Label>
                   <span className="col-span-3">{selectedProject.id}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Titre</Label>
                   <span className="col-span-3">{selectedProject.title}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Description</Label>
                   <span className="col-span-3">{selectedProject.description}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Date de debut </Label>
-                  <span className="col-span-3">
-                    {selectedProject.amount.toFixed(2)}
-                  </span>
+                  <Label className="text-right font-bold">Responsable</Label>
+                  <span className="col-span-3">{selectedProject.assign_to}</span>
                 </div>
-
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right font-bold">Date de fin </Label>
-                  <span className="col-span-3">
-                    {selectedProject.amount.toFixed(2)}
-                  </span>
+                  <Label className="text-right font-bold">Date de début</Label>
+                  <span className="col-span-3">{selectedProject.start_date}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold">Date de fin</Label>
+                  <span className="col-span-3">{selectedProject.end_date}</span>
                 </div>
               </div>
             )}
@@ -380,6 +510,7 @@ export default function Projects() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   className="col-span-3"
+                  required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -393,20 +524,49 @@ export default function Projects() {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   className="col-span-3"
+                  required
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-amount" className="text-right">
-                  Montant ($)
+                <Label htmlFor="edit-start_date" className="text-right">
+                  Date de début
                 </Label>
                 <Input
-                  id="edit-amount"
-                  type="number"
-                  value={formData.amount}
+                  id="edit-start_date"
+                  type="date"
+                  value={formData.start_date}
                   onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
+                    setFormData({ ...formData, start_date: e.target.value })
                   }
                   className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-end_date" className="text-right">
+                  Date de fin
+                </Label>
+                <Input
+                  id="edit-end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, end_date: e.target.value })
+                  }
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-assign_to" className="text-right">
+                  Responsable
+                </Label>
+                <Input
+                  id="edit-assign_to"
+                  value={formData.assign_to}
+                  onChange={(e) =>
+                    setFormData({ ...formData, assign_to: e.target.value })
+                  }
+                  className="col-span-3"
+                  required
                 />
               </div>
             </div>
@@ -420,7 +580,8 @@ export default function Projects() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-                  {/* Share Project Modal */}
+
+        {/* Share Project Modal */}
         <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -431,27 +592,26 @@ export default function Projects() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-title" className="text-right">
+                <Label htmlFor="share-assign_to" className="text-right">
                   Email
                 </Label>
                 <Input
-                  id="edit-title"
-                  value={formData.title}
+                  id="share-assign_to"
+                  value={formData.assign_to}
                   onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
+                    setFormData({ ...formData, assign_to: e.target.value })
                   }
                   className="col-span-3"
+                  required
                 />
               </div>
-
-              
             </div>
             <DialogFooter>
               <Button
-                onClick={handleEditProject}
+                onClick={handleShareProject}
                 className="bg-sky-500 hover:bg-sky-600"
               >
-                Enregistrer
+                Partager
               </Button>
             </DialogFooter>
           </DialogContent>
