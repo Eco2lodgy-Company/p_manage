@@ -90,7 +90,7 @@ export default function Tasks() {
       }
     
        const data = await response.json();
-         setUsers(data.data);
+         setTasks(data.data);
          toast.success("Tache ajoutée avec succès !");
       
     }catch (error) {
