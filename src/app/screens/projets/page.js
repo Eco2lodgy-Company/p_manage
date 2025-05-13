@@ -197,7 +197,7 @@ export default function Projects() {
     };
 
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/delete`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/delete/${projectToDelete.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
