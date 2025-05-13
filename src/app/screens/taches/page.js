@@ -84,7 +84,7 @@ export default function Tasks() {
         method: "POST",
         body: JSON.stringify(newTask),
       });
-      console.log("response",response.message);
+      console.log("response",response);
       // console.log("response",response.);
       if (!response.ok) {
         throw new Error("erreur de réseau");
