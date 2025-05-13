@@ -26,26 +26,7 @@ import { Trash2, Edit,Share2, Eye } from "lucide-react";
 import { data } from "framer-motion/client";
 
 export default function Projects() {
-  const [projects, setProjects] = useState([
-    {
-      id: "INV001",
-      title: "Project Alpha",
-      description: "Building a residential complex",
-      amount: 250.0,
-      date_debut: "2023-01-01", 
-      responsable: "John Doe",
-      date_fin: "2023-06-01",
-    },
-    {
-      id: "INV002",
-      title: "Project Beta",
-      description: "Commercial office renovation",
-      amount: 500.0,
-      responsable: "John Doe",
-      date_debut: "2023-01-01", 
-      date_fin: "2023-06-01",
-    },
-  ]);
+  const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -56,7 +37,9 @@ export default function Projects() {
     id: "",
     title: "",
     description: "",
-    amount: "",
+    start_date: "",
+    end_date: "",
+    assign_to: "",
   });
 
    const fetchProjects = async () => {
