@@ -92,6 +92,7 @@ export default function Tasks() {
        const data = await response.json();
          setTasks(data.data);
          toast.success("Tache ajoutée avec succès !");
+         await fetchTasks(); // Refresh project list
       
     }catch (error) {
       console.error("Erreur lors de l'ajout  de la tache:", error);
@@ -160,12 +161,12 @@ export default function Tasks() {
           }
           const data = await response.json();
           toast.success(data.message);
-          await fetchProjects(); // Refresh project list
+          await fetchTasks(); // Refresh project list
           setIsDeleteOpen(false);
-          setSelectedProject(null);
+          setSelectedTask(null);
         } catch (error) {
-          console.error("Erreur lors de la suppression du projet:", error);
-          toast.error("Erreur lors de la suppression du projet");
+          console.error("Erreur lors de la suppression de la tache:", error);
+          toast.error("Erreur lors de la suppression de la tache");
         }
     setIsDeleteOpen(false);
     setSelectedTask(null);
