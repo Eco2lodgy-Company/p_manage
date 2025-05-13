@@ -77,6 +77,7 @@ export default function Tasks() {
       precedence: formData.precedence,
       assignedTo: formData.assignedTo,
     };
+    console.log("newTask",newTask);
 
     try{
       const response = await fetch(`http://alphatek.fr:3110/api/tasks/add`, {
