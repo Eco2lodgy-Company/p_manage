@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function PATCH(request: Request) {
     try {
         const body = await request.json();
-        const { id, titre, description, id_projet, start_date, end_date, precedence, asign_to } = body;
+        const { id, titre, description, id_projet, start_date, echeance, precedence, asign_to } = body;
 
         if (!id) {
             return NextResponse.json(
@@ -71,9 +71,9 @@ export async function PATCH(request: Request) {
                 paramIndex++;
             }
 
-            if (end_date !== undefined) {
-                updates.push(`end_date = $${paramIndex}`);
-                values.push(end_date);
+            if (echeance !== undefined) {
+                updates.push(`echeance = $${paramIndex}`);
+                values.push(echeance);
                 paramIndex++;
             }
 
