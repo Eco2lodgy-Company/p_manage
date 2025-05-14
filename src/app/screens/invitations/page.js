@@ -402,19 +402,19 @@ export default function Users() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users && users.length > 0 ? (
-                users.map((user) => (
+                {invites && invites.length > 0 ? (
+                invites.map((user) => (
                   <TableRow
                     key={user.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="font-medium">{user.id}</TableCell>
-                    <TableCell>{user.nom}</TableCell>
-                    <TableCell>{user.prenom}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.token}</TableCell>
                     <TableCell>{user.telephone}</TableCell>
-                    <TableCell>{user.mail}</TableCell>
+                    {/* <TableCell>{user.mail}</TableCell>
                     <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.created_at}</TableCell>
+                    <TableCell>{user.created_at}</TableCell> */}
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
