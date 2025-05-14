@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { titre, description, id_projet, start_date, end_date, precedence, asign_to } = body;
+        const { titre, description, id_projet, start_date, echeance,end_date, precedence, asign_to } = body;
 
         const client = await connectionPool.connect();
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
                 (titre, description, start_date, echeance)
                 VALUES ($1, $2, $3, $4)
                 RETURNING *`,
-                [titre, description, id_projet, start_date, end_date]
+                [titre, description, start_date,echeance ]
             );
 
             const newTache = result.rows[0];
