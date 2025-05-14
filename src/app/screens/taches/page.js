@@ -36,7 +36,7 @@ export default function Tasks() {
     description: "",
     id_projet: "",
     start_date: "",
-    end_date: "",
+    echeance: "",
     precedence: "1",
     asign_to: "0",
   });
@@ -72,7 +72,7 @@ export default function Tasks() {
       description: formData.description,
       id_projet: formData.id_projet,
       start_date: formData.start_date,
-      end_date: formData.end_date,
+      echeance: formData.echeance,
     };
     console.log("newTask",newTask);
 
@@ -102,7 +102,7 @@ export default function Tasks() {
       description: "",
       id_projet: "",
       start_date: "",
-      end_date: "",
+      echeance: "",
       precedence: [],
       asign_to: "",
     });
@@ -120,7 +120,7 @@ export default function Tasks() {
           titre: formData.titre,
           description: formData.description,
           start_date: formData.start_date,
-          end_date: formData.end_date,
+          echeance: formData.echeance,
           asign_to: formData.asign_to,
         };
     
@@ -144,7 +144,7 @@ export default function Tasks() {
             titre: "",
             description: "",
             start_date: "",
-            end_date: "",
+            echeance: "",
             asign_to: "",
           });
           setSelectedTask(null);
@@ -157,7 +157,7 @@ export default function Tasks() {
       titre: "",
       description: "",
       start_date: "",
-      end_date: "",
+      echeance: "",
       precedence: [""],
       asign_to: "",
     });
@@ -201,7 +201,7 @@ export default function Tasks() {
       description: task.description,
       id_projet: task.id_projet,
       start_date: task.start_date,
-      end_date: task.end_date,
+      echeance: task.echeance,
       precedence: task.precedence,
       asign_to: task.asign_to,
     });
@@ -254,6 +254,7 @@ export default function Tasks() {
                       setFormData({ ...formData, titre: e.target.value })
                     }
                     className="col-span-3"
+                    required
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -267,6 +268,7 @@ export default function Tasks() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                     className="col-span-3"
+                    required
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -298,14 +300,14 @@ export default function Tasks() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="endDate" className="text-right">
-                    Date de fin
+                    Echeance
                   </Label>
                   <Input
                     id="endDate"
-                    type="date"
-                    value={formData.end_date}
+                    type="number"
+                    value={formData.echeance}
                     onChange={(e) =>
-                      setFormData({ ...formData, end_date: e.target.value })
+                      setFormData({ ...formData, echeance: e.target.value })
                     }
                     className="col-span-3"
                   />
@@ -393,7 +395,7 @@ export default function Tasks() {
                     <TableCell>{task.description}</TableCell>
                     <TableCell>{task.id_projet}</TableCell>
                     <TableCell>{task.start_date}</TableCell>
-                    <TableCell>{task.end_date}</TableCell>
+                    <TableCell>{task.echeance}</TableCell>
                     <TableCell>{task.precedence}</TableCell>
                     <TableCell>{task.asign_to}</TableCell>
                     <TableCell className="text-right">
@@ -465,7 +467,7 @@ export default function Tasks() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Date de fin</Label>
-                <span className="col-span-3">{selectedTask.end_date}</span>
+                <span className="col-span-3">{selectedTask.echeance}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Précédence</Label>
@@ -558,9 +560,9 @@ export default function Tasks() {
               <Input
                 id="edit-endDate"
                 type="date"
-                value={formData.end_date}
+                value={formData.echeance}
                 onChange={(e) =>
-                  setFormData({ ...formData, end_date: e.target.value })
+                  setFormData({ ...formData, echeance: e.target.value })
                 }
                 className="col-span-3"
               />
