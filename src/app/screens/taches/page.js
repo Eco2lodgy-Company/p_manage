@@ -127,9 +127,6 @@ export default function Tasks() {
         try {
           const response = await fetch(`http://alphatek.fr:3110/api/tasks/edit`, {
             method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
             body: JSON.stringify(taskToEdit),
           });
           if (!response.ok) {
@@ -555,11 +552,11 @@ export default function Tasks() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-endDate" className="text-right">
-                Date de fin
+                Echeance
               </Label>
               <Input
                 id="edit-endDate"
-                type="date"
+                type="number"
                 value={formData.echeance}
                 onChange={(e) =>
                   setFormData({ ...formData, echeance: e.target.value })
