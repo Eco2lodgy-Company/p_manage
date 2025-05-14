@@ -38,7 +38,7 @@ export default function Tasks() {
     start_date: "",
     end_date: "",
     precedence: "1",
-    assignedTo: "0",
+    asign_to: "0",
   });
 
   const fetchTasks = async () => {
@@ -75,7 +75,7 @@ export default function Tasks() {
       start_date: formData.start_date,
       end_date: formData.end_date,
       precedence: formData.precedence,
-      assignedTo: formData.assignedTo,
+      asign_to: formData.asign_to,
     };
     console.log("newTask",newTask);
 
@@ -107,7 +107,7 @@ export default function Tasks() {
       start_date: "",
       end_date: "",
       precedence: [],
-      assignedTo: "",
+      asign_to: "",
     });
     setIsAddOpen(false);
   };
@@ -124,7 +124,7 @@ export default function Tasks() {
     //           start_date: formData.start_date,
     //           end_date: formData.end_date,
     //           precedence: formData.precedence,
-    //           assignedTo: formData.assignedTo,
+    //           asign_to: formData.asign_to,
     //         }
     //       : t
     //   )
@@ -140,7 +140,7 @@ export default function Tasks() {
           description: formData.description,
           start_date: formData.start_date,
           end_date: formData.end_date,
-          assignedTo: formData.assignedTo,
+          asign_to: formData.asign_to,
         };
     
         try {
@@ -164,7 +164,7 @@ export default function Tasks() {
             description: "",
             start_date: "",
             end_date: "",
-            assignedTo: "",
+            asign_to: "",
           });
           setSelectedTask(null);
         } catch (error) {
@@ -178,7 +178,7 @@ export default function Tasks() {
       start_date: "",
       end_date: "",
       precedence: [""],
-      assignedTo: "",
+      asign_to: "",
     });
     setSelectedTask(null);
   };
@@ -222,7 +222,7 @@ export default function Tasks() {
       start_date: task.start_date,
       end_date: task.end_date,
       precedence: task.precedence,
-      assignedTo: task.assignedTo,
+      asign_to: task.asign_to,
     });
     setIsEditOpen(true);
   };
@@ -343,14 +343,14 @@ export default function Tasks() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="assignedTo" className="text-right">
+                  <Label htmlFor="asign_to" className="text-right">
                     Assignée à
                   </Label>
                   <Input
-                    id="assignedTo"
-                    value={formData.assignedTo}
+                    id="asign_to"
+                    value={formData.asign_to}
                     onChange={(e) =>
-                      setFormData({ ...formData, assignedTo: e.target.value })
+                      setFormData({ ...formData, asign_to: e.target.value })
                     }
                     className="col-span-3"
                   />
@@ -414,7 +414,7 @@ export default function Tasks() {
                     <TableCell>{task.start_date}</TableCell>
                     <TableCell>{task.end_date}</TableCell>
                     <TableCell>{task.precedence}</TableCell>
-                    <TableCell>{task.assignedTo}</TableCell>
+                    <TableCell>{task.asign_to}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -492,7 +492,7 @@ export default function Tasks() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Assignée à</Label>
-                <span className="col-span-3">{selectedTask.assignedTo}</span>
+                <span className="col-span-3">{selectedTask.asign_to}</span>
               </div>
             </div>
           )}
@@ -598,14 +598,14 @@ export default function Tasks() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-assignedTo" className="text-right">
+              <Label htmlFor="edit-asign_to" className="text-right">
                 Assignée à
               </Label>
               <Input
-                id="edit-assignedTo"
-                value={formData.assignedTo}
+                id="edit-asign_to"
+                value={formData.asign_to}
                 onChange={(e) =>
-                  setFormData({ ...formData, assignedTo: e.target.value })
+                  setFormData({ ...formData, asign_to: e.target.value })
                 }
                 className="col-span-3"
               />
