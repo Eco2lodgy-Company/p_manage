@@ -52,7 +52,6 @@ export default function Tasks() {
         }
          const data = await response.json();
            setTasks(data.data);
-           console.log(data.data);
       }catch (error) {
         console.error("Erreur lors de la recuperation des taches:", error);
       }
@@ -113,22 +112,6 @@ export default function Tasks() {
   };
 
   const handleEditTask = async () => {
-    // setTasks(
-    //   tasks.map((t) =>
-    //     t.id === selectedTask.id
-    //       ? {
-    //           ...t,
-    //           titre: formData.titre,
-    //           description: formData.description,
-    //           id_projet: formData.id_projet,
-    //           start_date: formData.start_date,
-    //           end_date: formData.end_date,
-    //           precedence: formData.precedence,
-    //           asign_to: formData.asign_to,
-    //         }
-    //       : t
-    //   )
-    // );
      if (!formData.titre || !formData.description) {
           toast.error("Veuillez remplir les champs obligatoires : Titre, Description");
           return;
