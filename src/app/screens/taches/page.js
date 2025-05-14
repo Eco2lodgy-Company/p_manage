@@ -194,6 +194,7 @@ export default function Tasks() {
   const openEditModal = (task) => {
     setSelectedTask(task);
     setFormData({
+      id: task.id,
       titre: task.titre,
       description: task.description,
       id_projet: task.id_projet,
