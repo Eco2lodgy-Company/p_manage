@@ -123,7 +123,7 @@ export default function Tasks() {
           echeance: formData.echeance,
           asign_to: formData.asign_to,
         };
-    
+    console.log("taskToEdit",taskToEdit);
         try {
           const response = await fetch(`http://alphatek.fr:3110/api/tasks/edit`, {
             method: "PATCH",
