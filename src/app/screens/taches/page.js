@@ -73,8 +73,6 @@ export default function Tasks() {
       id_projet: formData.id_projet,
       start_date: formData.start_date,
       end_date: formData.end_date,
-      precedence: formData.precedence,
-      asign_to: formData.asign_to,
     };
     console.log("newTask",newTask);
 
