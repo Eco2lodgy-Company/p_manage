@@ -168,9 +168,9 @@ export default function Tasks() {
 
   const handleDeleteTask = async () => {
     // setTasks(tasks.filter((t) => t.id !== selectedTask.id));
-    // const taskToDelete = {
-    //       id: selectedTask.id,
-    //     };
+    const taskToDelete = {
+          id: selectedTask.id,
+        };
     
         try {
           const response = await fetch(`http://alphatek.fr:3110/api/tasks/delete/?id=${taskToDelete.id}`, {
