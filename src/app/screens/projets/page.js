@@ -158,8 +158,8 @@ export default function Projects() {
     };
 
     const secretKey = generateRandomKey();
-    const token = btoa(secretKey);
-    console.log("Token:", token);
+    // const token = btoa(secretKey);
+    console.log("Token:", secretKey);
 
     const shareData = {
       email: formData.email,
