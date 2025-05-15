@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import crypto from "crypto";
+import crypto from 'crypto';
 import { toast } from "sonner";
 import {
   Table,
@@ -33,7 +33,6 @@ export default function Projects() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
@@ -41,7 +40,6 @@ export default function Projects() {
     start_date: "",
     end_date: "",
     assign_to: "",
-    email: "",
   });
 
   const fetchProjects = async () => {
@@ -66,7 +64,7 @@ export default function Projects() {
 
   const handleAddProject = async () => {
     if (!formData.title || !formData.description || !formData.start_date || !formData.end_date) {
-      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Dates");
+      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Responsable");
       return;
     }
 
@@ -81,19 +79,18 @@ export default function Projects() {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects/add`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
         body: JSON.stringify(newProject),
       });
-
+      console.log("Response:", response);
       if (!response.ok) {
         throw new Error("Erreur de réseau");
       }
-
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(); // Refresh project list
       setFormData({
         id: "",
         title: "",
@@ -101,7 +98,6 @@ export default function Projects() {
         start_date: "",
         end_date: "",
         assign_to: "",
-        email: "",
       });
       setIsAddOpen(false);
     } catch (error) {
@@ -138,7 +134,7 @@ export default function Projects() {
       }
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(); // Refresh project list
       setIsEditOpen(false);
       setFormData({
         id: "",
@@ -147,7 +143,6 @@ export default function Projects() {
         start_date: "",
         end_date: "",
         assign_to: "",
-        email: "",
       });
       setSelectedProject(null);
     } catch (error) {
@@ -157,25 +152,20 @@ export default function Projects() {
   };
 
   const handleShareProject = async () => {
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Veuillez entrer une adresse e-mail valide");
-      return;
-    }
-
+    
     const generateRandomKey = (length = 32) => {
-      return crypto.randomBytes(length).toString("base64url");
+      return crypto.randomBytes(length).toString('base64url'); // Base64URL-encoded
     };
 
-    const token = generateRandomKey();
-    console.log("Generated Token:", token);
+    const secretKey = generateRandomKey();
+    // const token = btoa(secretKey);
+    console.log("Token:", secretKey);
 
     const shareData = {
       email: formData.email,
-      token,
-      project_id: selectedProject?.id,
+      token: formData.assign_to,
     };
 
-    setIsSharing(true);
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
         method: "POST",
@@ -184,22 +174,25 @@ export default function Projects() {
         },
         body: JSON.stringify(shareData),
       });
-
       if (!response.ok) {
         throw new Error("Erreur de réseau");
       }
-
       const data = await response.json();
       toast.success(data.message);
       await fetchProjects();
       setIsShareOpen(false);
-      setFormData((prev) => ({ ...prev, email: "" }));
+      setFormData({
+        id: "",
+        title: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        assign_to: "",
+      });
       setSelectedProject(null);
     } catch (error) {
       console.error("Erreur lors du partage du projet:", error);
       toast.error("Erreur lors du partage du projet");
-    } finally {
-      setIsSharing(false);
     }
   };
 
@@ -221,7 +214,7 @@ export default function Projects() {
       }
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(); // Refresh project list
       setIsDeleteOpen(false);
       setSelectedProject(null);
     } catch (error) {
@@ -239,7 +232,6 @@ export default function Projects() {
       start_date: project.start_date || "",
       end_date: project.end_date || "",
       assign_to: project.assign_to || "",
-      email: "",
     });
     setIsEditOpen(true);
   };
@@ -248,12 +240,11 @@ export default function Projects() {
     setSelectedProject(project);
     setFormData({
       id: project.id,
-      title: "",
-      description: "",
-      start_date: "",
-      end_date: "",
+      title: project.title,
+      description: project.description,
+      start_date: project.start_date || "",
+      end_date: project.end_date || "",
       assign_to: "",
-      email: "",
     });
     setIsShareOpen(true);
   };
@@ -414,14 +405,14 @@ export default function Projects() {
                       <TableCell>{project.end_date}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-<Button
-  variant="outline"
-  size="icon"
-  onClick={() => openViewModal(project)}
-  className="text-sky-500 hover:text-sky-700"
->
-  <Eye className="h-4 w-4" />
-</Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openViewModal(project)}
+                            className="text-sky-500 hover:text-sky-700"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="icon"
@@ -480,9 +471,8 @@ export default function Projects() {
                   <span className="col-span-3">{selectedProject.description}</span>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="fn
-                  t-bold">Responsable</Label>
-                  <span className="col-span-unittest3">{selectedProject.assign_to}</span>
+                  <Label className="text-right font-bold">Responsable</Label>
+                  <span className="col-span-3">{selectedProject.assign_to}</span>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Date de début</Label>
@@ -608,12 +598,11 @@ export default function Projects() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="share-email" className="text-right">
+                <Label htmlFor="share-assign_to" className="text-right">
                   Email
                 </Label>
                 <Input
-                  id="share-email"
-                  type="email"
+                  id="share-assign_to"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
@@ -627,9 +616,8 @@ export default function Projects() {
               <Button
                 onClick={handleShareProject}
                 className="bg-sky-500 hover:bg-sky-600"
-                disabled={isSharing}
               >
-                {isSharing ? "Envoi..." : "Partager"}
+                Partager
               </Button>
             </DialogFooter>
           </DialogContent>

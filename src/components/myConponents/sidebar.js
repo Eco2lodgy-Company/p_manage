@@ -50,6 +50,7 @@ const Sidebar = () => {
     { icon: Folder, label: "Projets", href: "/screens/projets" },
     { icon: CheckSquare, label: "Tâches", href: "/screens/taches" },
     { icon: UsersRound, label: "Utilisateurs", href: "/screens/users" },
+    { icon: UsersRound, label: "Invités", href: "/screens/invitations" },
     { icon: User, label: "Profil", href: "/screens/profile" },
   ];
 
