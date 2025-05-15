@@ -41,7 +41,7 @@ export async function POST(request: Request) {
             const insertQuery = `
                 INSERT INTO invitations(email, token)
                 VALUES($1, $2)
-                RETURNING id, nom, prenom, mail, role;
+                RETURNING email, token;
             `;
             
             const values = [email, token];
