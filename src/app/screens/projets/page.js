@@ -155,14 +155,21 @@ export default function Projects() {
       toast.error("Veuillez spécifier un email pour partager");
       return;
     }
+    const generateRandomKey = (length = 32) => {
+      return crypto.randomBytes(length).toString('base64url'); // Base64URL-encoded
+    };
+
+    const secretKey = generateRandomKey();
+    const token = btoa(secretKey);
+    console.log("Token:", token);
 
     const shareData = {
-      id: formData.id,
-      assign_to: formData.assign_to,
+      email: formData.email,
+      token: formData.assign_to,
     };
 
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/share`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -598,9 +605,9 @@ export default function Projects() {
                 </Label>
                 <Input
                   id="share-assign_to"
-                  value={formData.assign_to}
+                  value={formData.email}
                   onChange={(e) =>
-                    setFormData({ ...formData, assign_to: e.target.value })
+                    setFormData({ ...formData, email: e.target.value })
                   }
                   className="col-span-3"
                   required
