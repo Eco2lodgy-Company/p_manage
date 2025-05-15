@@ -151,29 +151,46 @@ export default function Projects() {
     }
   };
 
-  const handleShareProject = async () => {
-    
-          function generateKeyWithTimestamp(length = 32) {
-          const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          let key = '';
-          for (let i = 0; i < length; i++) {
-              const randomIndex = Math.floor(Math.random() * characters.length);
-              key += characters[randomIndex];
-          }
+ const handleShareProject = async () => {
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Veuillez entrer une adresse e-mail valide");
+      return;
+    }
 
-          const timestamp = Date.now(); // Récupère le timestamp en millisecondes
-          return key + timestamp.toString(); // Combine la clé aléatoire avec le timestamp
+    function generateKeyWithTimestamp(length = 32) {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let key = '';
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        key += characters[randomIndex];
       }
+      const timestamp = Date.now();
+      return key + timestamp.toString();
+    }
 
-        const uniqueKey = generateKeyWithTimestamp();
-        console.log(uniqueKey);
-
+    const uniqueKey = generateKeyWithTimestamp();
+    console.log("Generated Token:", uniqueKey);
 
     const shareData = {
       email: formData.email,
       token: uniqueKey,
+      project_id: selectedProject?.id,
     };
     console.log("Share Data:", shareData);
+    const msg = {
+      to: email,
+      from: 'asaleydiori@gmail.com',
+      subject: 'Invitation à un projet',
+      text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${token}`,
+    };
+    try {
+      await sgMail.send(msg);
+      res.status(200).json({ message: 'Invitation enregistrée et email envoyé' });
+    } catch (emailError) {
+      console.warn('Erreur lors de l\'envoi de l\'email:', emailError);
+      res.status(200).json({ message: 'Invitation enregistrée (email non envoyé)' });
+    }
+  
 
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
@@ -183,27 +200,26 @@ export default function Projects() {
         },
         body: JSON.stringify(shareData),
       });
+
       if (!response.ok) {
         throw new Error("Erreur de réseau");
       }
+
       const data = await response.json();
-      toast.success(data.message);
+      toast.success(emailSent ? data.message : `${data.message} (Email non envoyé)`);
       await fetchProjects();
       setIsShareOpen(false);
-      setFormData({
-        id: "",
-        title: "",
-        description: "",
-        start_date: "",
-        end_date: "",
-        assign_to: "",
-      });
+      setFormData((prev) => ({ ...prev, email: "" }));
       setSelectedProject(null);
     } catch (error) {
       console.error("Erreur lors du partage du projet:", error);
       toast.error("Erreur lors du partage du projet");
+    } finally {
+      setIsSharing(false);
     }
   };
+
+
 
   const handleDeleteProject = async () => {
     const projectToDelete = {
