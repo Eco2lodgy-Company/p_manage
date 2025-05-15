@@ -173,6 +173,7 @@ export default function Projects() {
       email: formData.email,
       token: formData.assign_to,
     };
+    console.log("Share Data:", shareData);
 
     // try {
     //   const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
