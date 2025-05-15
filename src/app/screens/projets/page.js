@@ -181,7 +181,7 @@ export default function Projects() {
       to: formData.email,
       from: 'asaleydiori@gmail.com',
       subject: 'Invitation à un projet',
-      text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${token}`,
+      text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${uniqueKey}`,
     };
     try {
       await sgMail.send(msg);
