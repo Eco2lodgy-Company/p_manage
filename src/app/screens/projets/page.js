@@ -171,38 +171,38 @@ export default function Projects() {
 
     const shareData = {
       email: formData.email,
-      token: formData.assign_to,
+      token: uniqueKey,
     };
     console.log("Share Data:", shareData);
 
-    // try {
-    //   const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(shareData),
-    //   });
-    //   if (!response.ok) {
-    //     throw new Error("Erreur de réseau");
-    //   }
-    //   const data = await response.json();
-    //   toast.success(data.message);
-    //   await fetchProjects();
-    //   setIsShareOpen(false);
-    //   setFormData({
-    //     id: "",
-    //     title: "",
-    //     description: "",
-    //     start_date: "",
-    //     end_date: "",
-    //     assign_to: "",
-    //   });
-    //   setSelectedProject(null);
-    // } catch (error) {
-    //   console.error("Erreur lors du partage du projet:", error);
-    //   toast.error("Erreur lors du partage du projet");
-    // }
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(shareData),
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      toast.success(data.message);
+      await fetchProjects();
+      setIsShareOpen(false);
+      setFormData({
+        id: "",
+        title: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        assign_to: "",
+      });
+      setSelectedProject(null);
+    } catch (error) {
+      console.error("Erreur lors du partage du projet:", error);
+      toast.error("Erreur lors du partage du projet");
+    }
   };
 
   const handleDeleteProject = async () => {
