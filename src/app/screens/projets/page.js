@@ -153,14 +153,21 @@ export default function Projects() {
 
   const handleShareProject = async () => {
     
-    const generateRandomKey = (length = 32) => {
-      return crypto.randomBytes(length).toString('base64url'); // Base64URL-encoded
-    };
+          function generateKeyWithTimestamp(length = 32) {
+          const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          let key = '';
+          for (let i = 0; i < length; i++) {
+              const randomIndex = Math.floor(Math.random() * characters.length);
+              key += characters[randomIndex];
+          }
 
-    const secretKey = generateRandomKey();
-    // const token = btoa(secretKey);
-    console.log("Token:", secretKey);
-    toast.success("Token généré avec succès",secretKey);
+          const timestamp = Date.now(); // Récupère le timestamp en millisecondes
+          return key + timestamp.toString(); // Combine la clé aléatoire avec le timestamp
+      }
+
+        const uniqueKey = generateKeyWithTimestamp();
+        console.log(uniqueKey);
+
 
     const shareData = {
       email: formData.email,
