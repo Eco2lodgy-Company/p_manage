@@ -151,10 +151,7 @@ export default function Projects() {
   };
 
   const handleShareProject = async () => {
-    if (!formData.assign_to) {
-      toast.error("Veuillez spécifier un email pour partager");
-      return;
-    }
+    
     const generateRandomKey = (length = 32) => {
       return crypto.randomBytes(length).toString('base64url'); // Base64URL-encoded
     };
