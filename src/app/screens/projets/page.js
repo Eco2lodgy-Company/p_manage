@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import crypto from 'crypto';
+import crypto from "crypto";
 import { toast } from "sonner";
 import {
   Table,
@@ -33,6 +33,7 @@ export default function Projects() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
@@ -40,6 +41,7 @@ export default function Projects() {
     start_date: "",
     end_date: "",
     assign_to: "",
+    email: "",
   });
 
   const fetchProjects = async () => {
@@ -64,7 +66,7 @@ export default function Projects() {
 
   const handleAddProject = async () => {
     if (!formData.title || !formData.description || !formData.start_date || !formData.end_date) {
-      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Responsable");
+      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Dates");
       return;
     }
 
@@ -79,18 +81,17 @@ export default function Projects() {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects/add`, {
         method: "POST",
-        // headers: {
-        //   "Content-Type": "application/json",
-        // },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(newProject),
       });
-      console.log("Response:", response);
       if (!response.ok) {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects(); // Refresh project list
+      await fetchProjects();
       setFormData({
         id: "",
         title: "",
@@ -98,6 +99,7 @@ export default function Projects() {
         start_date: "",
         end_date: "",
         assign_to: "",
+        email: "",
       });
       setIsAddOpen(false);
     } catch (error) {
@@ -134,7 +136,7 @@ export default function Projects() {
       }
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects(); // Refresh project list
+      await fetchProjects();
       setIsEditOpen(false);
       setFormData({
         id: "",
@@ -143,6 +145,7 @@ export default function Projects() {
         start_date: "",
         end_date: "",
         assign_to: "",
+        email: "",
       });
       setSelectedProject(null);
     } catch (error) {
@@ -151,22 +154,17 @@ export default function Projects() {
     }
   };
 
- const handleShareProject = async () => {
+  const handleShareProject = async () => {
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       toast.error("Veuillez entrer une adresse e-mail valide");
       return;
     }
 
-    function generateKeyWithTimestamp(length = 32) {
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let key = '';
-      for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        key += characters[randomIndex];
-      }
+    const generateKeyWithTimestamp = (length = 32) => {
+      const key = crypto.randomBytes(length).toString('base64url');
       const timestamp = Date.now();
       return key + timestamp.toString();
-    }
+    };
 
     const uniqueKey = generateKeyWithTimestamp();
     console.log("Generated Token:", uniqueKey);
@@ -177,49 +175,59 @@ export default function Projects() {
       project_id: selectedProject?.id,
     };
     console.log("Share Data:", shareData);
-    const msg = {
-      to: formData.email,
-      from: 'asaleydiori@gmail.com',
-      subject: 'Invitation à un projet',
-      text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${uniqueKey}`,
-    };
+
+    setIsSharing(true);
+    let emailSent = false;
+
     try {
-      await sgMail.send(msg);
-      res.status(200).json({ message: 'Invitation enregistrée et email envoyé' });
-    } catch (emailError) {
-      console.warn('Erreur lors de l\'envoi de l\'email:', emailError);
-      res.status(200).json({ message: 'Invitation enregistrée (email non envoyé)' });
+      const emailResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: formData.email,
+          subject: `Invitation au projet ${selectedProject?.title}`,
+          body: `Vous avez été invité à rejoindre le projet "${selectedProject?.title}". Utilisez ce lien pour accepter : http://alphatek.fr/invite?token=${uniqueKey}`,
+        }),
+      });
+
+      if (emailResponse.ok) {
+        emailSent = true;
+        console.log("Email sent successfully");
+      } else {
+        console.warn("Email sending failed, proceeding with insertion");
+      }
+    } catch (error) {
+      console.warn("Erreur lors de l'envoi de l'email:", error);
     }
-  
 
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(shareData),
       });
 
       if (!response.ok) {
-        throw new Error("Erreur de réseau");
+        throw new Error('Erreur de réseau');
       }
 
       const data = await response.json();
       toast.success(emailSent ? data.message : `${data.message} (Email non envoyé)`);
       await fetchProjects();
       setIsShareOpen(false);
-      setFormData((prev) => ({ ...prev, email: "" }));
+      setFormData((prev) => ({ ...prev, email: '' }));
       setSelectedProject(null);
     } catch (error) {
-      console.error("Erreur lors du partage du projet:", error);
-      toast.error("Erreur lors du partage du projet");
+      console.error('Erreur lors du partage du projet:', error);
+      toast.error('Erreur lors du partage du projet');
     } finally {
       setIsSharing(false);
     }
   };
-
-
 
   const handleDeleteProject = async () => {
     const projectToDelete = {
@@ -239,7 +247,7 @@ export default function Projects() {
       }
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects(); // Refresh project list
+      await fetchProjects();
       setIsDeleteOpen(false);
       setSelectedProject(null);
     } catch (error) {
@@ -257,6 +265,7 @@ export default function Projects() {
       start_date: project.start_date || "",
       end_date: project.end_date || "",
       assign_to: project.assign_to || "",
+      email: "",
     });
     setIsEditOpen(true);
   };
@@ -265,11 +274,12 @@ export default function Projects() {
     setSelectedProject(project);
     setFormData({
       id: project.id,
-      title: project.title,
-      description: project.description,
-      start_date: project.start_date || "",
-      end_date: project.end_date || "",
+      title: "",
+      description: "",
+      start_date: "",
+      end_date: "",
       assign_to: "",
+      email: "",
     });
     setIsShareOpen(true);
   };
@@ -495,7 +505,7 @@ export default function Projects() {
                   <Label className="text-right font-bold">Description</Label>
                   <span className="col-span-3">{selectedProject.description}</span>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
+                <div className="grid grid-cols-4 items-center gap-4  items-center gap-4">
                   <Label className="text-right font-bold">Responsable</Label>
                   <span className="col-span-3">{selectedProject.assign_to}</span>
                 </div>
@@ -623,11 +633,12 @@ export default function Projects() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="share-assign_to" className="text-right">
+                <Label htmlFor="share-email" className="text-right">
                   Email
                 </Label>
                 <Input
-                  id="share-assign_to"
+                  id="share-email"
+                  type="email"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
@@ -641,8 +652,9 @@ export default function Projects() {
               <Button
                 onClick={handleShareProject}
                 className="bg-sky-500 hover:bg-sky-600"
+                disabled={isSharing}
               >
-                Partager
+                {isSharing ? "Envoi..." : "Partager"}
               </Button>
             </DialogFooter>
           </DialogContent>
