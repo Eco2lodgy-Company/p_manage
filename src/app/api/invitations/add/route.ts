@@ -3,30 +3,37 @@ import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 import type { NextRequest } from "next/server";
+import nodemailer from 'nodemailer';
+import { toast } from "sonner";
 
 export async function POST(request: NextRequest) {
   try {
-    // Step 1: Log environment variables
-    console.log("DEBUG: SENDGRID_API_KEY exists:", !!process.env.SENDGRID_API_KEY);
-    console.log("DEBUG: SENDGRID_VERIFIED_SENDER:", process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com");
-    console.log("DEBUG: NODE_ENV:", process.env.NODE_ENV);
-
-    // Step 2: Validate SendGrid configuration
-    if (!process.env.SENDGRID_API_KEY) {
-      console.error("ERROR: SENDGRID_API_KEY is not set in environment variables");
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Configuration SendGrid invalide",
-          details: process.env.NODE_ENV === "development" ? "SENDGRID_API_KEY is not set in .env.local" : undefined,
-        },
-        { status: 500 }
-      );
-    }
-
-    // Step 3: Parse and validate request body
     const body = await request.json();
     const { email, token, project_id } = body;
+
+    
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // Ou un autre service (yahoo, outlook, etc.)
+      auth: {
+        user: 'asaleydiori@gmail.com',
+        pass: 'Diori@1177', // Attention aux applications tierces, utilisez un mot de passe d'application
+      },
+    });
+    try{
+        await transporter.sendMail({
+            from: 'asaleydiori@gmail.com',
+            to: email,
+            subject: 'Invitation à rejoindre le projet',
+            text: `Vous avez été invité à rejoindre le projet avec l'ID ${project_id}. Voici votre token: ${token}`,
+        });
+        toast.success("Email envoyé avec succès");
+    }catch(e){
+        toast.error("Erreur lors de l'envoi de l'email");
+        console.error("ERROR: Email sending error:", e);
+        return NextResponse.json(
+          { error: "Erreur lors de l'envoi de l'email" },)
+    }
+
 
     if (!email || !token || !project_id) {
       console.error("ERROR: Missing required fields", { email, token, project_id });
@@ -41,36 +48,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Format d'email invalide" },
         { status: 400 }
-      );
-    }
-
-    // Step 4: Configure SendGrid
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    // Step 5: Send email first
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com",
-      subject: "Invitation à un projet",
-      text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${token}`,
-      html: `<p>Vous avez été invité à rejoindre un projet.</p><p><a href="http://alphatek.fr/invite?token=${token}">Acceptez l'invitation</a></p>`,
-    };
-
-    try {
-      console.log("DEBUG: Attempting to send email to:", email);
-      const sendResult = await sgMail.send(msg);
-      console.log("DEBUG: Email send result:", JSON.stringify(sendResult, null, 2));
-    } catch (emailError) {
-      console.error("ERROR: Failed to send email:", emailError);
-      let errorDetails = "Erreur inconnue lors de l'envoi de l'email";
-     
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Échec de l'envoi de l'email",
-          details: process.env.NODE_ENV === "development" ? errorDetails : undefined,
-        },
-        { status: 500 }
       );
     }
 
