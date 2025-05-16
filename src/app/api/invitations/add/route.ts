@@ -4,11 +4,8 @@ import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 import type { NextRequest } from "next/server";
 
-// Configuration
-if (!process.env.SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY environment variable is not set");
-}
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
