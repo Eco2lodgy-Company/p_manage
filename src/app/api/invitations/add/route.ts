@@ -6,48 +6,48 @@ import type { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    // Debug: Log environment variable status
-    console.log("Environment check: SENDGRID_API_KEY exists:", !!process.env.SENDGRID_API_KEY);
-    console.log("Environment check: SENDGRID_VERIFIED_SENDER:", process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com");
+    // Step 1: Log environment variables
+    console.log("DEBUG: SENDGRID_API_KEY exists:", !!process.env.SENDGRID_API_KEY);
+    console.log("DEBUG: SENDGRID_VERIFIED_SENDER:", process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com");
+    console.log("DEBUG: NODE_ENV:", process.env.NODE_ENV);
 
-    // Récupérer et valider les données
+    // Step 2: Validate SendGrid configuration
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error("ERROR: SENDGRID_API_KEY is not set in environment variables");
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Configuration SendGrid invalide",
+          details: process.env.NODE_ENV === "development" ? "SENDGRID_API_KEY is not set in .env.local" : undefined,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Step 3: Parse and validate request body
     const body = await request.json();
     const { email, token, project_id } = body;
 
-    // Validation complète des données
     if (!email || !token || !project_id) {
+      console.error("ERROR: Missing required fields", { email, token, project_id });
       return NextResponse.json(
         { error: "Tous les champs sont requis (email, token, project_id)" },
         { status: 400 }
       );
     }
 
-    // Valider le format de l'email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      console.error("ERROR: Invalid email format:", email);
       return NextResponse.json(
         { error: "Format d'email invalide" },
         { status: 400 }
       );
     }
 
-    // Vérifier la présence de la clé API SendGrid
-    if (!process.env.SENDGRID_API_KEY) {
-      console.error("SENDGRID_API_KEY is not set in environment variables");
-      console.error("SENDGRID_VERIFIED_SENDER:", process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com");
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Configuration SendGrid invalide",
-          details: process.env.NODE_ENV === "development" ? "SENDGRID_API_KEY is not set" : undefined,
-        },
-        { status: 500 }
-      );
-    }
-
-    // Configurer SendGrid
+    // Step 4: Configure SendGrid
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-    // Préparer l'email
+    // Step 5: Send email first
     const msg = {
       to: email,
       from: process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com",
@@ -56,24 +56,14 @@ export async function POST(request: NextRequest) {
       html: `<p>Vous avez été invité à rejoindre un projet.</p><p><a href="http://alphatek.fr/invite?token=${token}">Acceptez l'invitation</a></p>`,
     };
 
-    // Envoyer l'email avant l'insertion
     try {
-      console.log("Attempting to send email to:", email);
+      console.log("DEBUG: Attempting to send email to:", email);
       const sendResult = await sgMail.send(msg);
-      console.log("Email send result:", JSON.stringify(sendResult, null, 2));
+      console.log("DEBUG: Email send result:", JSON.stringify(sendResult, null, 2));
     } catch (emailError) {
-      console.error("Erreur lors de l'envoi de l'email:", emailError);
+      console.error("ERROR: Failed to send email:", emailError);
       let errorDetails = "Erreur inconnue lors de l'envoi de l'email";
-      if (
-        typeof emailError === "object" &&
-        emailError !== null &&
-        "response" in emailError &&
-        (emailError as any).response &&
-        "body" in (emailError as any).response
-      ) {
-        errorDetails = JSON.stringify((emailError as any).response.body, null, 2);
-        console.error("Détails SendGrid:", errorDetails);
-      }
+     
       return NextResponse.json(
         {
           success: false,
@@ -84,24 +74,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Si l'email est envoyé, procéder à l'insertion
+    // Step 6: Email sent successfully, proceed with database insertion
+    console.log("DEBUG: Connecting to database");
     const client = await connectionPool.connect();
 
     try {
-      // Vérification si l'email existe déjà pour ce projet
+      // Check for duplicate invitation
+      console.log("DEBUG: Checking for existing invitation");
       const checkQuery = `SELECT id FROM invitations WHERE email = $1 AND project_id = $2`;
       const checkResult = await client.query(checkQuery, [email, project_id]);
 
       if (checkResult.rows.length > 0) {
+        console.error("ERROR: Duplicate invitation for email:", email, "project_id:", project_id);
         return NextResponse.json(
           { error: "Un invité avec cet email existe déjà pour ce projet" },
           { status: 409 }
         );
       }
 
-      // Insertion avec transaction
+      // Insert invitation
+      console.log("DEBUG: Inserting invitation");
       await client.query("BEGIN");
-
       const insertQuery = `
         INSERT INTO invitations(email, token, project_id)
         VALUES($1, $2, $3)
@@ -110,8 +103,8 @@ export async function POST(request: NextRequest) {
       const values = [email, token, project_id];
       const result = await client.query(insertQuery, values);
 
-      // Commit la transaction
       await client.query("COMMIT");
+      console.log("DEBUG: Invitation inserted successfully");
 
       const userData = result.rows[0];
       return NextResponse.json(
@@ -124,13 +117,14 @@ export async function POST(request: NextRequest) {
       );
     } catch (dbError) {
       await client.query("ROLLBACK");
-      console.error("Erreur base de données:", dbError);
+      console.error("ERROR: Database error:", dbError);
       throw dbError;
     } finally {
+      console.log("DEBUG: Releasing database client");
       client.release();
     }
   } catch (error) {
-    console.error("Erreur serveur:", error);
+    console.error("ERROR: Server error:", error);
     return NextResponse.json(
       {
         success: false,
