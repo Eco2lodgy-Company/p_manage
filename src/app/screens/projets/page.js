@@ -195,6 +195,7 @@ export default function Projects() {
       if (!response.ok) {
         throw new Error('Erreur de réseau');
       }
+      emailSent = true;
 
       const data = await response.json();
       toast.success(emailSent ? data.message : `${data.message} (Email non envoyé)`);
