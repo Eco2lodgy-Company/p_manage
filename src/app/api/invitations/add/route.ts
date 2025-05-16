@@ -3,15 +3,17 @@ import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 
 // Configuration
-if (!process.env.SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY environment variable is not set");
-}
-sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+
 
 import type { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
-  try {
+    try {
+        if (!process.env.SENDGRID_API_KEY) {
+    throw new Error("SENDGRID_API_KEY environment variable is not set");
+    }
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+    console.log(process.env.SENDGRID_API_KEY);
     // Récupérer et valider les données
     const body = await request.json();
     const { email, token, project_id } = body;
