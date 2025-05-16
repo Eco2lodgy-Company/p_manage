@@ -4,7 +4,7 @@ import connectionPool from '@/lib/db'; // Modifiez ce chemin selon votre projet
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function POST(req: NextApiRequest, res: NextApiResponse) {
+export  async function POST(req: NextApiRequest, res: NextApiResponse) {
  
   try {
     // Étape 1 : Récupération des données du corps de la requête
