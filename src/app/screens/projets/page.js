@@ -162,8 +162,11 @@ export default function Projects() {
 
     const generateKeyWithTimestamp = (length = 32) => {
       const key = crypto.randomBytes(length).toString('base64url');
+      const base64 = key.toString('base64');
+      // Convert to base64url: replace '+' with '-', '/' with '_', remove '='
+      const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       const timestamp = Date.now();
-      return key + timestamp.toString();
+      return  base64url + timestamp.toString();
     };
 
     const uniqueKey = generateKeyWithTimestamp();
