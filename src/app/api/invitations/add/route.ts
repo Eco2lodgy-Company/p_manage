@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
 
       try {
         await sgMail.send(msg);
+        console.log(sgMail);
         emailSent = true;
         console.log(`Email sent successfully to ${email}`);
       } catch (emailError) {
