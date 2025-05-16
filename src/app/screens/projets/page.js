@@ -178,32 +178,6 @@ export default function Projects() {
 
     setIsSharing(true);
     let emailSent = false;
-
-    
-
-    try {
-      const emailResponse = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: formData.email,
-          subject: `Invitation au projet ${selectedProject?.title}`,
-          body: `Vous avez été invité à rejoindre le projet "${selectedProject?.title}". Utilisez ce lien pour accepter : http://alphatek.fr/invite?token=${uniqueKey}`,
-        }),
-      });
-
-      if (emailResponse.ok) {
-        emailSent = true;
-        console.log("Email sent successfully");
-      } else {
-        console.warn("Email sending failed, proceeding with insertion");
-      }
-    } catch (error) {
-      console.warn("Erreur lors de l'envoi de l'email:", error);
-    }
-
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
         method: 'POST',
