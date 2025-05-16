@@ -3,7 +3,6 @@ import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 import type { NextRequest } from "next/server";
-import { toast } from "sonner";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Vérifier la présence de la clé API SendGrid
     if (!process.env.SENDGRID_API_KEY) {
       console.error("SENDGRID_API_KEY is not set in environment variables");
-      console.error("SENDGRID_VERIFIED_SENDER:", process.env.SENDGRID_API_KEY || "");
+      console.error("SENDGRID_VERIFIED_SENDER:", process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com");
       return NextResponse.json(
         {
           success: false,
@@ -46,11 +45,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Configurer SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-// Préparer l'email
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+    // Préparer l'email
     const msg = {
       to: email,
-      from:"asaleydiori@gmail.com",
+      from: process.env.SENDGRID_VERIFIED_SENDER || "asaleydiori@gmail.com",
       subject: "Invitation à un projet",
       text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${token}`,
       html: `<p>Vous avez été invité à rejoindre un projet.</p><p><a href="http://alphatek.fr/invite?token=${token}">Acceptez l'invitation</a></p>`,
@@ -64,9 +64,14 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     } catch (emailError) {
       console.error("Erreur lors de l'envoi de l'email:", emailError);
       let errorDetails = "Erreur inconnue lors de l'envoi de l'email";
-      if (typeof emailError === "object" && emailError !== null && "response" in emailError) {
-        const err = emailError as { response?: { body?: unknown } };
-        errorDetails = JSON.stringify(err.response?.body, null, 2);
+      if (
+        typeof emailError === "object" &&
+        emailError !== null &&
+        "response" in emailError &&
+        (emailError as any).response &&
+        "body" in (emailError as any).response
+      ) {
+        errorDetails = JSON.stringify((emailError as any).response.body, null, 2);
         console.error("Détails SendGrid:", errorDetails);
       }
       return NextResponse.json(
