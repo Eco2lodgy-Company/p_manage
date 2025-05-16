@@ -53,7 +53,7 @@ export async function POST(request: Request) {
             const userData = result.rows[0];
             const sgMail = require('@sendgrid/mail')
                     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-                    console.log(process.env.SENDGRID_API_KEY)
+                    console.log(process.env.SENDGRID_API_KEY)   
                     const msg = {
                     to: email, // Change to your recipient
                     from: 'asaleydiori@gmail.com', // Change to your verified sender
@@ -69,6 +69,7 @@ export async function POST(request: Request) {
                     .catch((error: Error) => {
                         console.error(error)
                     })
+                    console.log(sgMail)
             
             return NextResponse.json(
                 { 
