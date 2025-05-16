@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -161,12 +162,12 @@ export default function Projects() {
     }
 
     const generateKeyWithTimestamp = (length = 32) => {
-      const key = crypto.randomBytes(length).toString('base64url');
-      const base64 = key.toString('base64');
+      const bytes = crypto.randomBytes(length);
+      const base64 = bytes.toString('base64');
       // Convert to base64url: replace '+' with '-', '/' with '_', remove '='
       const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       const timestamp = Date.now();
-      return  base64url + timestamp.toString();
+      return base64url + timestamp.toString();
     };
 
     const uniqueKey = generateKeyWithTimestamp();
@@ -181,6 +182,7 @@ export default function Projects() {
 
     setIsSharing(true);
     let emailSent = false;
+
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
         method: 'POST',
@@ -484,7 +486,7 @@ export default function Projects() {
                   <Label className="text-right font-bold">Description</Label>
                   <span className="col-span-3">{selectedProject.description}</span>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4  items-center gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Responsable</Label>
                   <span className="col-span-3">{selectedProject.assign_to}</span>
                 </div>
