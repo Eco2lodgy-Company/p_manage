@@ -1,114 +1,92 @@
-
-import connectionPool from "@/lib/db";
-import { NextResponse } from "next/server";
-import sgMail from "@sendgrid/mail";
-import type { NextRequest } from "next/server";
 import nodemailer from 'nodemailer';
-import { toast } from "sonner";
+import { NextResponse } from 'next/server';
+import connectionPool from '@/lib/db'; // Modifiez ce chemin selon votre projet
 
-export async function POST(request: NextRequest) {
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Méthode non autorisée, utilisez POST' });
+  }
+
   try {
-    const body = await request.json();
-    const { email, token, project_id } = body;
+    // Étape 1 : Récupération des données du corps de la requête
+    const { email, token, project_id } = req.body;
 
-    
-    const transporter = nodemailer.createTransport({
-      service: 'gmail', // Ou un autre service (yahoo, outlook, etc.)
-      auth: {
-        user: 'asaleydiori@gmail.com',
-        pass: 'Diori@1177', // Attention aux applications tierces, utilisez un mot de passe d'application
-      },
-    });
-    try{
-        await transporter.sendMail({
-            from: 'asaleydiori@gmail.com',
-            to: email,
-            subject: 'Invitation à rejoindre le projet',
-            text: `Vous avez été invité à rejoindre le projet avec l'ID ${project_id}. Voici votre token: ${token}`,
-        });
-        toast.success("Email envoyé avec succès");
-    }catch(e){
-        toast.error("Erreur lors de l'envoi de l'email");
-        console.error("ERROR: Email sending error:", e);
-        return NextResponse.json(
-          { error: "Erreur lors de l'envoi de l'email" },)
-    }
-
-
+    // Étape 2 : Validation des données
     if (!email || !token || !project_id) {
-      console.error("ERROR: Missing required fields", { email, token, project_id });
-      return NextResponse.json(
-        { error: "Tous les champs sont requis (email, token, project_id)" },
-        { status: 400 }
-      );
+      return res.status(400).json({ error: 'Tous les champs sont requis (email, token, project_id)' });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.error("ERROR: Invalid email format:", email);
-      return NextResponse.json(
-        { error: "Format d'email invalide" },
-        { status: 400 }
-      );
+      return res.status(400).json({ error: 'Format d\'email invalide' });
     }
 
-    // Step 6: Email sent successfully, proceed with database insertion
-    console.log("DEBUG: Connecting to database");
+    // Étape 3 : Envoi de l'email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        // user: process.env.EMAIL_USER,
+        user: 'asaleydiori@gmail.com',
+        // pass: process.env.EMAIL_PASSWORD,
+        pass:"Diori@1177" // Mot de passe d'application Gmail
+      },
+    });
+
+    try {
+      await transporter.sendMail({
+        from:"asaleydiori@gmail.com",
+        to: email,
+        subject: 'Invitation à rejoindre le projet',
+        text: `Vous avez été invité à rejoindre le projet avec l'ID ${project_id}. Voici votre token: ${token}`,
+      });
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+      return res.status(500).json({ error: 'Erreur lors de l\'envoi de l\'email' });
+    }
+
+    // Étape 4 : Connexion et insertion dans la base de données
     const client = await connectionPool.connect();
 
     try {
-      // Check for duplicate invitation
-      console.log("DEBUG: Checking for existing invitation");
+      await client.query('BEGIN');
+
+      // Vérifiez si l'invitation existe déjà
       const checkQuery = `SELECT id FROM invitations WHERE email = $1 AND project_id = $2`;
       const checkResult = await client.query(checkQuery, [email, project_id]);
 
       if (checkResult.rows.length > 0) {
-        console.error("ERROR: Duplicate invitation for email:", email, "project_id:", project_id);
-        return NextResponse.json(
-          { error: "Un invité avec cet email existe déjà pour ce projet" },
-          { status: 409 }
-        );
+        return res.status(409).json({ error: 'Un invité avec cet email existe déjà pour ce projet' });
       }
 
-      // Insert invitation
-      console.log("DEBUG: Inserting invitation");
-      await client.query("BEGIN");
+      // Insérez la nouvelle invitation
       const insertQuery = `
         INSERT INTO invitations(email, token, project_id)
         VALUES($1, $2, $3)
         RETURNING email, token, project_id;
       `;
-      const values = [email, token, project_id];
-      const result = await client.query(insertQuery, values);
+      const result = await client.query(insertQuery, [email, token, project_id]);
+      await client.query('COMMIT');
 
-      await client.query("COMMIT");
-      console.log("DEBUG: Invitation inserted successfully");
-
-      const userData = result.rows[0];
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Invitation créée et email envoyé avec succès",
-          data: userData,
-        },
-        { status: 201 }
-      );
+      // Réponse en cas de succès
+      return res.status(201).json({
+        success: true,
+        message: 'Invitation créée et email envoyé avec succès',
+        data: result.rows[0],
+      });
     } catch (dbError) {
-      await client.query("ROLLBACK");
-      console.error("ERROR: Database error:", dbError);
-      throw dbError;
+      await client.query('ROLLBACK');
+      console.error('Erreur lors de la gestion de la base de données:', dbError);
+      return res.status(500).json({ error: 'Erreur lors de l\'insertion dans la base de données' });
     } finally {
-      console.log("DEBUG: Releasing database client");
       client.release();
     }
   } catch (error) {
-    console.error("ERROR: Server error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erreur serveur",
-        details: process.env.NODE_ENV === "development" && error instanceof Error ? error.message : undefined,
-      },
-      { status: 500 }
-    );
+    console.error('Erreur serveur:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erreur serveur',
+      details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined,
+    });
   }
 }
