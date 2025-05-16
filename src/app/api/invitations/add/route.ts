@@ -4,20 +4,19 @@ import sgMail from "@sendgrid/mail";
 import type { NextRequest } from "next/server";
 
 // Configuration
-if (!process.env.SENDGRID_API_KEY) {
-  console.error("SENDGRID_API_KEY is not set in environment variables");
-  throw new Error("SENDGRID_API_KEY environment variable is not set");
-}
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// if (!process.env.SENDGRID_API_KEY) {
+//   console.error("SENDGRID_API_KEY is not set in environment variables");
+//   throw new Error("SENDGRID_API_KEY environment variable is not set");
+// }
+// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Fallback for verified sender
-const VERIFIED_SENDER = process.env.SENDGRID_VERIFIED_SENDER || "your_verified_email@domain.com";
+// const VERIFIED_SENDER = process.env.SENDGRID_VERIFIED_SENDER || "your_verified_email@domain.com";
 
 export async function POST(request: NextRequest) {
   try {
     // Debug: Log environment variable status
-    console.log("Environment check: SENDGRID_API_KEY exists:", !!process.env.SENDGRID_API_KEY);
-    console.log("Environment check: SENDGRID_VERIFIED_SENDER:", VERIFIED_SENDER);
+
 
     // Récupérer et valider les données
     const body = await request.json();
@@ -71,11 +70,13 @@ export async function POST(request: NextRequest) {
       let emailSent = false;
       const msg = {
         to: email,
-        from: VERIFIED_SENDER, // Utiliser le sender vérifié ou le fallback
+        from: "asaleydiori@gmail.com", // Utiliser le sender vérifié ou le fallback
         subject: "Invitation à un projet",
         text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${token}`,
         html: `<p>Vous avez été invité à rejoindre un projet.</p><p><a href="http://alphatek.fr/invite?token=${token}">Acceptez l'invitation</a></p>`,
       };
+      
+     sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
       try {
         await sgMail.send(msg);
