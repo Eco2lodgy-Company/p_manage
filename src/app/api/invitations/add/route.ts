@@ -1,19 +1,17 @@
+
 import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
-
-// Configuration
-
-
 import type { NextRequest } from "next/server";
 
+// Configuration
+if (!process.env.SENDGRID_API_KEY) {
+  throw new Error("SENDGRID_API_KEY environment variable is not set");
+}
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 export async function POST(request: NextRequest) {
-    try {
-        if (!process.env.SENDGRID_API_KEY) {
-    throw new Error("SENDGRID_API_KEY environment variable is not set");
-    }
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
-    console.log(process.env.SENDGRID_API_KEY);
+  try {
     // Récupérer et valider les données
     const body = await request.json();
     const { email, token, project_id } = body;
@@ -59,10 +57,14 @@ export async function POST(request: NextRequest) {
       const values = [email, token, project_id];
       const result = await client.query(insertQuery, values);
 
+      // Commit la transaction avant d'envoyer l'email
+      await client.query("COMMIT");
+
       // Envoyer l'email
+      let emailSent = false;
       const msg = {
         to: email,
-        from: "your_verified_email@domain.com", // Remplacer par votre email vérifié SendGrid
+        from: process.env.SENDGRID_VERIFIED_SENDER || "your_verified_email@domain.com", // Remplacer par votre email vérifié SendGrid
         subject: "Invitation à un projet",
         text: `Vous avez été invité à rejoindre un projet. Acceptez via ce lien : http://alphatek.fr/invite?token=${token}`,
         html: `<p>Vous avez été invité à rejoindre un projet.</p><p><a href="http://alphatek.fr/invite?token=${token}">Acceptez l'invitation</a></p>`,
@@ -70,41 +72,43 @@ export async function POST(request: NextRequest) {
 
       try {
         await sgMail.send(msg);
-        await client.query("COMMIT");
-        const userData = result.rows[0];
-        return NextResponse.json(
-          {
-            success: true,
-            message: "Invitation créée et email envoyé avec succès",
-            data: userData,
-          },
-          { status: 201 }
-        );
-      } catch (emailError) {
+        emailSent = true;
+      } catch (emailError:any) {
         console.error("Erreur lors de l'envoi de l'email:", emailError);
-        await client.query("ROLLBACK");
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Invitation créée mais email non envoyé",
-            data: result.rows[0],
-          },
-          { status: 201 }
-        );
+        // Inclure les détails de l'erreur SendGrid en mode développement
+        if (process.env.NODE_ENV === "development" && emailError.response) {
+          console.error("Détails SendGrid:", emailError.response.body);
+        }
       }
+
+      const userData = result.rows[0];
+      return NextResponse.json(
+        {
+          success: true,
+          message: emailSent
+            ? "Invitation créée et email envoyé avec succès"
+            : "Invitation créée mais email non envoyé",
+          data: userData,
+        },
+        { status: 201 }
+      );
     } catch (dbError) {
       await client.query("ROLLBACK");
+      console.error("Erreur base de données:", dbError);
       throw dbError;
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("Erreur:", error);
+    console.error("Erreur serveur:", error);
     return NextResponse.json(
       {
         success: false,
         error: "Erreur serveur",
-        details: process.env.NODE_ENV === "development" && typeof error === "object" && error !== null && "message" in error ? (error as { message: string }).message : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );
