@@ -44,17 +44,14 @@ export default function Dashboard() {
     console.log("Updated dashboardData:", dashboardData);
  
 
-  const chartData = useMemo(
-    () => [
+  const chartData = 
+    [
       { status: "termines", nombre: dashboardData.projets_termines, fill: "green" },
       { status: "en_cours", nombre: dashboardData.projets_en_cours, fill: "yellow" },
       { status: "en_attente", nombre: dashboardData.projets_non_demarres, fill: "orange" },
       { status: "annules", nombre: 0, fill: "red" },
       { status: "autres", nombre: 12, fill: "black" },
-    ],
-    [dashboardData]
-  );
-
+    ];
   console.log("chartData", chartData);
 
   const chartConfig = {
