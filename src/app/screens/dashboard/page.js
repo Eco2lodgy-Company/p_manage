@@ -9,14 +9,14 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState({
-      total_taches: "15",
-      taches_non_assignees: "14",
-      taches_en_cours: "4",
-      taches_terminees: "3",
-      total_projets: "6",
-      projets_en_cours: "1",
-      projets_termines: "2",
-      projets_non_demarres: "3"
+      total_taches: 0,
+      taches_non_assignees: 0,
+      taches_en_cours: 0,
+      taches_terminees: 0,
+      total_projets: 0,
+      projets_en_cours: 0,
+      projets_termines: 0,
+      projets_non_demarres: 0
   });
 
   const getDashData = async () => {
