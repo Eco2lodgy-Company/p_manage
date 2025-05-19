@@ -31,7 +31,7 @@ export default function Dashboard() {
       }
       const data = await response.json();
       console.log("API Response:", data.data);
-      setDashboardData(data.data[0]); // Use data.data[0] if array
+      setDashboardData(data.data[0]); // Confirmed array access
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
       toast.error("Erreur lors de la récupération des donnees");
@@ -48,14 +48,17 @@ export default function Dashboard() {
     console.log("Updated dashboardData:", dashboardData);
   }, [dashboardData]);
 
-  const chartData = 
-    [
+  const chartData = useMemo(
+    () => [
       { status: "termines", nombre: dashboardData.projets_termines || 0, fill: "green" },
       { status: "en_cours", nombre: dashboardData.projets_en_cours || 0, fill: "yellow" },
       { status: "en_attente", nombre: dashboardData.projets_non_demarres || 0, fill: "orange" },
       { status: "annules", nombre: 0, fill: "red" },
       { status: "autres", nombre: 0, fill: "black" },
-    ];
+    ],
+    [dashboardData]
+  );
+
   console.log("chartData", chartData);
 
   const chartConfig = {
@@ -176,48 +179,51 @@ export default function Dashboard() {
               {isLoading ? (
                 <div>Loading...</div>
               ) : (
-                <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
-                  <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Pie
-                      data={chartData}
-                      dataKey="nombre"
-                      nameKey="status"
-                      innerRadius={60}
-                      strokeWidth={5}
-                    >
-                      <Label
-                        content={({ viewBox }) => {
-                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                            return (
-                              <text
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                              >
-                                <tspan
+                <>
+                  {console.log("Rendering chart with chartData:", chartData)}
+                  <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
+                    <PieChart>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      <Pie
+                        data={chartData}
+                        dataKey="nombre"
+                        nameKey="status"
+                        innerRadius={60}
+                        strokeWidth={5}
+                      >
+                        <Label
+                          content={({ viewBox }) => {
+                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                              return (
+                                <text
                                   x={viewBox.cx}
                                   y={viewBox.cy}
-                                  className="fill-foreground text-3xl font-bold"
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
                                 >
-                                  {dashboardData.total_projets || 0}
-                                </tspan>
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 24}
-                                  className="fill-muted-foreground"
-                                >
-                                  Projets
-                                </tspan>
-                              </text>
-                            );
-                          }
-                        }}
-                      />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
+                                  <tspan
+                                    x={viewBox.cx}
+                                    y={viewBox.cy}
+                                    className="fill-foreground text-3xl font-bold"
+                                  >
+                                    {dashboardData.total_projets || 0}
+                                  </tspan>
+                                  <tspan
+                                    x={viewBox.cx}
+                                    y={(viewBox.cy || 0) + 24}
+                                    className="fill-muted-foreground"
+                                  >
+                                    Projets
+                                  </tspan>
+                                </text>
+                              );
+                            }
+                          }}
+                        />
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                </>
               )}
               {/* Legend */}
               <div className="flex flex-wrap justify-center gap-4 mt-4">
