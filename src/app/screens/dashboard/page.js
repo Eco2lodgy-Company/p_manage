@@ -5,7 +5,12 @@ import { Label, Pie, PieChart } from "recharts";
 import { Card,CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
-const [dashboardData,setData] = useState([]);
+
+
+
+
+export default function Dashboard() {
+  const [dashboardData,setData] = useState([]);
 
 const getDashData=async () => {
     try {
@@ -59,10 +64,6 @@ const chartConfig = {
   },
 };
 
-
-
-
-export default function Dashboard() {
   const totalNombre = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.nombre, 0);
   }, []);
