@@ -53,8 +53,8 @@ export default function Dashboard() {
       { status: "termines", nombre: dashboardData.projets_termines || 0, fill: "green" },
       { status: "en_cours", nombre: dashboardData.projets_en_cours || 0, fill: "yellow" },
       { status: "en_attente", nombre: dashboardData.projets_non_demarres || 0, fill: "orange" },
-      { status: "annules", nombre: 0, fill: "red" },
-      { status: "autres", nombre: 0, fill: "black" },
+      // { status: "annules", nombre: 0, fill: "red" },
+      // { status: "autres", nombre: 0, fill: "black" },
     ],
     [dashboardData]
   );
