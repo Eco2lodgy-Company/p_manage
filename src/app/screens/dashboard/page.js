@@ -6,7 +6,15 @@ import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function Dashboard() {
-  const [dashboardData, setDashboardData] = useState([]);
+  const [dashboardData, setDashboardData] = useState([
+    {
+      projets_termines: 0,
+      projets_en_cours: 0,
+      projets_non_demarres: 0,
+      projets_annules: 0,
+      projets_autres: 0,
+    }
+  ]);
 
   const getDashData = async () => {
     try {
