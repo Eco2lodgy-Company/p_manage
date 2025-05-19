@@ -9,17 +9,19 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState({
-      total_taches: 0,
-      taches_non_assignees: 0,
-      taches_en_cours: 0,
-      taches_terminees: 0,
-      total_projets: 0,
-      projets_en_cours: 0,
-      projets_termines: 0,
-      projets_non_demarres: 0
+    total_taches: 0,
+    taches_non_assignees: 0,
+    taches_en_cours: 0,
+    taches_terminees: 0,
+    total_projets: 0,
+    projets_en_cours: 0,
+    projets_termines: 0,
+    projets_non_demarres: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const getDashData = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/dashboard/`, {
         method: "GET",
@@ -29,10 +31,12 @@ export default function Dashboard() {
       }
       const data = await response.json();
       console.log("API Response:", data.data);
-      setDashboardData(data.data); // Adjust to data.data[0] if data.data is an array
+      setDashboardData(data.data); // Use data.data[0] if array
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
       toast.error("Erreur lors de la récupération des donnees");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,18 +44,21 @@ export default function Dashboard() {
     getDashData();
   }, []);
 
-
+  useEffect(() => {
     console.log("Updated dashboardData:", dashboardData);
- 
+  }, [dashboardData]);
 
-  const chartData = 
-    [
-      { status: "termines", nombre: dashboardData.projets_termines, fill: "green" },
-      { status: "en_cours", nombre: dashboardData.projets_en_cours, fill: "yellow" },
-      { status: "en_attente", nombre: dashboardData.projets_non_demarres, fill: "orange" },
+  const chartData = useMemo(
+    () => [
+      { status: "termines", nombre: dashboardData.projets_termines || 0, fill: "green" },
+      { status: "en_cours", nombre: dashboardData.projets_en_cours || 0, fill: "yellow" },
+      { status: "en_attente", nombre: dashboardData.projets_non_demarres || 0, fill: "orange" },
       { status: "annules", nombre: 0, fill: "red" },
       { status: "autres", nombre: 12, fill: "black" },
-    ];
+    ],
+    [dashboardData]
+  );
+
   console.log("chartData", chartData);
 
   const chartConfig = {
@@ -95,19 +102,19 @@ export default function Dashboard() {
       <div className="mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between">
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-red-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches Non Assignées</h1>
-          <h1 className="text-3xl font-bold text-red-500">18</h1>
+          <h1 className="text-3xl font-bold text-red-500">{dashboardData.taches_non_assignees || 0}</h1>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-yellow-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches En Cours</h1>
-          <h1 className="text-3xl font-bold text-yellow-500">15</h1>
+          <h1 className="text-3xl font-bold text-yellow-500">{dashboardData.taches_en_cours || 0}</h1>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-green-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches Terminées</h1>
-          <h1 className="text-3xl font-bold text-green-500">32</h1>
+          <h1 className="text-3xl font-bold text-green-500">{dashboardData.taches_terminees || 0}</h1>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-blue-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches Totales</h1>
-          <h1 className="text-3xl font-bold text-blue-500">58</h1>
+          <h1 className="text-3xl font-bold text-blue-500">{dashboardData.total_taches || 0}</h1>
         </div>
       </div>
       {/* Main content area with padding to avoid overlap with fixed row */}
@@ -169,48 +176,52 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-0">
-              <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
-                <PieChart>
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                  <Pie
-                    data={chartData}
-                    dataKey="nombre"
-                    nameKey="status"
-                    innerRadius={60}
-                    strokeWidth={5}
-                  >
-                    <Label
-                      content={({ viewBox }) => {
-                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                          return (
-                            <text
-                              x={viewBox.cx}
-                              y={viewBox.cy}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                            >
-                              <tspan
+              {isLoading ? (
+                <div>Loading...</div>
+              ) : (
+                <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
+                  <PieChart>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <Pie
+                      data={chartData}
+                      dataKey="nombre"
+                      nameKey="status"
+                      innerRadius={60}
+                      strokeWidth={5}
+                    >
+                      <Label
+                        content={({ viewBox }) => {
+                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                            return (
+                              <text
                                 x={viewBox.cx}
                                 y={viewBox.cy}
-                                className="fill-foreground text-3xl font-bold"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
                               >
-                                {totalNombre.toLocaleString()}
-                              </tspan>
-                              <tspan
-                                x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 24}
-                                className="fill-muted-foreground"
-                              >
-                                Projets
-                              </tspan>
-                            </text>
-                          );
-                        }
-                      }}
-                    />
-                  </Pie>
-                </PieChart>
-              </ChartContainer>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={viewBox.cy}
+                                  className="fill-foreground text-3xl font-bold"
+                                >
+                                  {totalNombre.toLocaleString()}
+                                </tspan>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 24}
+                                  className="fill-muted-foreground"
+                                >
+                                  Projets
+                                </tspan>
+                              </text>
+                            );
+                          }
+                        }}
+                      />
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              )}
               {/* Legend */}
               <div className="flex flex-wrap justify-center gap-4 mt-4">
                 {chartData.map((item) => (
