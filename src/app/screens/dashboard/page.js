@@ -172,7 +172,7 @@ export default function Dashboard() {
                 Statistiques des Projets
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Janvier - Juin 2024
+                {/* Janvier - Juin 2024 */}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-0">
@@ -242,10 +242,10 @@ export default function Dashboard() {
             </CardContent>
             <CardFooter className="flex-col gap-2 text-sm">
               <div className="flex items-center gap-2 font-medium leading-none text-sky-700">
-                En hausse de 5.2% ce mois-ci <TrendingUp className="h-4 w-4" />
+                {/* En hausse de 5.2% ce mois-ci <TrendingUp className="h-4 w-4" /> */}
               </div>
               <div className="leading-none text-muted-foreground">
-                Total des projets pour les 6 derniers mois
+                {/* Total des projets pour les 6 derniers mois */}
               </div>
             </CardFooter>
           </Card>
