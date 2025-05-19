@@ -1,22 +1,24 @@
 import nodemailer from 'nodemailer';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import connectionPool from '@/lib/db'; // Modifiez ce chemin selon votre projet
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { request } from 'http';
 
-export  async function POST(req: NextApiRequest, res: NextApiResponse) {
- 
+export  async function POST(req: NextRequest, res: NextResponse) {
+    const body = await req.json();
+ const { email, token, project_id } = body;
   try {
     // Étape 1 : Récupération des données du corps de la requête
-    const { email, token, project_id } = req.body;
+    
 
     // Étape 2 : Validation des données
     if (!email || !token || !project_id) {
-      return res.status(400).json({ error: 'Tous les champs sont requis (email, token, project_id)' });
+      return console.log({ error: 'Tous les champs sont requis (email, token, project_id)' });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Format d\'email invalide' });
+      return console.error({ error: 'Format d\'email invalide' });
     }
 
     // Étape 3 : Envoi de l'email
@@ -39,7 +41,7 @@ export  async function POST(req: NextApiRequest, res: NextApiResponse) {
       });
     } catch (emailError) {
       console.error('Erreur lors de l\'envoi de l\'email:', emailError);
-      return res.status(500).json({ error: 'Erreur lors de l\'envoi de l\'email' });
+      return console.error({ error: 'Erreur lors de l\'envoi de l\'email' });
     }
 
     // Étape 4 : Connexion et insertion dans la base de données
@@ -53,7 +55,7 @@ export  async function POST(req: NextApiRequest, res: NextApiResponse) {
       const checkResult = await client.query(checkQuery, [email, project_id]);
 
       if (checkResult.rows.length > 0) {
-        return res.status(409).json({ error: 'Un invité avec cet email existe déjà pour ce projet' });
+        return console.error({ error: 'Un invité avec cet email existe déjà pour ce projet' });
       }
 
       // Insérez la nouvelle invitation
@@ -66,7 +68,7 @@ export  async function POST(req: NextApiRequest, res: NextApiResponse) {
       await client.query('COMMIT');
 
       // Réponse en cas de succès
-      return res.status(201).json({
+      return console.log({
         success: true,
         message: 'Invitation créée et email envoyé avec succès',
         data: result.rows[0],
@@ -74,13 +76,14 @@ export  async function POST(req: NextApiRequest, res: NextApiResponse) {
     } catch (dbError) {
       await client.query('ROLLBACK');
       console.error('Erreur lors de la gestion de la base de données:', dbError);
-      return res.status(500).json({ error: 'Erreur lors de l\'insertion dans la base de données' });
+      return console.error({ error: 'Erreur lors de l\'insertion dans la base de données' });
     } finally {
       client.release();
     }
   } catch (error) {
     console.error('Erreur serveur:', error);
-    return res.status(500).json({
+    // res.json()
+    return console.error({
       success: false,
       error: 'Erreur serveur',
       details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined,
