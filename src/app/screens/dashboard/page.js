@@ -1,19 +1,14 @@
 "use client";
-import React, { use ,useEffect,useState} from "react";
+import React, { useEffect, useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
-import { Card,CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { console } from "inspector";
-
-
-
-
 
 export default function Dashboard() {
-  const [dashboardData,setData] = useState([]);
+  const [dashboardData, setData] = useState([]);
 
-const getDashData=async () => {
+  const getDashData = async () => {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/dashboard/`, {
         method: "GET",
@@ -28,43 +23,46 @@ const getDashData=async () => {
       toast.error("Erreur lors de la récupération des donnees");
     }
   };
+
   useEffect(() => {
     getDashData();
   }, []);
-const chartData = [
-  { status: "termines", nombre: dashboardData.projets_termines, fill: "green" },
-  { status: "en_cours", nombre: dashboardData.projets_en_cours, fill: "yellow" },
-  { status: "en_attente", nombre: dashboardData.projets_non_demarres, fill: "orange" },
-  { status: "annules", nombre: 50, fill: "red" },
-  { status: "autres", nombre: 150, fill: "black" },
-];
-console.log("chartData",chartData);
 
-const chartConfig = {
-  nombre: {
-    label: "Nombre",
-  },
-  termines: {
-    label: "Terminés",
-    color: "green",
-  },
-  en_cours: {
-    label: "En Cours",
-    color: "yellow",
-  },
-  en_attente: {
-    label: "En Attente",
-    color: "orange",
-  },
-  annules: {
-    label: "Annulés",
-    color: "red",
-  },
-  autres: {
-    label: "Autres",
-    color: "black",
-  },
-};
+  const chartData = [
+    { status: "termines", nombre: dashboardData.projets_termines, fill: "green" },
+    { status: "en_cours", nombre: dashboardData.projets_en_cours, fill: "yellow" },
+    { status: "en_attente", nombre: dashboardData.projets_non_demarres, fill: "orange" },
+    { status: "annules", nombre: 50, fill: "red" },
+    { status: "autres", nombre: 150, fill: "black" },
+  ];
+
+  console.log("chartData", chartData);
+
+  const chartConfig = {
+    nombre: {
+      label: "Nombre",
+    },
+    termines: {
+      label: "Terminés",
+      color: "green",
+    },
+    en_cours: {
+      label: "En Cours",
+      color: "yellow",
+    },
+    en_attente: {
+      label: "En Attente",
+      color: "orange",
+    },
+    annules: {
+      label: "Annulés",
+      color: "red",
+    },
+    autres: {
+      label: "Autres",
+      color: "black",
+    },
+  };
 
   const totalNombre = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.nombre, 0);
@@ -143,7 +141,7 @@ const chartConfig = {
           </div>
         </div>
         {/* Statistics section */}
-        <div className="bg-white flex flex-col shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
+        <div className="bg-white flex flex-col shadow Brasileiras shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
           <Card className="flex flex-col border-l-4 border-sky-500">
             <CardHeader className="items-center pb-0">
               <CardTitle className="text-xl font-bold text-sky-700">
