@@ -40,10 +40,9 @@ export default function Dashboard() {
     getDashData();
   }, []);
 
-  // Log dashboardData changes
-  useEffect(() => {
+
     console.log("Updated dashboardData:", dashboardData);
-  }, [dashboardData]);
+ 
 
   const chartData = useMemo(
     () => [
