@@ -17,7 +17,7 @@ export default function Dashboard() {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
-      setData(data.data);
+      setData(data);
       console.log("data", data);
       console.log("dashboardData", dashboardData);
     } catch (error) {
