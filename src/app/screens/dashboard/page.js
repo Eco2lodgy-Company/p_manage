@@ -204,7 +204,7 @@ export default function Dashboard() {
                                   y={viewBox.cy}
                                   className="fill-foreground text-3xl font-bold"
                                 >
-                                  {totalNombre.toLocaleString()}
+                                  {dashboardData.total_projets || 0}
                                 </tspan>
                                 <tspan
                                   x={viewBox.cx}
