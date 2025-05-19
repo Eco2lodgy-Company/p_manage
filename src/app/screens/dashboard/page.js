@@ -1,20 +1,20 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Dashboard() {
-  const [dashboardData, setDashboardData] = useState([
-    {
-      projets_termines: 0,
-      projets_en_cours: 0,
-      projets_non_demarres: 0,
-      projets_annules: 0,
-      projets_autres: 0,
-    }
-  ]);
+  const [dashboardData, setDashboardData] = useState({
+    projets_termines: 0,
+    projets_en_cours: 0,
+    projets_non_demarres: 0,
+    projets_annules: 0,
+    projets_autres: 0,
+  });
 
   const getDashData = async () => {
     try {
@@ -25,9 +25,8 @@ export default function Dashboard() {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
-      setDashboardData(data.data);
-      console.log("data", data.data);
-      console.log("dashboardData", dashboardData);
+      console.log("API Response:", data.data);
+      setDashboardData(data.data); // Adjust to data.data[0] if data.data is an array
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
       toast.error("Erreur lors de la récupération des donnees");
@@ -38,13 +37,21 @@ export default function Dashboard() {
     getDashData();
   }, []);
 
-  const chartData = [
-    { status: "termines", nombre: dashboardData.projets_termines, fill: "green" },
-    { status: "en_cours", nombre: dashboardData.projets_en_cours, fill: "yellow" },
-    { status: "en_attente", nombre: dashboardData.projets_non_demarres, fill: "orange" },
-    { status: "annules", nombre: 50, fill: "red" },
-    { status: "autres", nombre: 150, fill: "black" },
-  ];
+  // Log dashboardData changes
+  useEffect(() => {
+    console.log("Updated dashboardData:", dashboardData);
+  }, [dashboardData]);
+
+  const chartData = useMemo(
+    () => [
+      { status: "termines", nombre: dashboardData.projets_termines || 0, fill: "green" },
+      { status: "en_cours", nombre: dashboardData.projets_en_cours || 0, fill: "yellow" },
+      { status: "en_attente", nombre: dashboardData.projets_non_demarres || 0, fill: "orange" },
+      { status: "annules", nombre: dashboardData.projets_annules || 0, fill: "red" },
+      { status: "autres", nombre: dashboardData.projets_autres || 0, fill: "black" },
+    ],
+    [dashboardData]
+  );
 
   console.log("chartData", chartData);
 
@@ -74,18 +81,19 @@ export default function Dashboard() {
     },
   };
 
-  const totalNombre = React.useMemo(() => {
+  const totalNombre = useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.nombre, 0);
-  }, []);
+  }, [chartData]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
+      <ToastContainer />
       {/* Fixed header with sky-blue background */}
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Tableau de Bord</h1>
       </div>
       {/* Fixed row at the top with space-between */}
-      <div className=" mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between ">
+      <div className="mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between">
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-red-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches Non Assignées</h1>
           <h1 className="text-3xl font-bold text-red-500">18</h1>
@@ -104,7 +112,7 @@ export default function Dashboard() {
         </div>
       </div>
       {/* Main content area with padding to avoid overlap with fixed row */}
-      <div className="flex-1 p-4 flex flex-row flex-wrap justify-around ">
+      <div className="flex-1 p-4 flex flex-row flex-wrap justify-around">
         {/* Tasks/Projects section */}
         <div className="bg-white border-l-4 border-sky-500 shadow-md rounded-lg p-6 max-w-md w-full mt-4 md:mt-0">
           <div className="flex flex-col space-y-6 w-full">
@@ -151,7 +159,7 @@ export default function Dashboard() {
           </div>
         </div>
         {/* Statistics section */}
-        <div className="bg-white flex flex-col shadow Brasileiras shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
+        <div className="bg-white flex flex-col shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
           <Card className="flex flex-col border-l-4 border-sky-500">
             <CardHeader className="items-center pb-0">
               <CardTitle className="text-xl font-bold text-sky-700">
