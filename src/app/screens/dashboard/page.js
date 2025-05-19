@@ -6,7 +6,7 @@ import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function Dashboard() {
-  const [dashboardData, setData] = useState([]);
+  const [dashboardData, setDashboardData] = useState([]);
 
   const getDashData = async () => {
     try {
@@ -17,7 +17,7 @@ export default function Dashboard() {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
-      setData(data);
+      setDashboardData(data.data);
       console.log("data", data);
       console.log("dashboardData", dashboardData);
     } catch (error) {
