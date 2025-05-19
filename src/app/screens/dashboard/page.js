@@ -18,7 +18,7 @@ export default function Dashboard() {
       }
       const data = await response.json();
       setDashboardData(data.data);
-      console.log("data", data);
+      console.log("data", data.data);
       console.log("dashboardData", dashboardData);
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
