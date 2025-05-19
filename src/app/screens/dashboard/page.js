@@ -1,14 +1,34 @@
 "use client";
-import React from "react";
+import React, { use ,useEffect,useState} from "react";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 import { Card,CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
+const [dashboardData,setData] = useState([]);
+
+const getDashData=async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/dashboard/`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      setData(data.data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des donnees:", error);
+      toast.error("Erreur lors de la récupération des donnees");
+    }
+  };
+  useEffect(() => {
+    getDashData();
+  }, []);
 const chartData = [
-  { status: "termines", nombre: 275, fill: "green" },
-  { status: "en_cours", nombre: 200, fill: "yellow" },
-  { status: "en_attente", nombre: 100, fill: "orange" },
+  { status: "termines", nombre: dashboardData.projets_termines, fill: "green" },
+  { status: "en_cours", nombre: dashboardData.projets_en_cours, fill: "yellow" },
+  { status: "en_attente", nombre: dashboardData.projets_non_demarres, fill: "orange" },
   { status: "annules", nombre: 50, fill: "red" },
   { status: "autres", nombre: 150, fill: "black" },
 ];
@@ -38,6 +58,9 @@ const chartConfig = {
     color: "black",
   },
 };
+
+
+
 
 export default function Dashboard() {
   const totalNombre = React.useMemo(() => {
