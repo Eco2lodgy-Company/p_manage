@@ -4,6 +4,7 @@ import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 import { Card,CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { console } from "inspector";
 
 
 
@@ -37,6 +38,7 @@ const chartData = [
   { status: "annules", nombre: 50, fill: "red" },
   { status: "autres", nombre: 150, fill: "black" },
 ];
+console.log("chartData",chartData);
 
 const chartConfig = {
   nombre: {
