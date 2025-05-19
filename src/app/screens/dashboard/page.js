@@ -31,7 +31,7 @@ export default function Dashboard() {
       }
       const data = await response.json();
       console.log("API Response:", data.data);
-      setDashboardData(data.data); // Use data.data[0] if array
+      setDashboardData(data.data[0]); // Use data.data[0] if array
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
       toast.error("Erreur lors de la récupération des donnees");
