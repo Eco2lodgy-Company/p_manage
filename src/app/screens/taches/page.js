@@ -349,7 +349,7 @@ export default function Tasks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map((task) => (
+                {tasks && tasks.map((task) => (
                   <TableRow
                     key={task.id}
                     className="hover:bg-gray-50 transition-colors"
