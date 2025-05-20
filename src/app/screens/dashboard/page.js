@@ -19,6 +19,8 @@ export default function Dashboard() {
     projets_non_demarres: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [latestTask,setLatestTasks]=useState([]);
+  const [latestProjects,setLatestProjects]=useState([]);
 
   const getDashData = async () => {
     setIsLoading(true);
@@ -32,6 +34,27 @@ export default function Dashboard() {
       const data = await response.json();
       console.log("API Response:", data.data);
       setDashboardData(data.data[0]); // Confirmed array access
+    } catch (error) {
+      console.error("Erreur lors de la récupération des donnees:", error);
+      toast.error("Erreur lors de la récupération des donnees");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getLatest = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/dashboard/prt`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      console.log("API Response:", data.data);
+      setLatestProjects(data.data[0]); // Confirmed array access
+      setLatestTasks(data.data[0]); // Confirmed array access
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
       toast.error("Erreur lors de la récupération des donnees");
