@@ -54,7 +54,7 @@ export default function Dashboard() {
       }
       const data = await response.json();
       console.log("API Response:", data.data);
-      setLatestProjects(data.prodata); // Confirmed array access
+      setLatestProjects(data); // Confirmed array access
       setLatestTasks(data.taskdata); 
       console.log("tasks",latestTask)
       console.log("projects",latestProjects)// Confirmed array access
