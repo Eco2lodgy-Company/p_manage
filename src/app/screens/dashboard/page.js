@@ -80,8 +80,8 @@ export default function Dashboard() {
   const chartData = useMemo(
     () => [
       { status: "termines", nombre: parseInt(dashboardData.projets_termines )|| 0, fill: "green" },
-      { status: "en_cours", nombre: dashboardData.projets_en_cours || 0, fill: "yellow" },
-      { status: "en_attente", nombre: dashboardData.projets_non_demarres || 0, fill: "orange" },
+      { status: "en_cours", nombre: parseInt(dashboardData.projets_en_cours) || 0, fill: "yellow" },
+      { status: "en_attente", nombre: parent(dashboardData.projets_non_demarres) || 0, fill: "orange" },
       { status: "annules", nombre: 0, fill: "red" },
       { status: "autres", nombre: 0, fill: "black" },
     ],
