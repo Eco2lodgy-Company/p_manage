@@ -352,7 +352,8 @@ export default function Tasks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks && tasks.map((task) => (
+                {tasks && tasks.length >0 ? 
+                (tasks.map((task) => (
                   <TableRow
                     key={task.id}
                     className="hover:bg-gray-50 transition-colors"
@@ -393,8 +394,14 @@ export default function Tasks() {
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)
+                )):(
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center">
+                        Aucune tâche trouvée.
+                      </TableCell>
+                    </TableRow>
+                  )}
               </TableBody>
             </Table>
           </div>
