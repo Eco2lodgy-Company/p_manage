@@ -6,6 +6,7 @@ import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { console } from "inspector";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState({
@@ -53,8 +54,10 @@ export default function Dashboard() {
       }
       const data = await response.json();
       console.log("API Response:", data.data);
-      setLatestProjects(data.data[0]); // Confirmed array access
-      setLatestTasks(data.data[0]); // Confirmed array access
+      setLatestProjects(data.prodata); // Confirmed array access
+      setLatestTasks(data.taskdata); 
+      console.log("tasks",latestTask)
+      console.log("projects",latestProjects)// Confirmed array access
     } catch (error) {
       console.error("Erreur lors de la récupération des donnees:", error);
       toast.error("Erreur lors de la récupération des donnees");
