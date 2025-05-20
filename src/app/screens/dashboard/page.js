@@ -96,6 +96,14 @@ export default function Dashboard() {
     annules: { label: "Annulés", color: "red" },
     autres: { label: "Autres", color: "black" },
   };
+  const getstatusname = (name) => {
+    const statusNames = {
+      done: "Terminés",
+      in_progress: "En Cours",
+      pending: "En Attente",    
+    };
+    return statusNames[name] || name;
+  };
 
   const totalNombre = useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.nombre, 0);
@@ -145,7 +153,7 @@ export default function Dashboard() {
                           task.state === "Terminée" ? "bg-green-500" : "bg-yellow-500"
                         }`}
                       >
-                        {task.state || "Unknown"}
+                        {getstatusname(task.state) || "Unknown"}
                       </div>
                     </div>
                   ))
@@ -171,7 +179,7 @@ export default function Dashboard() {
                           project.state === "done" ? "bg-green-500" : "bg-yellow-500"
                         }`}
                       >
-                        {project.state || "Unknown"}
+                        {getstatusname(project.state) || "Unknown"}
                       </div>
                     </div>
                   ))
