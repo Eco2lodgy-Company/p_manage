@@ -82,8 +82,7 @@ export default function Dashboard() {
       { status: "termines", nombre: parseInt(dashboardData.projets_termines )|| 0, fill: "green" },
       { status: "en_cours", nombre: parseInt(dashboardData.projets_en_cours) || 0, fill: "yellow" },
       { status: "en_attente", nombre: parseInt(dashboardData.projets_non_demarres) || 0, fill: "orange" },
-      { status: "annules", nombre: 0, fill: "red" },
-      { status: "autres", nombre: 0, fill: "black" },
+      
     ],
     [dashboardData]
   );
@@ -93,8 +92,7 @@ export default function Dashboard() {
     termines: { label: "Terminés", color: "green" },
     en_cours: { label: "En Cours", color: "yellow" },
     en_attente: { label: "En Attente", color: "orange" },
-    annules: { label: "Annulés", color: "red" },
-    autres: { label: "Autres", color: "black" },
+  
   };
   const getstatusname = (name) => {
     const statusNames = {

@@ -269,19 +269,7 @@ export default function Tasks() {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="project" className="text-right">
-                    Projet
-                  </Label>
-                  <Input
-                    id="project"
-                    value={formData.id_projet}
-                    onChange={(e) =>
-                      setFormData({ ...formData, id_projet: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="startDate" className="text-right">
                     Date de début
@@ -310,32 +298,7 @@ export default function Tasks() {
                     className="col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="precedence" className="text-right">
-                    Précédence
-                  </Label>
-                  <Input
-                    id="precedence"
-                    value={formData.precedence}
-                    onChange={(e) =>
-                      setFormData({ ...formData, precedence: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="asign_to" className="text-right">
-                    Assignée à
-                  </Label>
-                  <Input
-                    id="asign_to"
-                    value={formData.asign_to}
-                    onChange={(e) =>
-                      setFormData({ ...formData, asign_to: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
+               
               </div>
               <DialogFooter>
                 <Button
