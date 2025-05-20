@@ -56,8 +56,8 @@ export default function Dashboard() {
 
       // Adjust based on actual API response structure
       // Example: If response is { projects: [], tasks: [] }
-      setLatestProjects(data.projects || []); // Extract projects
-      setLatestTasks(data.tasks || []); // Extract tasks
+      setLatestProjects(data || []); // Extract projects
+      setLatestTasks(data || []); // Extract tasks
     } catch (error) {
       console.error("Erreur lors de la récupération des données:", error);
       toast.error("Erreur lors de la récupération des données");
