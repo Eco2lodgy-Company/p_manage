@@ -70,7 +70,7 @@ export default function Tasks() {
       // id: `T${(tasks.length + 1).toString().padStart(3, "0")}`,
       titre: formData.titre,
       description: formData.description,
-      id_projet: formData.id_projet,
+      // id_projet: formData.id_projet,
       start_date: formData.start_date,
       echeance: formData.echeance,
     };
