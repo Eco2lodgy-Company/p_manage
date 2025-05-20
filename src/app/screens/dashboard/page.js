@@ -165,13 +165,13 @@ export default function Dashboard() {
                       key={index}
                       className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
                     >
-                      <h3 className="text-md font-semibold text-gray-800">{project.name || "Unnamed Project"}</h3>
+                      <h3 className="text-md font-semibold text-gray-800">{project.nom || "Unnamed Project"}</h3>
                       <div
                         className={`rounded-full px-3 py-1 text-white text-sm ${
-                          project.status === "Terminée" ? "bg-green-500" : "bg-yellow-500"
+                          project.state === "done" ? "bg-green-500" : "bg-yellow-500"
                         }`}
                       >
-                        {project.status || "Unknown"}
+                        {project.state || "Unknown"}
                       </div>
                     </div>
                   ))
