@@ -6,7 +6,6 @@ import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// import { console } from "inspector";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState({
@@ -20,8 +19,8 @@ export default function Dashboard() {
     projets_non_demarres: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [latestTask,setLatestTasks]=useState([]);
-  const [latestProjects,setLatestProjects]=useState([]);
+  const [latestTasks, setLatestTasks] = useState([]);
+  const [latestProjects, setLatestProjects] = useState([]);
 
   const getDashData = async () => {
     setIsLoading(true);
@@ -33,11 +32,11 @@ export default function Dashboard() {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
-      console.log("API Response:", data.data);
-      setDashboardData(data.data[0]); // Confirmed array access
+      console.log("Dashboard API Response:", data.data);
+      setDashboardData(data.data[0]); // Assuming data.data is an array
     } catch (error) {
-      console.error("Erreur lors de la récupération des donnees:", error);
-      toast.error("Erreur lors de la récupération des donnees");
+      console.error("Erreur lors de la récupération des données:", error);
+      toast.error("Erreur lors de la récupération des données");
     } finally {
       setIsLoading(false);
     }
@@ -53,16 +52,15 @@ export default function Dashboard() {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
-      console.log("API Response:", data);
+      console.log("Latest API Response:", data);
 
-      setLatestProjects(data.prodata); // Confirmed array access
-      setLatestTasks(data.taskdata); 
-
-      console.log("tasks",latestTask)
-      console.log("projects",latestProjects)// Confirmed array access
+      // Adjust based on actual API response structure
+      // Example: If response is { projects: [], tasks: [] }
+      setLatestProjects(data.projects || []); // Extract projects
+      setLatestTasks(data.tasks || []); // Extract tasks
     } catch (error) {
-      console.error("Erreur lors de la récupération des donnees:", error);
-      toast.error("Erreur lors de la récupération des donnees");
+      console.error("Erreur lors de la récupération des données:", error);
+      toast.error("Erreur lors de la récupération des données");
     } finally {
       setIsLoading(false);
     }
@@ -73,9 +71,11 @@ export default function Dashboard() {
     getLatest();
   }, []);
 
+  // Debug state updates
   useEffect(() => {
-    console.log("Updated dashboardData:", dashboardData);
-  }, [dashboardData]);
+    console.log("Updated latestTasks:", latestTasks);
+    console.log("Updated latestProjects:", latestProjects);
+  }, [latestTasks, latestProjects]);
 
   const chartData = useMemo(
     () => [
@@ -88,32 +88,13 @@ export default function Dashboard() {
     [dashboardData]
   );
 
-  console.log("chartData", chartData);
-
   const chartConfig = {
-    nombre: {
-      label: "Nombre",
-    },
-    termines: {
-      label: "Terminés",
-      color: "green",
-    },
-    en_cours: {
-      label: "En Cours",
-      color: "yellow",
-    },
-    en_attente: {
-      label: "En Attente",
-      color: "orange",
-    },
-    annules: {
-      label: "Annulés",
-      color: "red",
-    },
-    autres: {
-      label: "Autres",
-      color: "black",
-    },
+    nombre: { label: "Nombre" },
+    termines: { label: "Terminés", color: "green" },
+    en_cours: { label: "En Cours", color: "yellow" },
+    en_attente: { label: "En Attente", color: "orange" },
+    annules: { label: "Annulés", color: "red" },
+    autres: { label: "Autres", color: "black" },
   };
 
   const totalNombre = useMemo(() => {
@@ -123,11 +104,9 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
       <ToastContainer />
-      {/* Fixed header with sky-blue background */}
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Tableau de Bord</h1>
       </div>
-      {/* Fixed row at the top with space-between */}
       <div className="mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between">
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-red-500 w-full sm:w-[48%] md:w-[23%] mb-4">
           <h1 className="text-lg font-bold text-sky-700">Tâches Non Assignées</h1>
@@ -146,54 +125,63 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-blue-500">{dashboardData.total_taches || 0}</h1>
         </div>
       </div>
-      {/* Main content area with padding to avoid overlap with fixed row */}
       <div className="flex-1 p-4 flex flex-row flex-wrap justify-around">
-        {/* Tasks/Projects section */}
         <div className="bg-white border-l-4 border-sky-500 shadow-md rounded-lg p-6 max-w-md w-full mt-4 md:mt-0">
           <div className="flex flex-col space-y-6 w-full">
             <div className="bg-sky-50 p-4 rounded-lg shadow-sm text-center border border-sky-200">
               <h2 className="text-xl font-bold text-sky-700">Tâches</h2>
               <div className="flex flex-col space-y-2 mt-4">
-                {[
-                  "Construction d'une maison R+1",
-                  "Construction d'une maison R+1",
-                  "Construction d'une maison R+1",
-                ].map((task, index) => (
-                  <div
-                    key={index}
-                    className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
-                  >
-                    <h3 className="text-md font-semibold text-gray-800">{task}</h3>
-                    <div className="bg-green-500 rounded-full px-3 py-1 text-white text-sm">
-                      Terminée
+                {isLoading ? (
+                  <div>Loading tasks...</div>
+                ) : latestTasks.length > 0 ? (
+                  latestTasks.map((task, index) => (
+                    <div
+                      key={index}
+                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
+                    >
+                      <h3 className="text-md font-semibold text-gray-800">{task.name || "Unnamed Task"}</h3>
+                      <div
+                        className={`rounded-full px-3 py-1 text-white text-sm ${
+                          task.status === "Terminée" ? "bg-green-500" : "bg-yellow-500"
+                        }`}
+                      >
+                        {task.status || "Unknown"}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div>No tasks available</div>
+                )}
               </div>
             </div>
             <div className="bg-sky-50 p-4 rounded-lg shadow-sm text-center border border-sky-200">
               <h2 className="text-xl font-bold text-sky-700">Projets</h2>
               <div className="flex flex-col space-y-2 mt-4">
-                {[
-                  "Construction d'une maison R+1",
-                  "Construction d'une maison R+1",
-                  "Construction d'une maison R+1",
-                ].map((project, index) => (
-                  <div
-                    key={index}
-                    className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
-                  >
-                    <h3 className="text-md font-semibold text-gray-800">{project}</h3>
-                    <div className="bg-green-500 rounded-full px-3 py-1 text-white text-sm">
-                      Terminée
+                {isLoading ? (
+                  <div>Loading projects...</div>
+                ) : latestProjects.length > 0 ? (
+                  latestProjects.map((project, index) => (
+                    <div
+                      key={index}
+                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
+                    >
+                      <h3 className="text-md font-semibold text-gray-800">{project.name || "Unnamed Project"}</h3>
+                      <div
+                        className={`rounded-full px-3 py-1 text-white text-sm ${
+                          project.status === "Terminée" ? "bg-green-500" : "bg-yellow-500"
+                        }`}
+                      >
+                        {project.status || "Unknown"}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div>No projects available</div>
+                )}
               </div>
             </div>
           </div>
         </div>
-        {/* Statistics section */}
         <div className="bg-white flex flex-col shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
           <Card className="flex flex-col border-l-4 border-sky-500">
             <CardHeader className="items-center pb-0">
@@ -206,10 +194,9 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="flex-1 pb-0">
               {isLoading ? (
-                <div>Loading...</div>
+                <div>Loading chart...</div>
               ) : (
                 <>
-                  {console.log("Rendering chart with chartData:", chartData)}
                   <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
                     <PieChart>
                       <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
@@ -252,22 +239,21 @@ export default function Dashboard() {
                       </Pie>
                     </PieChart>
                   </ChartContainer>
+                  <div className="flex flex-wrap justify-center gap-4 mt-4">
+                    {chartData.map((item) => (
+                      <div key={item.status} className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: chartConfig[item.status].color }}
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {chartConfig[item.status].label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
-              {/* Legend */}
-              <div className="flex flex-wrap justify-center gap-4 mt-4">
-                {chartData.map((item) => (
-                  <div key={item.status} className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: chartConfig[item.status].color }}
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      {chartConfig[item.status].label}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </CardContent>
             <CardFooter className="flex-col gap-2 text-sm">
               <div className="flex items-center gap-2 font-medium leading-none text-sky-700">
