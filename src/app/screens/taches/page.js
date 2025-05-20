@@ -80,6 +80,9 @@ export default function Tasks() {
       const response = await fetch(`http://alphatek.fr:3110/api/tasks/add`, {
         method: "POST",
         body: JSON.stringify(newTask),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
       // console.log("response",response.);
       if (!response.ok) {
