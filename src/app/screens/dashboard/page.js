@@ -6,7 +6,7 @@ import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { console } from "inspector";
+// import { console } from "inspector";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState({
@@ -68,6 +68,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     getDashData();
+    getLatest();
   }, []);
 
   useEffect(() => {
