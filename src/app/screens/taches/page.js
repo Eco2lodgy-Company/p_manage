@@ -45,7 +45,10 @@ export default function Tasks() {
 
    try{
         const response = await fetch(`http://alphatek.fr:3110/api/tasks/`, {
-          method: "GET"
+          method: "GET",
+           headers: {
+          "Content-Type": "application/json",
+        },
         });
         if (!response.ok) {
           throw new Error("erreur de réseau");
