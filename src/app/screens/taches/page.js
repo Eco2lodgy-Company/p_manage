@@ -338,7 +338,7 @@ export default function Tasks() {
                     Date de début
                   </TableHead>
                   <TableHead className="font-bold text-sky-700">
-                    Date de fin
+                    Echeance
                   </TableHead>
                   <TableHead className="font-bold text-sky-700">
                     Précédence
@@ -361,10 +361,10 @@ export default function Tasks() {
                     <TableCell className="font-medium">{task.id}</TableCell>
                     <TableCell>{task.titre}</TableCell>
                     <TableCell>{task.description}</TableCell>
-                    <TableCell>{task.id_projet || ""}</TableCell>
+                    <TableCell>{task.id_projet || "aucun"}</TableCell>
                     <TableCell>{task.start_date}</TableCell>
-                    <TableCell>{task.echeance}</TableCell>
-                    <TableCell>{task.precedence || ""}</TableCell>
+                    <TableCell>{task.echeance || "0"}</TableCell>
+                    <TableCell>{task.precedence || "-"}</TableCell>
                     <TableCell>{task.asign_to || ""}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
