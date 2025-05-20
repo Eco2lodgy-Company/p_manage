@@ -53,9 +53,11 @@ export default function Dashboard() {
         throw new Error("Erreur de réseau");
       }
       const data = await response.json();
-      console.log("API Response:", data.data);
-      setLatestProjects(data); // Confirmed array access
+      console.log("API Response:", data);
+
+      setLatestProjects(data.prodata); // Confirmed array access
       setLatestTasks(data.taskdata); 
+
       console.log("tasks",latestTask)
       console.log("projects",latestProjects)// Confirmed array access
     } catch (error) {
