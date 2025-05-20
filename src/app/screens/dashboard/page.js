@@ -139,13 +139,13 @@ export default function Dashboard() {
                       key={index}
                       className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
                     >
-                      <h3 className="text-md font-semibold text-gray-800">{task.name || "Unnamed Task"}</h3>
+                      <h3 className="text-md font-semibold text-gray-800">{task.nom || "Unnamed Task"}</h3>
                       <div
                         className={`rounded-full px-3 py-1 text-white text-sm ${
-                          task.status === "Terminée" ? "bg-green-500" : "bg-yellow-500"
+                          task.state === "Terminée" ? "bg-green-500" : "bg-yellow-500"
                         }`}
                       >
-                        {task.status || "Unknown"}
+                        {task.state || "Unknown"}
                       </div>
                     </div>
                   ))
