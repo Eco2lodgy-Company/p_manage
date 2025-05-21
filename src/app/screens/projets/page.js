@@ -271,6 +271,7 @@ const router = useRouter();
     setSelectedProject(project);
     // setIsViewOpen(true);
     router.push(`/details?id=${project.id}`);
+    localStorage.setItem("projectId", project.id);
   };
 
   const openDeleteModal = (project) => {

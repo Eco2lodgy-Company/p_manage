@@ -9,11 +9,11 @@ import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 export default function ProjectDetails() {
-  const { id } = useParams(); // Extract project ID from URL
+  const { ids } = useParams(); // Extract project ID from URL
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
-
+  const id=localStorage.getItem("projectId")
   // Fetch project details from API
   const fetchProjectDetails = async () => {
     try {
