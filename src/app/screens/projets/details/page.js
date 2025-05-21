@@ -17,7 +17,7 @@ export default function ProjectDetails() {
   // Fetch project details from API
   const fetchProjectDetails = async () => {
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/${id}`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
         method: "GET",
       });
       if (!response.ok) {
