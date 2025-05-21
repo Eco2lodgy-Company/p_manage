@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { useRouter } from "next/navigation";
 import crypto from "crypto";
-import localStorage from "localstorage-polyfill";
 import { toast } from "sonner";
 import {
   Table,
@@ -27,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, Edit, Share2, Eye } from "lucide-react";
+// import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
@@ -271,8 +271,12 @@ const router = useRouter();
   const openViewModal = (project) => {
     setSelectedProject(project);
     // setIsViewOpen(true);
-    router.push(`/details?id=${project.id}`);
-    localStorage.setItem("projectId", project.id);
+   
+    // localStorage.setItem("projectId", project.id);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('projectId', project.id);
+    }
+     router.push(`/details?id=${project.id}`);
   };
 
   const openDeleteModal = (project) => {

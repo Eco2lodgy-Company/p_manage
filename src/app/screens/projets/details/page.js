@@ -8,14 +8,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import localStorage from "localstorage-polyfill";
+// import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function ProjectDetails() {
-  const { ids } = useParams(); // Extract project ID from URL
+  const { id, setId } = useState(''); // Extract project ID from URL
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
-  const id=localStorage.getItem("projectId")
+  if (typeof window !== 'undefined') {
+      const id = localStorage.getItem('projectId') || '0';
+      setId(id)
+    }
   console.log("ID du projet:", id);
   // Fetch project details from API
   const fetchProjectDetails = async () => {
