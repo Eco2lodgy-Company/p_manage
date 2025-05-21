@@ -270,7 +270,7 @@ const router = useRouter();
   const openViewModal = (project) => {
     setSelectedProject(project);
     // setIsViewOpen(true);
-    router.push(`/details/${project.id}`);
+    router.push(`/details?id=${project.id}`);
   };
 
   const openDeleteModal = (project) => {
