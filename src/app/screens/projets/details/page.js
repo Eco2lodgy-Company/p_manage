@@ -21,34 +21,34 @@ export default function ProjectDetails() {
     }
   console.log("ID du projet:", id);
   // Fetch project details from API
-  const fetchProjectDetails = async () => {
-    try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
-        method: "GET",
-      });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
-      const data = await response.json();
-      if (data.data) {
-        // Assuming the API returns project data with tasks
-        setProjectData(data.data);
-        console.log("Données du projet:", projectData);
-      } else {
-        toast.error("Projet non trouvé");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des détails du projet:", error);
-      toast.error("Erreur lors de la récupération des détails du projet");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchProjectDetails = async () => {
+  //   try {
+  //     const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+  //       method: "GET",
+  //     });
+  //     if (!response.ok) {
+  //       throw new Error("Erreur de réseau");
+  //     }
+  //     const data = await response.json();
+  //     if (data.data) {
+  //       // Assuming the API returns project data with tasks
+  //       setProjectData(data.data);
+  //       console.log("Données du projet:", projectData);
+  //     } else {
+  //       toast.error("Projet non trouvé");
+  //     }
+  //   } catch (error) {
+  //     console.error("Erreur lors de la récupération des détails du projet:", error);
+  //     toast.error("Erreur lors de la récupération des détails du projet");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
-    if (id) {
-      fetchProjectDetails();
-    }
+    // if (id) {
+    //   fetchProjectDetails();
+    // }
   }, [id]);
 
   // If loading, show a loading state
