@@ -32,7 +32,7 @@ export default function ProjectDetails() {
       const data = await response.json();
       if (data.data) {
         // Assuming the API returns project data with tasks
-        setProjectData(data.data);
+        setProjectData(data.data[0]);
         console.log("Données du projet:", projectData);
       } else {
         toast.error("Projet non trouvé");
