@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -7,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
+import localStorage from "localstorage-polyfill";
 
 export default function ProjectDetails() {
   const { ids } = useParams(); // Extract project ID from URL
@@ -14,6 +16,7 @@ export default function ProjectDetails() {
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
   const id=localStorage.getItem("projectId")
+  console.log("ID du projet:", id);
   // Fetch project details from API
   const fetchProjectDetails = async () => {
     try {
