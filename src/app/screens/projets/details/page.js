@@ -11,7 +11,7 @@ import { Toaster, toast } from "sonner";
 // import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function ProjectDetails() {
-  const { id, setId } = useState(''); // Extract project ID from URL
+  const { id, setId } = useState(); // Extract project ID from URL
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
@@ -21,29 +21,29 @@ export default function ProjectDetails() {
     }
   console.log("ID du projet:", id);
   // Fetch project details from API
-  // const fetchProjectDetails = async () => {
-  //   try {
-  //     const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
-  //       method: "GET",
-  //     });
-  //     if (!response.ok) {
-  //       throw new Error("Erreur de réseau");
-  //     }
-  //     const data = await response.json();
-  //     if (data.data) {
-  //       // Assuming the API returns project data with tasks
-  //       setProjectData(data.data);
-  //       console.log("Données du projet:", projectData);
-  //     } else {
-  //       toast.error("Projet non trouvé");
-  //     }
-  //   } catch (error) {
-  //     console.error("Erreur lors de la récupération des détails du projet:", error);
-  //     toast.error("Erreur lors de la récupération des détails du projet");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const fetchProjectDetails = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      if (data.data) {
+        // Assuming the API returns project data with tasks
+        setProjectData(data.data);
+        console.log("Données du projet:", projectData);
+      } else {
+        toast.error("Projet non trouvé");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails du projet:", error);
+      toast.error("Erreur lors de la récupération des détails du projet");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // if (id) {
