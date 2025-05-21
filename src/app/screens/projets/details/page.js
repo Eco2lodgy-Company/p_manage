@@ -23,7 +23,7 @@ export default function ProjectDetails() {
   // Fetch project details from API
   const fetchProjectDetails = async () => {
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=2`, {
         method: "GET",
       });
       if (!response.ok) {
@@ -46,10 +46,10 @@ export default function ProjectDetails() {
   };
 
   useEffect(() => {
-    // if (id) {
-    //   fetchProjectDetails();
-    // }
-  }, [id]);
+    
+      fetchProjectDetails();
+    
+  }, []);
 
   // If loading, show a loading state
   if (loading) {
