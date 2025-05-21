@@ -265,10 +265,11 @@ export default function Projects() {
     });
     setIsShareOpen(true);
   };
-
+const router = useRouter();
   const openViewModal = (project) => {
     setSelectedProject(project);
-    setIsViewOpen(true);
+    // setIsViewOpen(true);
+    router.push(`/details/${project.id}`);
   };
 
   const openDeleteModal = (project) => {
