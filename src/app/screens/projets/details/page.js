@@ -33,6 +33,7 @@ export default function ProjectDetails() {
       if (data.data) {
         // Assuming the API returns project data with tasks
         setProjectData(data.data);
+        console.log("Données du projet:", projectData);
       } else {
         toast.error("Projet non trouvé");
       }
