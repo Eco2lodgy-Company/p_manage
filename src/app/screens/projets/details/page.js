@@ -1,100 +1,103 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
-
-// Sample project data (replace with API call)
-const projectData = {
-  id: "INV001",
-  title: "Project Alpha",
-  description: "Building a residential complex",
-  amount: 250.0,
-  status: "En Cours",
-  startDate: "2024-01-01",
-  endDate: "2024-06-30",
-  tasks: [
-    {
-      id: "T001",
-      name: "Foundation Work",
-      startDate: "2024-01-01",
-      endDate: "Interpellation sur le chantier",
-      status: "Terminée",
-      dependencies: [],
-    },
-    {
-      id: "T002",
-      name: "Structural Framing",
-      startDate: "2024-02-16",
-      endDate: "2024-04-01",
-      status: "En Cours",
-      dependencies: ["T001"],
-    },
-    {
-      id: "T003",
-      name: "Interior Finishing",
-      startDate: "2024-04-02",
-      endDate: "2024-06-30",
-      status: "En Attente",
-      dependencies: ["T002"],
-    },
-  ],
-};
-
-// Convert dates to days for Gantt chart
-const ganttData = projectData.tasks.map((task) => {
-  const start = new Date(task.startDate);
-  const end = new Date(task.endDate);
-  const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
-  return {
-    name: task.name,
-    start: start.toISOString().split("T")[0],
-    duration: duration > 0 ? duration : 1, // Ensure positive duration
-    status: task.status,
-  };
-});
+import { Toaster, toast } from "sonner";
 
 export default function ProjectDetails() {
-  const { id } = "INV001";
+  const { id } = useParams(); // Extract project ID from URL
+  const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
+  const [loading, setLoading] = useState(true);
 
-  // Check if project exists
-//   if (id !== projectData.id) {
-//     return (
-//       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
-//         <h1 className="text-2xl font-bold text-sky-700">Projet non trouvé</h1>
-//       </div>
-//     );
-//   }
+  // Fetch project details from API
+  const fetchProjectDetails = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/${id}`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      if (data.data) {
+        // Assuming the API returns project data with tasks
+        setProjectData(data.data);
+      } else {
+        toast.error("Projet non trouvé");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails du projet:", error);
+      toast.error("Erreur lors de la récupération des détails du projet");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // PERT chart node positions (hardcoded for simplicity)
-  const pertNodes = projectData.tasks.map((task, index) => ({
+  useEffect(() => {
+    if (id) {
+      fetchProjectDetails();
+    }
+  }, [id]);
+
+  // If loading, show a loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
+        <h1 className="text-2xl font-bold text-sky-700">Chargement...</h1>
+      </div>
+    );
+  }
+
+  // If no project data, show not found
+  if (!projectData) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
+        <h1 className="text-2xl font-bold text-sky-700">Projet non trouvé</h1>
+      </div>
+    );
+  }
+
+  // Convert tasks to Gantt chart data
+  const ganttData = projectData.tasks?.map((task) => {
+    const start = new Date(task.startDate);
+    const end = new Date(task.endDate);
+    const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
+    return {
+      name: task.name,
+      start: start.toISOString().split("T")[0],
+      duration: duration > 0 ? duration : 1,
+      status: task.status,
+    };
+  }) || [];
+
+  // PERT chart node positions
+  const pertNodes = projectData.tasks?.map((task, index) => ({
     id: task.id,
     name: task.name,
     x: 100 + index * 150,
     y: 100 + (index % 2) * 100,
-  }));
+  })) || [];
 
-  const pertEdges = projectData.tasks.flatMap((task) =>
-    task.dependencies.map((depId) => {
+  const pertEdges = projectData.tasks?.flatMap((task) =>
+    task.dependencies?.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
       const toNode = pertNodes.find((n) => n.id === task.id);
       return { from: fromNode, to: toNode };
-    })
-  );
+    }) || []
+  ) || [];
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
-      {/* Fixed header */}
+      <Toaster />
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Détails du Projet: {projectData.title}</h1>
       </div>
-      {/* Main content */}
       <div className="flex-1 p-6 mt-16 flex flex-col items-center">
-        {/* Project Details Card */}
         <Card className="w-full max-w-4xl mb-6 border-l-4 border-sky-500 bg-white shadow-md">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-sky-700">
@@ -117,13 +120,13 @@ export default function ProjectDetails() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Montant ($)</p>
-                <p className="text-lg text-gray-800">{projectData.amount.toFixed(2)}</p>
+                <p className="text-lg text-gray-800">{projectData.amount?.toFixed(2) || "N/A"}</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Statut</p>
                 <p className="text-lg text-gray-800 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  {projectData.status}
+                  {projectData.status || "N/A"}
                 </p>
               </div>
               <div>
@@ -136,7 +139,6 @@ export default function ProjectDetails() {
           </CardContent>
         </Card>
 
-        {/* Tasks Table */}
         <Card className="w-full max-w-4xl mb-6 bg-white shadow-md border-l-4 border-sky-500">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-sky-700">Tâches</CardTitle>
@@ -153,7 +155,7 @@ export default function ProjectDetails() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projectData.tasks.map((task) => (
+                  {projectData.tasks?.map((task) => (
                     <TableRow
                       key={task.id}
                       className="hover:bg-sky-100 transition-colors"
@@ -177,14 +179,13 @@ export default function ProjectDetails() {
                         {task.startDate} - {task.endDate}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) || <TableRow><TableCell colSpan={4}>Aucune tâche disponible</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
 
-        {/* Chart Tabs */}
         <Card className="w-full max-w-4xl bg-white shadow-md border-l-4 border-sky-500">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-sky-700">
@@ -250,20 +251,18 @@ export default function ProjectDetails() {
                         <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
                       </marker>
                     </defs>
-                    {/* Edges */}
                     {pertEdges.map((edge, index) => (
                       <line
                         key={index}
-                        x1={edge.from.x}
-                        y1={edge.from.y}
-                        x2={edge.to.x}
-                        y2={edge.to.y}
+                        x1={edge.from?.x}
+                        y1={edge.from?.y}
+                        x2={edge.to?.x}
+                        y2={edge.to?.y}
                         stroke="#0ea5e9"
                         strokeWidth="2"
                         markerEnd="url(#arrow)"
                       />
                     ))}
-                    {/* Nodes */}
                     {pertNodes.map((node) => (
                       <g key={node.id}>
                         <circle
