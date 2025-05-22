@@ -98,7 +98,7 @@ function ProjectDetailsContent() {
   }
 
   // Convert tasks to Gantt chart data
-  const ganttData = tasks &&  tasks.length >0 ? tasks?.map((task) => {
+  const ganttData = tasks &&  tasks.length >0 ? (tasks?.map((task) => {
     const start = new Date(task.startDate);
     const end = new Date(task.endDate);
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
@@ -108,7 +108,7 @@ function ProjectDetailsContent() {
       duration: duration > 0 ? duration : 1,
       status: task.status,
     };
-  }) || [];
+  })): [];
 
   // PERT chart node positions
   const pertNodes = tasks?.map((task, index) => ({
