@@ -21,6 +21,8 @@ export default function ProjectDetails() {
       setLoading(false);
       console.log(id);
       toast.error('ID du projet non spécifié');
+      const id = localStorage.getItem('projectId') || '0';
+      console.log("local id ",id);
       return;
     }
 
