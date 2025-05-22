@@ -19,12 +19,13 @@ export default function ProjectDetails() {
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
   
-
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+ if (typeof window !== 'undefined') {
       const id = localStorage.getItem('projectId') || '0';
       setId(id)
     }
+  })
+  useEffect(() => {
    
   // Fetch project details from API
   const fetchProjectDetails = async () => {
@@ -52,7 +53,7 @@ export default function ProjectDetails() {
   };
       fetchProjectDetails();
     
-  }, []);
+  }, [id]);
 
   // If loading, show a loading state
   if (loading) {
