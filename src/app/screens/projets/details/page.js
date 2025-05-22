@@ -8,11 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
+import { useRouter } from 'next/router';
 // import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function ProjectDetails() {
   
   const [id, setId ] = useState(); // Extract project ID from URL
+  const router = useRouter();
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
