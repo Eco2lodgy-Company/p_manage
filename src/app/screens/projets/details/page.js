@@ -19,10 +19,11 @@ export default function ProjectDetails() {
   
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const id = localStorage.getItem('projectId') || '0';
-      setId(id)
-    }
+    // if (typeof window !== 'undefined') {
+    //   const id = localStorage.getItem('projectId') || '0';
+    //   setId(id)
+    // }
+    const { id } = router.query;
   console.log("ID du projet:", id);
   // Fetch project details from API
   const fetchProjectDetails = async () => {
