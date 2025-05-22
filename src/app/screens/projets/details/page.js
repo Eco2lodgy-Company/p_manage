@@ -1,85 +1,85 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { useRouter } from 'next/router';
-// import useLocalStorage from "@/lib/useLocalStorage";
+import { useRouter } from "next/navigation"; // Use App Router's useRouter
 
-export default function ProjectDetails() {
-  
-  const [id, setId ] = useState(); // Extract project ID from URL
- const searchParams = useSearchParams();
+// Component to handle useSearchParams with Suspense
+function ProjectDetailsContent() {
+  const searchParams = useSearchParams();
+  const [id, setId] = useState(null);
   const [projectData, setProjectData] = useState(null);
   const [tasks, setTasks] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-const id = searchParams.get('id');
-setId(id);
-  })
-  useEffect(() => {
-   
-  // Fetch project details from API
-  const fetchProjectDetails = async () => {
-    try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
-        method: "GET",
-      });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
-      const data = await response.json();
-      if (data.data) {
-        // Assuming the API returns project data with tasks
-        setProjectData(data.data[0]);
-        console.log("Données du projet:", projectData);
-      } else {
-        toast.error("Projet non trouvé");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des détails du projet:", error);
-      toast.error("Erreur lors de la récupération des détails du projet");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-   const fetchProjectTasks = async () => {
-    try {
-      const response = await fetch(`http://alphatek.fr:3110/api/tasks/forprojects/?id=${id}`, {
-        method: "GET",
-      });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
+  // Extract ID from searchParams
+  useEffect(() => {
+    const idFromParams = searchParams.get("id");
+    setId(idFromParams);
+  }, [searchParams]);
+
+  // Fetch project details and tasks
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProjectDetails = async () => {
+      try {
+        const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de réseau");
+        }
+        const data = await response.json();
+        if (data.data) {
+          setProjectData(data.data[0]);
+          console.log("Données du projet:", data.data[0]);
+        } else {
+          toast.error("Projet non trouvé");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des détails du projet:", error);
+        toast.error("Erreur lors de la récupération des détails du projet");
+      } finally {
+        setLoading(false);
       }
-      const data = await response.json();
-      if (data.data) {
-        // Assuming the API returns project data with tasks
-        setTasks(data.data[0]);
-        console.log("Données des taches:", tasks);
-      } else {
-        toast.error("taches non trouvé");
+    };
+
+    const fetchProjectTasks = async () => {
+      try {
+        const response = await fetch(`http://alphatek.fr:3110/api/tasks/forprojects/?id=${id}`, {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de réseau");
+        }
+        const data = await response.json();
+        if (data.data) {
+          setTasks(data.data[0]);
+          console.log("Données des tâches:", data.data[0]);
+        } else {
+          toast.error("Tâches non trouvées");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des tâches:", error);
+        toast.error("Erreur lors de la récupération des tâches");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des taches:", error);
-      toast.error("Erreur lors de la récupération des taches");
-    } finally {
-      setLoading(false);
-    }
-  };
-      fetchProjectDetails();
-      fetchProjectTasks();
-    
+    };
+
+    fetchProjectDetails();
+    fetchProjectTasks();
   }, [id]);
 
-  // If loading, show a loading state
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
@@ -88,7 +88,7 @@ setId(id);
     );
   }
 
-  // If no project data, show not found
+  // If no project data
   if (!projectData) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
@@ -328,5 +328,20 @@ setId(id);
         </Card>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function ProjectDetails() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
+          <h1 className="text-2xl font-bold text-sky-700">Chargement des paramètres...</h1>
+        </div>
+      }
+    >
+      <ProjectDetailsContent />
+    </Suspense>
   );
 }
