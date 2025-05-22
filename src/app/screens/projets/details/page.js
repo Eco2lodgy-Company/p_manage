@@ -112,8 +112,8 @@ function ProjectDetailsContent() {
 
   // PERT chart node positions
   const pertNodes = tasks?.map((task, index) => ({
-    id: task.id,
-    name: task.name,
+    id: task.id || 0,
+    name: task.name || "Tâche",
     x: 100 + index * 150,
     y: 100 + (index % 2) * 100,
   })) || [];
