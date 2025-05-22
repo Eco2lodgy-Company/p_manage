@@ -1,61 +1,59 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle } from "lucide-react";
-import { Toaster, toast } from "sonner";
-import { useRouter } from 'next/router';
-// import useLocalStorage from "@/lib/useLocalStorage";
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, CheckCircle } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
 
 export default function ProjectDetails() {
-  
-  const [id, setId ] = useState(); // Extract project ID from URL
-  // const router = useRouter();
+  const { id } = useParams(); // Extract id from dynamic route (e.g., /projets/details/[id])
   const [projectData, setProjectData] = useState(null);
-  const [activeTab, setActiveTab] = useState("gantt");
+  const [activeTab, setActiveTab] = useState('gantt');
   const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
- if (typeof window !== 'undefined') {
-      const id = localStorage.getItem('projectId') || '0';
-      setId(id)
-    }
-  })
-  useEffect(() => {
-   
-  // Fetch project details from API
-  const fetchProjectDetails = async () => {
-    try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
-        method: "GET",
-      });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
-      const data = await response.json();
-      if (data.data) {
-        // Assuming the API returns project data with tasks
-        setProjectData(data.data[0]);
-        console.log("Données du projet:", projectData);
-      } else {
-        toast.error("Projet non trouvé");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des détails du projet:", error);
-      toast.error("Erreur lors de la récupération des détails du projet");
-    } finally {
-      setLoading(false);
-    }
-  };
-      fetchProjectDetails();
-    
-  }, [id]);
 
-  // If loading, show a loading state
+  // Fetch project details when id is available
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      toast.error('ID du projet non spécifié');
+      return;
+    }
+
+    const fetchProjectDetails = async () => {
+      try {
+        const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+          method: 'GET',
+        });
+        if (!response.ok) {
+          throw new Error('Erreur de réseau');
+        }
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          setProjectData(data.data[0]);
+          console.log('Données du projet:', data.data[0]);
+          // Optionally save to localStorage for persistence
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('projectId', id);
+          }
+        } else {
+          toast.error('Projet non trouvé');
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des détails du projet:', error);
+        toast.error('Erreur lors de la récupération des détails du projet');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectDetails();
+  }, [id]); // Depend on id from useParams
+
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
@@ -64,7 +62,7 @@ export default function ProjectDetails() {
     );
   }
 
-  // If no project data, show not found
+  // No project data
   if (!projectData) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
@@ -80,7 +78,7 @@ export default function ProjectDetails() {
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
       name: task.name,
-      start: start.toISOString().split("T")[0],
+      start: start.toISOString().split('T')[0],
       duration: duration > 0 ? duration : 1,
       status: task.status,
     };
@@ -131,13 +129,13 @@ export default function ProjectDetails() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Montant ($)</p>
-                <p className="text-lg text-gray-800">{projectData.amount?.toFixed(2) || "N/A"}</p>
+                <p className="text-lg text-gray-800">{projectData.amount?.toFixed(2) || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Statut</p>
                 <p className="text-lg text-gray-800 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  {projectData.status || "N/A"}
+                  {projectData.status || 'N/A'}
                 </p>
               </div>
               <div>
@@ -176,11 +174,11 @@ export default function ProjectDetails() {
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-white text-sm ${
-                            task.status === "Terminée"
-                              ? "bg-green-500"
-                              : task.status === "En Cours"
-                              ? "bg-yellow-500"
-                              : "bg-orange-500"
+                            task.status === 'Terminée'
+                              ? 'bg-green-500'
+                              : task.status === 'En Cours'
+                              ? 'bg-yellow-500'
+                              : 'bg-orange-500'
                           }`}
                         >
                           {task.status}
