@@ -64,14 +64,14 @@ export default function ProjectDetails() {
       const data = await response.json();
       if (data.data) {
         // Assuming the API returns project data with tasks
-        setTasks(data.data[0]);
-        console.log("Données des projets:", tasks);
+        setTasks(data.data);
+        console.log("Données des taches:", tasks);
       } else {
-        toast.error("Projet non trouvé");
+        toast.error("taches non trouvé");
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des détails du projet:", error);
-      toast.error("Erreur lors de la récupération des détails du projet");
+      console.error("Erreur lors de la récupération des taches:", error);
+      toast.error("Erreur lors de la récupération des taches");
     } finally {
       setLoading(false);
     }
