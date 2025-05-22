@@ -104,7 +104,7 @@ function ProjectDetailsContent() {
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
       name: task.name,
-      start: start.toISOString().split("T")[0],
+      start: "start.toISOString()",
       duration: duration > 0 ? duration : 1,
       status: task.status,
     };
