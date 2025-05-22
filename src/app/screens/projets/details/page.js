@@ -16,6 +16,7 @@ export default function ProjectDetails() {
   const [id, setId ] = useState(); // Extract project ID from URL
   // const router = useRouter();
   const [projectData, setProjectData] = useState(null);
+  const [tasks, setTasks] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
   
@@ -51,7 +52,32 @@ export default function ProjectDetails() {
       setLoading(false);
     }
   };
+
+   const fetchProjectTasks = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/tasks/forprojects/?id=${id}`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      if (data.data) {
+        // Assuming the API returns project data with tasks
+        setTasks(data.data[0]);
+        console.log("Données du projet:", projectData);
+      } else {
+        toast.error("Projet non trouvé");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails du projet:", error);
+      toast.error("Erreur lors de la récupération des détails du projet");
+    } finally {
+      setLoading(false);
+    }
+  };
       fetchProjectDetails();
+      fetchProjectTasks();
     
   }, [id]);
 
@@ -74,7 +100,7 @@ export default function ProjectDetails() {
   }
 
   // Convert tasks to Gantt chart data
-  const ganttData = projectData.tasks?.map((task) => {
+  const ganttData = tasks?.map((task) => {
     const start = new Date(task.startDate);
     const end = new Date(task.endDate);
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
@@ -87,7 +113,7 @@ export default function ProjectDetails() {
   }) || [];
 
   // PERT chart node positions
-  const pertNodes = projectData.tasks?.map((task, index) => ({
+  const pertNodes = tasks?.map((task, index) => ({
     id: task.id,
     name: task.name,
     x: 100 + index * 150,
