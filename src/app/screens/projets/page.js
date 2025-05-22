@@ -276,6 +276,8 @@ const router = useRouter();
     if (typeof window !== 'undefined') {
       localStorage.setItem('projectId', project.id);
     }
+    const id = localStorage.getItem('projectId') || '0';
+    console.log("local id ",id);
      router.push(`projets/details?id=${project.id}`);
   };
 

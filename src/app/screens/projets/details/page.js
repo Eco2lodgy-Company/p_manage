@@ -14,19 +14,18 @@ import { useRouter } from 'next/router';
 export default function ProjectDetails() {
   
   const [id, setId ] = useState(); // Extract project ID from URL
-  const router = useRouter();
+  // const router = useRouter();
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
   
 
   useEffect(() => {
-    // if (typeof window !== 'undefined') {
-    //   const id = localStorage.getItem('projectId') || '0';
-    //   setId(id)
-    // }
-    const { id } = router.query;
-  console.log("ID du projet:", id);
+    if (typeof window !== 'undefined') {
+      const id = localStorage.getItem('projectId') || '0';
+      setId(id)
+    }
+   
   // Fetch project details from API
   const fetchProjectDetails = async () => {
     try {
