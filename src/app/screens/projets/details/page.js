@@ -14,17 +14,15 @@ import { useRouter } from 'next/router';
 export default function ProjectDetails() {
   
   const [id, setId ] = useState(); // Extract project ID from URL
-  // const router = useRouter();
+ const searchParams = useSearchParams();
   const [projectData, setProjectData] = useState(null);
   const [tasks, setTasks] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
- if (typeof window !== 'undefined') {
-      const id = localStorage.getItem('projectId') || '0';
-      setId(id)
-    }
+const id = searchParams.get('id');
+setId(id);
   })
   useEffect(() => {
    
