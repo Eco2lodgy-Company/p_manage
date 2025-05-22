@@ -11,7 +11,7 @@ import { Toaster, toast } from "sonner";
 // import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function ProjectDetails() {
-  const { id, setId } = useState(); // Extract project ID from URL
+  const [id, setId ] = useState(); // Extract project ID from URL
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
