@@ -1,67 +1,61 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, CheckCircle } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, CheckCircle } from "lucide-react";
+import { Toaster, toast } from "sonner";
+import { useRouter } from 'next/router';
+// import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function ProjectDetails() {
-  const params = useParams(); // For dynamic route (/projets/details/[id])
-  const searchParams = useSearchParams(); // For query params (?id=123)
-  const id = params?.id || searchParams.get('id'); // Try dynamic route first, then query param
+  
+  const [id, setId ] = useState(); // Extract project ID from URL
+  // const router = useRouter();
   const [projectData, setProjectData] = useState(null);
-  const [activeTab, setActiveTab] = useState('gantt');
+  const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
-
-  // Debug id value
+  
   useEffect(() => {
-    console.log('ID from URL:', id);
-  }, [id]);
-
-  // Fetch project details when id is available
-  useEffect(() => {
-    if (!id || id === '0') {
-      setLoading(false);
-      toast.error('ID du projet non spécifié ou invalide');
-      return;
+ if (typeof window !== 'undefined') {
+      const id = localStorage.getItem('projectId') || '0';
+      setId(id)
     }
-
-    const fetchProjectDetails = async () => {
-      try {
-        console.log('Fetching project with ID:', id);
-        const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
-          method: 'GET',
-        });
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('API Response:', data);
-        if (data.data && data.data.length > 0) {
-          setProjectData(data.data[0]);
-          // Optional: Save to localStorage for persistence
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('projectId', id);
-          }
-        } else {
-          toast.error('Projet non trouvé');
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des détails du projet:', error);
-        toast.error(`Erreur: ${error.message}`);
-      } finally {
-        setLoading(false);
+  })
+  useEffect(() => {
+   
+  // Fetch project details from API
+  const fetchProjectDetails = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
       }
-    };
-
-    fetchProjectDetails();
+      const data = await response.json();
+      if (data.data) {
+        // Assuming the API returns project data with tasks
+        setProjectData(data.data[0]);
+        console.log("Données du projet:", projectData);
+      } else {
+        toast.error("Projet non trouvé");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails du projet:", error);
+      toast.error("Erreur lors de la récupération des détails du projet");
+    } finally {
+      setLoading(false);
+    }
+  };
+      fetchProjectDetails();
+    
   }, [id]);
 
-  // Loading state
+  // If loading, show a loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
@@ -70,7 +64,7 @@ export default function ProjectDetails() {
     );
   }
 
-  // No project data
+  // If no project data, show not found
   if (!projectData) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
@@ -80,39 +74,33 @@ export default function ProjectDetails() {
   }
 
   // Convert tasks to Gantt chart data
-  const ganttData = projectData.tasks?.length
-    ? projectData.tasks.map((task) => {
-        const start = new Date(task.startDate);
-        const end = new Date(task.endDate);
-        const duration = (end - start) / (1000 * 60 * 60 * 24);
-        return {
-          name: task.name,
-          start: start.toISOString().split('T')[0],
-          duration: duration > 0 ? duration : 1,
-          status: task.status,
-        };
-      })
-    : [];
+  const ganttData = projectData.tasks?.map((task) => {
+    const start = new Date(task.startDate);
+    const end = new Date(task.endDate);
+    const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
+    return {
+      name: task.name,
+      start: start.toISOString().split("T")[0],
+      duration: duration > 0 ? duration : 1,
+      status: task.status,
+    };
+  }) || [];
 
   // PERT chart node positions
-  const pertNodes = projectData.tasks?.length
-    ? projectData.tasks.map((task, index) => ({
-        id: task.id,
-        name: task.name,
-        x: 100 + index * 150,
-        y: 100 + (index % 2) * 100,
-      }))
-    : [];
+  const pertNodes = projectData.tasks?.map((task, index) => ({
+    id: task.id,
+    name: task.name,
+    x: 100 + index * 150,
+    y: 100 + (index % 2) * 100,
+  })) || [];
 
-  const pertEdges = projectData.tasks?.length
-    ? projectData.tasks.flatMap((task) =>
-        task.dependencies?.map((depId) => {
-          const fromNode = pertNodes.find((n) => n.id === depId);
-          const toNode = pertNodes.find((n) => n.id === task.id);
-          return { from: fromNode, to: toNode };
-        }) || []
-      )
-    : [];
+  const pertEdges = projectData.tasks?.flatMap((task) =>
+    task.dependencies?.map((depId) => {
+      const fromNode = pertNodes.find((n) => n.id === depId);
+      const toNode = pertNodes.find((n) => n.id === task.id);
+      return { from: fromNode, to: toNode };
+    }) || []
+  ) || [];
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
@@ -143,13 +131,13 @@ export default function ProjectDetails() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Montant ($)</p>
-                <p className="text-lg text-gray-800">{projectData.amount?.toFixed(2) || 'N/A'}</p>
+                <p className="text-lg text-gray-800">{projectData.amount?.toFixed(2) || "N/A"}</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Statut</p>
                 <p className="text-lg text-gray-800 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  {projectData.status || 'N/A'}
+                  {projectData.status || "N/A"}
                 </p>
               </div>
               <div>
@@ -178,37 +166,31 @@ export default function ProjectDetails() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projectData.tasks?.length ? (
-                    projectData.tasks.map((task) => (
-                      <TableRow
-                        key={task.id}
-                        className="hover:bg-sky-100 transition-colors"
-                      >
-                        <TableCell>{task.id}</TableCell>
-                        <TableCell>{task.name}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded-full text-white text-sm ${
-                              task.status === 'Terminée'
-                                ? 'bg-green-500'
-                                : task.status === 'En Cours'
-                                ? 'bg-yellow-500'
-                                : 'bg-orange-500'
-                            }`}
-                          >
-                            {task.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {task.startDate} - {task.endDate}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4}>Aucune tâche disponible</TableCell>
+                  {projectData.tasks?.map((task) => (
+                    <TableRow
+                      key={task.id}
+                      className="hover:bg-sky-100 transition-colors"
+                    >
+                      <TableCell>{task.id}</TableCell>
+                      <TableCell>{task.name}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-white text-sm ${
+                            task.status === "Terminée"
+                              ? "bg-green-500"
+                              : task.status === "En Cours"
+                              ? "bg-yellow-500"
+                              : "bg-orange-500"
+                          }`}
+                        >
+                          {task.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {task.startDate} - {task.endDate}
+                      </TableCell>
                     </TableRow>
-                  )}
+                  )) || <TableRow><TableCell colSpan={4}>Aucune tâche disponible</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
