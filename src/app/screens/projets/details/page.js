@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useRouter } from 'next/router';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,12 +11,15 @@ import { Toaster, toast } from "sonner";
 // import useLocalStorage from "@/lib/useLocalStorage";
 
 export default function ProjectDetails() {
-  const router = useRouter();
+  
   const [id, setId ] = useState(); // Extract project ID from URL
   const [projectData, setProjectData] = useState(null);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
-  if (typeof window !== 'undefined') {
+  
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
       const id = localStorage.getItem('projectId') || '0';
       setId(id)
     }
@@ -46,28 +48,6 @@ export default function ProjectDetails() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (router.isReady) {
-      const { id } = router.query; // Extract id from URL (e.g., ?id=123)
-      if (id) {
-        setId(id);
-        // Optionally save to localStorage if needed for persistence
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('projectId', id);
-        }
-      } else {
-        // Fallback: Check localStorage if no id in URL
-        if (typeof window !== 'undefined') {
-          const storedId = localStorage.getItem('projectId') || '0';
-          setId(storedId);
-        }
-      }
-    }
-  }, [router.isReady, router.query]);
-
-  useEffect(() => {
-    
       fetchProjectDetails();
     
   }, []);
