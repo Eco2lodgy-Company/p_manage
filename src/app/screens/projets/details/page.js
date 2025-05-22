@@ -19,6 +19,7 @@ export default function ProjectDetails() {
   useEffect(() => {
     if (!id) {
       setLoading(false);
+      console.log(id);
       toast.error('ID du projet non spécifié');
       return;
     }
