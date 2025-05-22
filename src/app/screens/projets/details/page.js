@@ -190,7 +190,7 @@ function ProjectDetailsContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projectData.tasks?.map((task) => (
+                  {tasks && tasks?.map((task) => (
                     <TableRow
                       key={task.id}
                       className="hover:bg-sky-100 transition-colors"
