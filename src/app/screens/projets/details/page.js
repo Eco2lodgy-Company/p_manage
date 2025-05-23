@@ -215,7 +215,7 @@ function ProjectDetailsContent() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {task.startDate || ""} - {task.endDate || ""}
+                        {task.start_date || ""} - {task.end_date || ""}
                       </TableCell>
                     </TableRow>
                   )) : (
