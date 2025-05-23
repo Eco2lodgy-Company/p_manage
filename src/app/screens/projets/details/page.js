@@ -140,7 +140,18 @@ function ProjectDetailsContent() {
     }).filter(Boolean) : []
   ) : [];
 
-  
+const getstatename = (state) => {
+  switch (state) {
+    case "done":
+      return "Terminé";
+    case "in_progress":
+      return "En cours";
+    case "not_started":
+      return "Non commencé";
+    default:
+      return state;
+  }
+}
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
@@ -177,7 +188,7 @@ function ProjectDetailsContent() {
                 <p className="text-sm font-semibold text-gray-600">Statut</p>
                 <p className="text-lg text-gray-800 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  {projectData.state || "N/A"}
+                  {getstatename(projectData.state) || "N/A"}
                 </p>
               </div>
               <div>
@@ -232,7 +243,7 @@ function ProjectDetailsContent() {
                                 : "bg-orange-500"
                             }`}
                           >
-                            {task.state || "N/A"}
+                            {getstatename(task.state) || "N/A"}
                           </span>
                         </TableCell>
                         <TableCell>
