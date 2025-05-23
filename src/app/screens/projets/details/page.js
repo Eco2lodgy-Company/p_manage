@@ -206,31 +206,41 @@ function ProjectDetailsContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => (
-                    <TableRow
-                      key={task.id}
-                      className="hover:bg-sky-100 transition-colors"
-                    >
-                      <TableCell>{task.id || 0}</TableCell>
-                      <TableCell>{task.titre || ""}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-white text-sm ${
-                            task.status === "Terminée"
-                              ? "bg-green-500"
-                              : task.state === "En Cours"
-                              ? "bg-yellow-500"
-                              : "bg-orange-500"
-                          }`}
-                        >
-                          {task.status || "N/A"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {convertDate(task.start_date) || ""} - {convertDate(task.start_date)+task.echeance || ""}
-                      </TableCell>
-                    </TableRow>
-                  )) : (
+                  {Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
+                    // Calcul de la date de fin à partir de la date de début et de l'échéance (nombre de jours)
+                    const startDate = task.start_date ? new Date(task.start_date) : null;
+                    let endDate = "";
+                    if (startDate && !isNaN(startDate) && task.echeance) {
+                      const end = new Date(startDate);
+                      end.setDate(end.getDate() + Number(task.echeance));
+                      endDate = convertDate(end);
+                    }
+                    return (
+                      <TableRow
+                        key={task.id}
+                        className="hover:bg-sky-100 transition-colors"
+                      >
+                        <TableCell>{task.id || 0}</TableCell>
+                        <TableCell>{task.titre || ""}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded-full text-white text-sm ${
+                              task.status === "Terminée"
+                                ? "bg-green-500"
+                                : task.state === "En Cours"
+                                ? "bg-yellow-500"
+                                : "bg-orange-500"
+                            }`}
+                          >
+                            {task.status || "N/A"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {convertDate(task.start_date) || ""} - {endDate || ""}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }) : (
                     <TableRow>
                       <TableCell colSpan={4}>Aucune tâche disponible</TableCell>
                     </TableRow>
