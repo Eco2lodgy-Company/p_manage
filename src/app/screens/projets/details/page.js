@@ -200,13 +200,13 @@ function ProjectDetailsContent() {
                       className="hover:bg-sky-100 transition-colors"
                     >
                       <TableCell>{task.id || 0}</TableCell>
-                      <TableCell>{task.name || ""}</TableCell>
+                      <TableCell>{task.titre || ""}</TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-white text-sm ${
                             task.status === "Terminée"
                               ? "bg-green-500"
-                              : task.status === "En Cours"
+                              : task.state === "En Cours"
                               ? "bg-yellow-500"
                               : "bg-orange-500"
                           }`}
