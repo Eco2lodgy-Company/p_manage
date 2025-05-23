@@ -165,7 +165,7 @@ function ProjectDetailsContent() {
                 <p className="text-sm font-semibold text-gray-600">Statut</p>
                 <p className="text-lg text-gray-800 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  {projectData.status || "N/A"}
+                  {projectData.state || "N/A"}
                 </p>
               </div>
               <div>
