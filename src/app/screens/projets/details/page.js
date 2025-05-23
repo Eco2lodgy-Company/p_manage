@@ -171,7 +171,7 @@ function ProjectDetailsContent() {
               <div>
                 <p className="text-sm font-semibold text-gray-600">Dates</p>
                 <p className="text-lg text-gray-800">
-                  {projectData.startDate} - {projectData.endDate}
+                  {projectData.start_date} - {projectData.end_date}
                 </p>
               </div>
             </div>
@@ -215,7 +215,7 @@ function ProjectDetailsContent() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {task.start_date || ""} - {task.end_date || ""}
+                        {task.start_date || ""} - {task.start_date || ""}
                       </TableCell>
                     </TableRow>
                   )) : (
