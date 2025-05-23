@@ -99,11 +99,21 @@ function ProjectDetailsContent() {
       </div>
     );
   }
+  // Convert a date to "AAAA-MM-DD" format
+  const convertDate = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d)) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   // Convert tasks to Gantt chart data
   const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
     const start = new Date(task.start_date);
-    const end = new Date(task.start_date + task.duration); // Assuming duration is in days
+    const end = new Date(convertDate(task.start_date) + task.duration); // Assuming duration is in days
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
       name: task.titre || "Tâche",
@@ -173,7 +183,7 @@ function ProjectDetailsContent() {
               <div>
                 <p className="text-sm font-semibold text-gray-600">Dates</p>
                 <p className="text-lg text-gray-800">
-                  {projectData.start_date} - {projectData.end_date}
+                  {convertDate(projectData.start_date)} - {convertDate(projectData.end_date)}
                 </p>
               </div>
             </div>
@@ -217,7 +227,7 @@ function ProjectDetailsContent() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {task.start_date || ""} - {task.start_date || ""}
+                        {convertDate(task.start_date) || ""} - {convertDate(task.start_date)+task.echeance || ""}
                       </TableCell>
                     </TableRow>
                   )) : (
