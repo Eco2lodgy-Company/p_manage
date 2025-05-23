@@ -183,7 +183,7 @@ function ProjectDetailsContent() {
               <div>
                 <p className="text-sm font-semibold text-gray-600">Dates</p>
                 <p className="text-lg text-gray-800">
-                  {convertDate(projectData.start_date)} - {convertDate(projectData.end_date)}
+                  De +""+{convertDate(projectData.start_date)} à {convertDate(projectData.end_date)}
                 </p>
               </div>
             </div>
