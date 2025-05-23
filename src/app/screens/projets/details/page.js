@@ -5,17 +5,15 @@ import { useSearchParams } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { useRouter } from "next/navigation"; // Use App Router's useRouter
 
-// Component to handle useSearchParams with Suspense
 function ProjectDetailsContent() {
   const searchParams = useSearchParams();
   const [id, setId] = useState(null);
   const [projectData, setProjectData] = useState(null);
-  const [tasks, setTasks] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState("gantt");
   const [loading, setLoading] = useState(true);
 
@@ -61,14 +59,19 @@ function ProjectDetailsContent() {
           throw new Error("Erreur de réseau");
         }
         const data = await response.json();
-        if (data.data) {
-          setTasks(data.data[0]);
-          console.log("Données des tâches:", data.data[0]);
+        console.log("Raw tasks API response:", data);
+        // Convert data.data to an array if it's not already
+        const tasksArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+        if (tasksArray.length > 0) {
+          setTasks(tasksArray);
+          console.log("Tasks set:", tasksArray);
         } else {
-          toast.error("Tâches non trouvées");
+          setTasks([]);
+          toast.error("Tâches non trouvées ou format incorrect");
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des tâches:", error);
+        setTasks([]);
         toast.error("Erreur lors de la récupération des tâches");
       } finally {
         setLoading(false);
@@ -98,33 +101,34 @@ function ProjectDetailsContent() {
   }
 
   // Convert tasks to Gantt chart data
-  const ganttData = tasks &&  tasks.length >0 ? (tasks?.map((task) => {
+  const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
     const start = new Date(task.startDate);
     const end = new Date(task.endDate);
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
-      name: task.name,
-      start: "start.toISOString()",
+      name: task.name || "Tâche",
+      start: start.toISOString(), // Fixed: Use start.toISOString() correctly
       duration: duration > 0 ? duration : 1,
-      status: task.status,
+      status: task.status || "N/A",
     };
-  })): [];
+  }) : [];
 
   // PERT chart node positions
-  const pertNodes = tasks?.map((task, index) => ({
+  const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
     id: task.id || 0,
     name: task.name || "Tâche",
     x: 100 + index * 150,
     y: 100 + (index % 2) * 100,
-  })) || [];
+  })) : [];
 
-  const pertEdges = projectData.tasks?.flatMap((task) =>
-    task.dependencies?.map((depId) => {
+  // PERT chart edges
+  const pertEdges = Array.isArray(projectData.tasks) ? projectData.tasks.flatMap((task) =>
+    Array.isArray(task.dependencies) ? task.dependencies.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
       const toNode = pertNodes.find((n) => n.id === task.id);
-      return { from: fromNode, to: toNode };
-    }) || []
-  ) || [];
+      return fromNode && toNode ? { from: fromNode, to: toNode } : null;
+    }).filter(Boolean) : []
+  ) : [];
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
@@ -190,7 +194,7 @@ function ProjectDetailsContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tasks && tasks?.map((task) => (
+                  {Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => (
                     <TableRow
                       key={task.id}
                       className="hover:bg-sky-100 transition-colors"
@@ -214,7 +218,11 @@ function ProjectDetailsContent() {
                         {task.startDate || ""} - {task.endDate || ""}
                       </TableCell>
                     </TableRow>
-                  )) || <TableRow><TableCell colSpan={4}>Aucune tâche disponible</TableCell></TableRow>}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={4}>Aucune tâche disponible</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -245,82 +253,90 @@ function ProjectDetailsContent() {
               </TabsList>
               <TabsContent value="gantt" className="mt-4">
                 <div className="overflow-x-auto">
-                  <BarChart
-                    width={800}
-                    height={300}
-                    data={ganttData}
-                    layout="vertical"
-                    margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" dataKey="duration" hide />
-                    <YAxis type="category" dataKey="name" />
-                    <Tooltip
-                      formatter={(value, name, props) => [
-                        `${props.payload.start} (${value || 10} jours)`,
-                        props.payload.name,
-                      ]}
-                    />
-                    <Bar dataKey="duration" fill="#0ea5e9" />
-                  </BarChart>
+                  {ganttData.length > 0 ? (
+                    <BarChart
+                      width={800}
+                      height={300}
+                      data={ganttData}
+                      layout="vertical"
+                      margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" dataKey="duration" hide />
+                      <YAxis type="category" dataKey="name" />
+                      <Tooltip
+                        formatter={(value, name, props) => [
+                          `${props.payload.start} (${value || 10} jours)`,
+                          props.payload.name,
+                        ]}
+                      />
+                      <Bar dataKey="duration" fill="#0ea5e9" />
+                    </BarChart>
+                  ) : (
+                    <p className="text-gray-600">Aucune donnée disponible pour le diagramme de Gantt</p>
+                  )}
                 </div>
               </TabsContent>
               <TabsContent value="pert" className="mt-4">
                 <div className="overflow-x-auto">
-                  <svg
-                    width="800"
-                    height="300"
-                    role="img"
-                    aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
-                  >
-                    <defs>
-                      <marker
-                        id="arrow"
-                        viewBox="0 0 10 10"
-                        refX="5"
-                        refY="5"
-                        markerWidth="6"
-                        markerHeight="6"
-                        orient="auto-start-reverse"
-                      >
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
-                      </marker>
-                    </defs>
-                    {pertEdges.map((edge, index) => (
-                      <line
-                        key={index}
-                        x1={edge.from?.x}
-                        y1={edge.from?.y}
-                        x2={edge.to?.x}
-                        y2={edge.to?.y}
-                        stroke="#0ea5e9"
-                        strokeWidth="2"
-                        markerEnd="url(#arrow)"
-                      />
-                    ))}
-                    {pertNodes.map((node) => (
-                      <g key={node.id}>
-                        <circle
-                          cx={node.x}
-                          cy={node.y}
-                          r="30"
-                          fill="#bfdbfe"
+                  {pertNodes.length > 0 ? (
+                    <svg
+                      width="800"
+                      height="300"
+                      role="img"
+                      aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
+                    >
+                      <defs>
+                        <marker
+                          id="arrow"
+                          viewBox="0 0 10 10"
+                          refX="5"
+                          refY="5"
+                          markerWidth="6"
+                          markerHeight="6"
+                          orient="auto-start-reverse"
+                        >
+                          <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+                        </marker>
+                      </defs>
+                      {pertEdges.map((edge, index) => (
+                        <line
+                          key={index}
+                          x1={edge.from?.x}
+                          y1={edge.from?.y}
+                          x2={edge.to?.x}
+                          y2={edge.to?.y}
                           stroke="#0ea5e9"
                           strokeWidth="2"
+                          markerEnd="url(#arrow)"
                         />
-                        <text
-                          x={node.x}
-                          y={node.y}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fill="#1e3a8a"
-                          fontSize="12"
-                        >
-                          {node.name}
-                        </text>
-                      </g>
-                    ))}
-                  </svg>
+                      ))}
+                      {pertNodes.map((node) => (
+                        <g key={node.id}>
+                          <circle
+                            cx={node.x}
+                            cy={node.y}
+                            r="30"
+                            fill="#bfdbfe"
+                            stroke="#0ea5e9"
+                            strokeWidth="2"
+                          />
+                          <text
+                            x={node.x}
+                            y={node.y}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill="#1e3a8a"
+                            fontSize="12"
+                          >
+                            {node.name}
+                          </text>
+                        </g>
+                      ))}
+                    </svg>
+                  ) : (
+                    <p className="text-gray-600">Aucune donnée disponible pour le diagramme de PERT</p>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -331,7 +347,6 @@ function ProjectDetailsContent() {
   );
 }
 
-// Main component with Suspense boundary
 export default function ProjectDetails() {
   return (
     <Suspense
