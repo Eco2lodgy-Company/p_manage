@@ -195,8 +195,8 @@ function ProjectDetailsContent() {
                       key={task.id}
                       className="hover:bg-sky-100 transition-colors"
                     >
-                      <TableCell>{task.id}</TableCell>
-                      <TableCell>{task.name}</TableCell>
+                      <TableCell>{task.id || 0}</TableCell>
+                      <TableCell>{task.name || ""}</TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-white text-sm ${
@@ -207,11 +207,11 @@ function ProjectDetailsContent() {
                               : "bg-orange-500"
                           }`}
                         >
-                          {task.status}
+                          {task.status || "N/A"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {task.startDate} - {task.endDate}
+                        {task.startDate || ""} - {task.endDate || ""}
                       </TableCell>
                     </TableRow>
                   )) || <TableRow><TableCell colSpan={4}>Aucune tâche disponible</TableCell></TableRow>}
@@ -257,7 +257,7 @@ function ProjectDetailsContent() {
                     <YAxis type="category" dataKey="name" />
                     <Tooltip
                       formatter={(value, name, props) => [
-                        `${props.payload.start} (${value} jours)`,
+                        `${props.payload.start} (${value || 10} jours)`,
                         props.payload.name,
                       ]}
                     />
