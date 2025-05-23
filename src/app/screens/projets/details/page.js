@@ -225,14 +225,14 @@ function ProjectDetailsContent() {
                         <TableCell>
                           <span
                             className={`px-2 py-1 rounded-full text-white text-sm ${
-                              task.status === "Terminée"
+                              task.state === "done"
                                 ? "bg-green-500"
-                                : task.state === "En Cours"
+                                : task.state === "in_progress"
                                 ? "bg-yellow-500"
                                 : "bg-orange-500"
                             }`}
                           >
-                            {task.status || "N/A"}
+                            {task.state || "N/A"}
                           </span>
                         </TableCell>
                         <TableCell>
