@@ -102,14 +102,14 @@ function ProjectDetailsContent() {
 
   // Convert tasks to Gantt chart data
   const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
-    const start = new Date(task.startDate);
-    const end = new Date(task.endDate);
+    const start = new Date(task.start_date);
+    const end = new Date(task.start_date + task.duration); // Assuming duration is in days
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
       name: task.titre || "Tâche",
       start: start.toString(), // Fixed: Use start.toISOString() correctly
       duration: duration > 0 ? duration : 1,
-      status: task.status || "N/A",
+      status: task.state || "N/A",
     };
   }) : [];
 
@@ -129,6 +129,8 @@ function ProjectDetailsContent() {
       return fromNode && toNode ? { from: fromNode, to: toNode } : null;
     }).filter(Boolean) : []
   ) : [];
+
+  
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
