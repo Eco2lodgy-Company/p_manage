@@ -146,10 +146,10 @@ const getstatename = (state) => {
       return "Terminé";
     case "in_progress":
       return "En cours";
-    case "not_started":
-      return "Non commencé";
+    case "pending":
+      return "En attente";
     default:
-      return state;
+      return "En attente";
   }
 }
 
