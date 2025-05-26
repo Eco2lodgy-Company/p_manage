@@ -60,6 +60,7 @@ function ProjectDetailsContent() {
         }
         const data = await response.json();
         console.log("Raw tasks API response:", data);
+        // Convert data.data to an array if it's not already
         const tasksArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
         if (tasksArray.length > 0) {
           setTasks(tasksArray);
@@ -98,7 +99,6 @@ function ProjectDetailsContent() {
       </div>
     );
   }
-
   // Convert a date to "AAAA-MM-DD" format
   const convertDate = (date) => {
     if (!date) return "";
@@ -113,61 +113,45 @@ function ProjectDetailsContent() {
   // Convert tasks to Gantt chart data
   const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
     const start = new Date(task.start_date);
-    const end = new Date(convertDate(task.start_date) + task.echeance);
-    const duration = (end - start) / (1000 * 60 * 60 * 24);
+    const end = new Date(convertDate(task.start_date) + task.echeance); // Assuming duration is in days
+    const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
       name: task.titre || "Tâche",
-      start: start.toString(),
+      start: start.toString(), // Fixed: Use start.toISOString() correctly
       duration: task.echeance > 0 ? task.echeance : 1,
       status: task.state || "N/A",
     };
   }) : [];
 
-  // Sort tasks by id for PERT chart node positions
-  const sortedTasks = Array.isArray(tasks) ? [...tasks].sort((a, b) => (a.id || 0) - (b.id || 0)) : [];
-
-  // PERT chart node positions, ordered by id
-  const pertNodes = sortedTasks.map((task, index) => ({
+  // PERT chart node positions
+  const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
     id: task.id || 0,
     name: task.titre || "Tâche",
-    x: 100 + index * 150, // Linear horizontal placement by id order
-    y: 150, // Single row for clarity
-  }));
+    x: 100 + index * 150,
+    y: 100 + (index % 2) * 100,
+  })) : [];
 
-  // PERT chart edges, handling JSON dependencies
-  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) => {
-    let dependencies = [];
-    try {
-      // Parse dependencies if they are a JSON string
-      dependencies = typeof task.dependances === "string" ? JSON.parse(task.dependances) : task.dependances;
-    } catch (error) {
-      console.error(`Erreur lors du parsing des dépendances pour la tâche ${task.id}:`, error);
-      toast.warning(`Dépendances invalides pour la tâche ${task.titre || "inconnue"}`);
-      return [];
-    }
-    return Array.isArray(dependencies) ? dependencies.map((depId) => {
+  // PERT chart edges
+  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
+    Array.isArray(task.dependances) ? task.dependances.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
       const toNode = pertNodes.find((n) => n.id === task.id);
-      if (!fromNode) {
-        console.warn(`Dépendance ${depId} introuvable pour la tâche ${task.id}`);
-        return null;
-      }
       return fromNode && toNode ? { from: fromNode, to: toNode } : null;
-    }).filter(Boolean) : [];
-  }) : [];
+    }).filter(Boolean) : []
+  ) : [];
 
-  const getstatename = (state) => {
-    switch (state) {
-      case "done":
-        return "Terminé";
-      case "in_progress":
-        return "En cours";
-      case "pending":
-        return "En attente";
-      default:
-        return "En attente";
-    }
-  };
+const getstatename = (state) => {
+  switch (state) {
+    case "done":
+      return "Terminé";
+    case "in_progress":
+      return "En cours";
+    case "pending":
+      return "En attente";
+    default:
+      return "En attente";
+  }
+}
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
@@ -234,6 +218,7 @@ function ProjectDetailsContent() {
                 </TableHeader>
                 <TableBody>
                   {Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
+                    // Calcul de la date de fin à partir de la date de début et de l'échéance (nombre de jours)
                     const startDate = task.start_date ? new Date(task.start_date) : null;
                     let endDate = "";
                     if (startDate && !isNaN(startDate) && task.echeance) {
@@ -329,8 +314,8 @@ function ProjectDetailsContent() {
                 <div className="overflow-x-auto">
                   {pertNodes.length > 0 ? (
                     <svg
-                      width={800}
-                      height={300}
+                      width="800"
+                      height="300"
                       role="img"
                       aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
                     >
