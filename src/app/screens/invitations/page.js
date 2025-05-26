@@ -269,11 +269,7 @@ export default function Users() {
                     <TableCell className="font-medium">{user.id}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.token}</TableCell>
-                    <TableCell>{user.telephone}</TableCell>
-                    {/* <TableCell>{user.mail}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.created_at}</TableCell> */}
-                    <TableCell className="text-right">
+                    
                       <div className="flex justify-end gap-2">
                        
                         <Button
