@@ -234,7 +234,7 @@ export default function Users() {
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
       {/* Fixed header */}
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
-        <h1 className="text-2xl font-bold">Utilisateurs</h1>
+        <h1 className="text-2xl font-bold">Invitations</h1>
       </div>
       <Toaster />
       {/* Main content */}
@@ -248,14 +248,14 @@ export default function Users() {
                 aria-label="Ajouter un nouvel utilisateur"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter un Utilisateur
+                Ajouter un invité
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Ajouter un Utilisateur</DialogTitle>
+                <DialogTitle>Ajouter un invité</DialogTitle>
                 <DialogDescription>
-                  Remplissez les détails du nouvel utilisateur.
+                  Remplissez les détails du nouvel invité.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -384,18 +384,18 @@ export default function Users() {
                   <TableHead className="w-[100px] font-bold text-sky-700">
                     ID
                   </TableHead>
-                  <TableHead className="font-bold text-sky-700">Nom</TableHead>
+                  <TableHead className="font-bold text-sky-700">Email</TableHead>
                   <TableHead className="font-bold text-sky-700">
-                    Prénom
+                    Token
                   </TableHead>
-                  <TableHead className="font-bold text-sky-700">
-                    Téléphone
+                  {/* <TableHead className="font-bold text-sky-700">
+                    Actions
                   </TableHead>
                   <TableHead className="font-bold text-sky-700">Email</TableHead>
                   <TableHead className="font-bold text-sky-700">Rôle</TableHead>
                   <TableHead className="font-bold text-sky-700">
                     Date de création
-                  </TableHead>
+                  </TableHead> */}
                   <TableHead className="text-right font-bold text-sky-700">
                     Actions
                   </TableHead>
