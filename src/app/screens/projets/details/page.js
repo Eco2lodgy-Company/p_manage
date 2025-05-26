@@ -133,7 +133,7 @@ function ProjectDetailsContent() {
 
   // PERT chart edges
   const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
-    Array.isArray(task.precedence) ? task.precedence.map((depId) => {
+    Array.isArray(task.dependances) ? task.dependances.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
       const toNode = pertNodes.find((n) => n.id === task.id);
       return fromNode && toNode ? { from: fromNode, to: toNode } : null;
