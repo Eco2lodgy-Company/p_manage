@@ -8,7 +8,7 @@ export async function GET(request:Request) {
         const id = searchParams.get('id');
         const client = await connectionPool.connect();
         console.log("connected!")
-        const result = await client.query("SELECT * FROM taches WHERE id_projet=$1",[id]);
+        const result = await client.query("SELECT * FROM taches WHERE id_projet=$1 ORDER by id",[id]);
         const data = result.rows;
         console.log("data",data);
         client.release();
