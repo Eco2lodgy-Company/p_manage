@@ -299,7 +299,7 @@ const getstatename = (state) => {
                       <YAxis type="category" dataKey="name" />
                       <Tooltip
                         formatter={(value, name, props) => [
-                          `${props.payload.start} (${value || 10} jours)`,
+                          `${props.payload.start} (${value || 0} jours)`,
                           props.payload.name,
                         ]}
                       />
