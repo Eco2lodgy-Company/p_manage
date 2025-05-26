@@ -99,6 +99,7 @@ function ProjectDetailsContent() {
       </div>
     );
   }
+
   // Convert a date to "AAAA-MM-DD" format
   const convertDate = (date) => {
     if (!date) return "";
@@ -113,23 +114,26 @@ function ProjectDetailsContent() {
   // Convert tasks to Gantt chart data
   const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
     const start = new Date(task.start_date);
-    const end = new Date(convertDate(task.start_date) + task.echeance); // Assuming duration is in days
-    const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
+    const end = new Date(convertDate(task.start_date) + task.echeance);
+    const duration = (end - start) / (1000 * 60 * 60 * 24);
     return {
       name: task.titre || "Tâche",
-      start: start.toString(), // Fixed: Use start.toISOString() correctly
+      start: start.toString(),
       duration: task.echeance > 0 ? task.echeance : 1,
       status: task.state || "N/A",
     };
   }) : [];
 
-  // PERT chart node positions
-  const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
+  // Sort tasks by id for PERT chart node positions
+  const sortedTasks = Array.isArray(tasks) ? [...tasks].sort((a, b) => (a.id || 0) - (b.id || 0)) : [];
+
+  // PERT chart node positions, ordered by id
+  const pertNodes = sortedTasks.map((task, index) => ({
     id: task.id || 0,
     name: task.titre || "Tâche",
-    x: 100 + index * 150,
-    y: 100 + (index % 2) * 100,
-  })) : [];
+    x: 100 + index * 150, // Linear horizontal placement
+    y: 150, // Fixed y-coordinate for a single row
+  }));
 
   // PERT chart edges
   const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
@@ -140,18 +144,18 @@ function ProjectDetailsContent() {
     }).filter(Boolean) : []
   ) : [];
 
-const getstatename = (state) => {
-  switch (state) {
-    case "done":
-      return "Terminé";
-    case "in_progress":
-      return "En cours";
-    case "pending":
-      return "En attente";
-    default:
-      return "En attente";
-  }
-}
+  const getstatename = (state) => {
+    switch (state) {
+      case "done":
+        return "Terminé";
+      case "in_progress":
+        return "En cours";
+      case "pending":
+        return "En attente";
+      default:
+        return "En attente";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
@@ -209,7 +213,8 @@ const getstatename = (state) => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-sky-50">
+                  <TableRow className="bg-sky-5
+0">
                     <TableHead className="font-bold text-sky-700">ID</TableHead>
                     <TableHead className="font-bold text-sky-700">Nom</TableHead>
                     <TableHead className="font-bold text-sky-700">Statut</TableHead>
@@ -218,7 +223,6 @@ const getstatename = (state) => {
                 </TableHeader>
                 <TableBody>
                   {Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
-                    // Calcul de la date de fin à partir de la date de début et de l'échéance (nombre de jours)
                     const startDate = task.start_date ? new Date(task.start_date) : null;
                     let endDate = "";
                     if (startDate && !isNaN(startDate) && task.echeance) {
@@ -314,8 +318,8 @@ const getstatename = (state) => {
                 <div className="overflow-x-auto">
                   {pertNodes.length > 0 ? (
                     <svg
-                      width="800"
-                      height="300"
+                      width={800}
+                      height={300}
                       role="img"
                       aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
                     >
