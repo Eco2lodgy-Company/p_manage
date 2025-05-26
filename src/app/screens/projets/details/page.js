@@ -113,7 +113,7 @@ function ProjectDetailsContent() {
   // Convert tasks to Gantt chart data
   const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
     const start = new Date(task.start_date);
-    const end = new Date(convertDate(task.start_date) + task.duration); // Assuming duration is in days
+    const end = new Date(convertDate(task.start_date) + task.echeance); // Assuming duration is in days
     const duration = (end - start) / (1000 * 60 * 60 * 24); // Days
     return {
       name: task.titre || "Tâche",
