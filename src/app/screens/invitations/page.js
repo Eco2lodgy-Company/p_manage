@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Eye, Plus } from "lucide-react";
+import { Trash2, Edit, Eye, Plus ,PowerOff,Power} from "lucide-react";
 
 export default function Users() {
   const [invites, setInvites] = useState([]);
@@ -240,141 +240,7 @@ export default function Users() {
       {/* Main content */}
       <div className="flex-1 flex flex-col p-6 pt-20">
         {/* Add User Button */}
-        <div className="flex justify-end mb-4">
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button
-                className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 text-sm"
-                aria-label="Ajouter un nouvel utilisateur"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un invité
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Ajouter un invité</DialogTitle>
-                <DialogDescription>
-                  Remplissez les détails du nouvel invité.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nom" className="text-right">
-                    Nom
-                  </Label>
-                  <Input
-                    id="nom"
-                    value={formData.nom}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nom: e.target.value })
-                    }
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="prenom" className="text-right">
-                    Prénom
-                  </Label>
-                  <Input
-                    id="prenom"
-                    value={formData.prenom}
-                    onChange={(e) =>
-                      setFormData({ ...formData, prenom: e.target.value })
-                    }
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="telephone" className="text-right">
-                    Téléphone
-                  </Label>
-                  <Input
-                    id="telephone"
-                    type="tel"
-                    value={formData.telephone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, telephone: e.target.value })
-                    }
-                    min={8}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="mail" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="mail"
-                    type="email"
-                    value={formData.mail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mail: e.target.value })
-                    }
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="password" className="text-right">
-                    Mot de passe
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    min={8}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">
-                    Rôle
-                  </Label>
-                  {/* <Input
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
-                    }
-                    
-                    className="col-span-3"
-                    required
-                  /> */}
-                  <Select
-                   value={formData.role}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, role: value })
-                    }>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="choisir role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                      <SelectItem value="user">Employé(é)</SelectItem>
-                      <SelectItem value="guest">Invité</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={handleAddInvite}
-                  className="bg-sky-500 hover:bg-sky-600"
-                >
-                  Ajouter
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+        {/*  */}
         {/* Table Container */}
         <div className="flex-1 bg-white shadow-md rounded-lg overflow-hidden">
           <div className="w-full h-full overflow-auto">
@@ -388,14 +254,6 @@ export default function Users() {
                   <TableHead className="font-bold text-sky-700">
                     Token
                   </TableHead>
-                  {/* <TableHead className="font-bold text-sky-700">
-                    Actions
-                  </TableHead>
-                  <TableHead className="font-bold text-sky-700">Email</TableHead>
-                  <TableHead className="font-bold text-sky-700">Rôle</TableHead>
-                  <TableHead className="font-bold text-sky-700">
-                    Date de création
-                  </TableHead> */}
                   <TableHead className="text-right font-bold text-sky-700">
                     Actions
                   </TableHead>
@@ -417,21 +275,14 @@ export default function Users() {
                     <TableCell>{user.created_at}</TableCell> */}
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openViewModal(user)}
-                          className="text-sky-500 hover:text-sky-700"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                       
                         <Button
                           variant="outline"
                           size="icon"
                           onClick={() => openEditModal(user)}
                           className="text-sky-500 hover:text-sky-700"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Power className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
@@ -439,7 +290,7 @@ export default function Users() {
                           onClick={() => openDeleteModal(user)}
                           className="text-red-500 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <PowerOff className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
