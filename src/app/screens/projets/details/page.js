@@ -126,14 +126,14 @@ function ProjectDetailsContent() {
   // PERT chart node positions
   const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
     id: task.id || 0,
-    name: task.name || "Tâche",
+    name: task.titre || "Tâche",
     x: 100 + index * 150,
     y: 100 + (index % 2) * 100,
   })) : [];
 
   // PERT chart edges
-  const pertEdges = Array.isArray(projectData.tasks) ? projectData.tasks.flatMap((task) =>
-    Array.isArray(task.dependencies) ? task.dependencies.map((depId) => {
+  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
+    Array.isArray(task.precedence) ? task.precedence.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
       const toNode = pertNodes.find((n) => n.id === task.id);
       return fromNode && toNode ? { from: fromNode, to: toNode } : null;
