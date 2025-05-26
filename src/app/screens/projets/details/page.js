@@ -60,7 +60,6 @@ function ProjectDetailsContent() {
         }
         const data = await response.json();
         console.log("Raw tasks API response:", data);
-        // Convert data.data to an array if it's not already
         const tasksArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
         if (tasksArray.length > 0) {
           setTasks(tasksArray);
@@ -131,18 +130,26 @@ function ProjectDetailsContent() {
   const pertNodes = sortedTasks.map((task, index) => ({
     id: task.id || 0,
     name: task.titre || "Tâche",
-    x: 100 + index * 150, // Linear horizontal placement
-    y: 150, // Fixed y-coordinate for a single row
+    x: 100 + index * 150,
+    y: 150,
   }));
 
-  // PERT chart edges
-  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
-    Array.isArray(task.dependances) ? task.dependances.map((depId) => {
+  // PERT chart edges, handling JSON dependencies
+  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) => {
+    let dependencies = [];
+    try {
+      // Parse dependencies if they are a JSON string
+      dependencies = typeof task.dependances === "string" ? JSON.parse(task.dependances) : task.dependances;
+    } catch (error) {
+      console.error(`Erreur lors du parsing des dépendances pour la tâche ${task.id}:`, error);
+      return [];
+    }
+    return Array.isArray(dependencies) ? dependencies.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
       const toNode = pertNodes.find((n) => n.id === task.id);
       return fromNode && toNode ? { from: fromNode, to: toNode } : null;
-    }).filter(Boolean) : []
-  ) : [];
+    }).filter(Boolean) : [];
+  }) : [];
 
   const getstatename = (state) => {
     switch (state) {
@@ -213,8 +220,7 @@ function ProjectDetailsContent() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-sky-5
-0">
+                  <TableRow className="bg-sky-50">
                     <TableHead className="font-bold text-sky-700">ID</TableHead>
                     <TableHead className="font-bold text-sky-700">Nom</TableHead>
                     <TableHead className="font-bold text-sky-700">Statut</TableHead>
