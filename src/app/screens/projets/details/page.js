@@ -118,7 +118,7 @@ function ProjectDetailsContent() {
     return {
       name: task.titre || "Tâche",
       start: start.toString(), // Fixed: Use start.toISOString() correctly
-      duration: duration > 0 ? duration : 1,
+      duration: task.echeance > 0 ? task.echeance : 1,
       status: task.state || "N/A",
     };
   }) : [];
