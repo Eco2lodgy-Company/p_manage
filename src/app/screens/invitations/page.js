@@ -270,6 +270,7 @@ export default function Users() {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.token}</TableCell>
                     
+                    <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                        
                         <Button
