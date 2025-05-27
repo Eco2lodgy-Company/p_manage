@@ -52,10 +52,10 @@ export default function Profile() {
 
   useEffect(() => {
     // Retrieve data from local storage
-    const id = localStorage.getItem("myKey");
-    if (storedData) {
-      setData(storedData);
-    }
+    const id = localStorage.getItem("id");
+    // if (id) {
+    //   setData(storedData);
+    // }
 
      const fetchProfile = async () => {
     try{
