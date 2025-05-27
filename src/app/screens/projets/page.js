@@ -1,10 +1,17 @@
-
 "use client";
-import React, { useEffect, useState } from "react";
-import { Toaster } from "@/components/ui/sonner";
+import React, { useState, useEffect } from "react";
+import { z } from "https://cdn.jsdelivr.net/npm/zod@3.24/dist/index.min.mjs";
 import { useRouter } from "next/navigation";
-import crypto from "crypto";
+import CryptoJS from "crypto-js";
+import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -25,17 +32,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Share2, Eye } from "lucide-react";
-// import useLocalStorage from "@/lib/useLocalStorage";
+import { Trash2, Edit, Share2, Eye } from "lucideation";
+
+// Define Zod schema for project validation
+const projectSchema = z.object({
+  title: z.string().trim().min(1, "Le titre est requis").max(100, "Le titre ne doit pas dépasser 100 caractères"),
+  description: z.string().min(500, "La description est requise").max(50, "La description ne doit pas dépasser 500 caractères"),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La date de début doit être au format YYYY-MM-DD").min(1, "La date de début est requise"),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La date de fin doit être au format YYYY-MM-DD").min(1, "La date de fin est requise"),
+  assign_to: z.string().min(1, "Le responsable est requis"),
+  email: z.string().email("Veuillez entrer une adresse email valide").optional(),
+});
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewingOpen] = useState(false);
+  const [isEditOpen, setIsEditingOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAddOpen, setIsAddingOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -46,11 +63,13 @@ export default function Projects() {
     assign_to: "",
     email: "",
   });
+  const [errors, setErrors] = useState({});
 
   const fetchProjects = async () => {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects/`, {
         method: "GET",
+        headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) {
         throw new Error("Erreur de réseau");
@@ -63,13 +82,49 @@ export default function Projects() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/users/`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      setUsers(data.data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs:", error);
+      toast.error("Erreur lors de la récupération des utilisateurs");
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
+    fetchUsers();
   }, []);
 
+  const validateForm = (data, isSharing = false) => {
+    const schema = isSharing
+      ? projectSchema.pick({ email: true })
+      : projectSchema.omit({ email: true });
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      const fieldErrors = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0];
+        fieldErrors[field] = err.message;
+      });
+      setErrors(fieldErrors);
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
   const handleAddProject = async () => {
-    if (!formData.title || !formData.description || !formData.start_date || !formData.end_date) {
-      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Dates");
+    if (!validateForm(formData)) {
+      toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
 
@@ -84,9 +139,7 @@ export default function Projects() {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects/add`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newProject),
       });
       if (!response.ok) {
@@ -112,8 +165,8 @@ export default function Projects() {
   };
 
   const handleEditProject = async () => {
-    if (!formData.title || !formData.description || !formData.assign_to) {
-      toast.error("Veuillez remplir les champs obligatoires : Titre, Description, Responsable");
+    if (!validateForm(formData)) {
+      toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
 
@@ -129,9 +182,7 @@ export default function Projects() {
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects/edit`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(projectToEdit),
       });
       if (!response.ok) {
@@ -158,72 +209,60 @@ export default function Projects() {
   };
 
   const handleShareProject = async () => {
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Veuillez entrer une adresse e-mail valide");
+    if (!validateForm({ email: formData.email }, true)) {
+      toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
 
     const generateKeyWithTimestamp = (length = 32) => {
-      const bytes = crypto.randomBytes(length);
-      const base64 = bytes.toString('base64');
-      // Convert to base64url: replace '+' with '-', '/' with '_', remove '='
+      const randomBytes = CryptoJS.lib.WordArray.random(length);
+      const base64 = randomBytes.toString(CryptoJS.enc.Base64);
       const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       const timestamp = Date.now();
       return base64url + timestamp.toString();
     };
 
     const uniqueKey = generateKeyWithTimestamp();
-    console.log("Generated Token:", uniqueKey);
 
     const shareData = {
       email: formData.email,
       token: uniqueKey,
       project_id: selectedProject?.id,
     };
-    console.log("Share Data:", shareData);
 
     setIsSharing(true);
     let emailSent = false;
 
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(shareData),
       });
-
       if (!response.ok) {
-        throw new Error('Erreur de réseau');
+        throw new Error("Erreur de réseau");
       }
       emailSent = true;
-
       const data = await response.json();
       toast.success(emailSent ? data.message : `${data.message} (Email non envoyé)`);
       await fetchProjects();
       setIsShareOpen(false);
-      setFormData((prev) => ({ ...prev, email: '' }));
+      setFormData((prev) => ({ ...prev, email: "" }));
       setSelectedProject(null);
     } catch (error) {
-      console.error('Erreur lors du partage du projet:', error);
-      toast.error('Erreur lors du partage du projet');
+      console.error("Erreur lors du partage du projet:", error);
+      toast.error("Erreur lors du partage du projet");
     } finally {
       setIsSharing(false);
     }
   };
 
   const handleDeleteProject = async () => {
-    const projectToDelete = {
-      id: selectedProject.id,
-    };
-
+    const projectToDelete = { id: selectedProject.id };
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/delete/?id=${projectToDelete.id}`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/delete`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(projectToDelete),
       });
       if (!response.ok) {
@@ -251,6 +290,7 @@ export default function Projects() {
       assign_to: project.assign_to || "",
       email: "",
     });
+    setErrors({});
     setIsEditOpen(true);
   };
 
@@ -265,20 +305,18 @@ export default function Projects() {
       assign_to: "",
       email: "",
     });
+    setErrors({});
     setIsShareOpen(true);
   };
-const router = useRouter();
+
+  const router = useRouter();
   const openViewModal = (project) => {
     setSelectedProject(project);
-    // setIsViewOpen(true);
-   
-    // localStorage.setItem("projectId", project.id);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('projectId', project.id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("projectId", project.id);
     }
-    const id = localStorage.getItem('projectId') || '0';
-    console.log("local id ",id);
-     router.push(`projets/details?id=${project.id}`);
+    const id = localStorage.getItem("projectId") || "0";
+    router.push(`/projets/details?id=${project.id}`);
   };
 
   const openDeleteModal = (project) => {
@@ -313,71 +351,92 @@ const router = useRouter();
                     <Label htmlFor="title" className="text-right">
                       Titre
                     </Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                      className="col-span-3"
-                      required
-                    />
+                    <div className="col-span-3">
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                        className={errors.title ? "border-red-500" : ""}
+                      />
+                      {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                    </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="description" className="text-right">
                       Description
                     </Label>
-                    <Input
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                      className="col-span-3"
-                      required
-                    />
+                    <div className="col-span-3">
+                      <Input
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) =>
+                          setFormData({ ...formData, description: e.target.value })
+                        }
+                        className={errors.description ? "border-red-500" : ""}
+                      />
+                      {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                    </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="start_date" className="text-right">
                       Date de début
                     </Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, start_date: e.target.value })
-                      }
-                      className="col-span-3"
-                    />
+                    <div className="col-span-3">
+                      <Input
+                        id="start_date"
+                        type="date"
+                        value={formData.start_date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, start_date: e.target.value })
+                        }
+                        className={errors.start_date ? "border-red-500" : ""}
+                      />
+                      {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                    </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="end_date" className="text-right">
                       Date de fin
                     </Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, end_date: e.target.value })
-                      }
-                      className="col-span-3"
-                    />
+                    <div className="col-span-3">
+                      <Input
+                        id="end_date"
+                        type="date"
+                        value={formData.end_date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, end_date: e.target.value })
+                        }
+                        className={errors.end_date ? "border-red-500" : ""}
+                      />
+                      {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                    </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="assign_to" className="text-right">
                       Responsable
                     </Label>
-                    <Input
-                      id="assign_to"
-                      value={formData.assign_to}
-                      onChange={(e) =>
-                        setFormData({ ...formData, assign_to: e.target.value })
-                      }
-                      className="col-span-3"
-                      required
-                    />
+                    <div className="col-span-3">
+                      <Select
+                        value={formData.assign_to}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, assign_to: value })
+                        }
+                      >
+                        <SelectTrigger className={errors.assign_to ? "border-red-500" : ""}>
+                          <SelectValue placeholder="Choisir un responsable" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {users.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.nom} {user.prenom}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>
@@ -397,84 +456,79 @@ const router = useRouter();
               <Table>
                 <TableHeader>
                   <TableRow className="bg-sky-50">
-                    <TableHead className="w-[100px] font-bold text-sky-700">
-                      ID
-                    </TableHead>
+                    <TableHead className="w-[100px] font-bold text-sky-700">ID</TableHead>
                     <TableHead className="font-bold text-sky-700">Titre</TableHead>
-                    <TableHead className="font-bold text-sky-700">
-                      Description
-                    </TableHead>
-                    <TableHead className="font-bold text-sky-700">
-                      Responsable
-                    </TableHead>
-                    <TableHead className="font-bold text-sky-700">
-                      Date de début
-                    </TableHead>
-                    <TableHead className="font-bold text-sky-700">
-                      Date de fin
-                    </TableHead>
-                    <TableHead className="text-right font-bold text-sky-700">
-                      Actions
-                    </TableHead>
+                    <TableHead className="font-bold text-sky-700">Description</TableHead>
+                    <TableHead className="font-bold text-sky-700">Responsable</TableHead>
+                    <TableHead className="font-bold text-sky-700">Date de début</TableHead>
+                    <TableHead className="font-bold text-sky-700">Date de fin</TableHead>
+                    <TableHead className="text-right font-bold text-sky-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projects.map((project) => (
-                    <TableRow
-                      key={project.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <TableCell className="font-medium">{project.id}</TableCell>
-                      <TableCell>{project.title}</TableCell>
-                      <TableCell>{project.description}</TableCell>
-                      <TableCell>{project.assign_to}</TableCell>
-                      <TableCell>{project.start_date}</TableCell>
-                      <TableCell>{project.end_date}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openViewModal(project)}
-                            className="text-sky-500 hover:text-sky-700"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openEditModal(project)}
-                            className="text-sky-500 hover:text-sky-700"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openShareModal(project)}
-                            className="text-sky-500 hover:text-sky-700"
-                          >
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openDeleteModal(project)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {projects.length > 0 ? (
+                    projects.map((project) => (
+                      <TableRow
+                        key={project.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <TableCell className="font-medium">{project.id}</TableCell>
+                        <TableCell>{project.title}</TableCell>
+                        <TableCell>{project.description}</TableCell>
+                        <TableCell>{users.find(u => u.id === project.assign_to)?.nom || project.assign_to}</TableCell>
+                        <TableCell>{project.start_date}</TableCell>
+                        <TableCell>{project.end_date}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openViewModal(project)}
+                              className="text-sky-500 hover:text-sky-700"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openEditModal(project)}
+                              className="text-sky-500 hover:text-sky-700"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openShareModal(project)}
+                              className="text-sky-500 hover:text-sky-700"
+                            >
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openDeleteModal(project)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center">
+                        Aucun projet trouvé.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
           </div>
         </div>
 
-        {/* View Details Modal */}
         <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -499,7 +553,7 @@ const router = useRouter();
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Responsable</Label>
-                  <span className="col-span-3">{selectedProject.assign_to}</span>
+                  <span className="col-span-3">{users.find(u => u.id === selectedProject.assign_to)?.nom || selectedProject.assign_to}</span>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Date de début</Label>
@@ -522,7 +576,6 @@ const router = useRouter();
           </DialogContent>
         </Dialog>
 
-        {/* Edit Project Modal */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -536,71 +589,92 @@ const router = useRouter();
                 <Label htmlFor="edit-title" className="text-right">
                   Titre
                 </Label>
-                <Input
-                  id="edit-title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="col-span-3"
-                  required
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="edit-title"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    className={errors.title ? "border-red-500" : ""}
+                  />
+                  {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-description" className="text-right">
                   Description
                 </Label>
-                <Input
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="col-span-3"
-                  required
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    className={errors.description ? "border-red-500" : ""}
+                  />
+                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-start_date" className="text-right">
                   Date de début
                 </Label>
-                <Input
-                  id="edit-start_date"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, start_date: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="edit-start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
+                    className={errors.start_date ? "border-red-500" : ""}
+                  />
+                  {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-end_date" className="text-right">
                   Date de fin
                 </Label>
-                <Input
-                  id="edit-end_date"
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, end_date: e.target.value })
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="edit-end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, end_date: e.target.value })
+                    }
+                    className={errors.end_date ? "border-red-500" : ""}
+                  />
+                  {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-assign_to" className="text-right">
                   Responsable
                 </Label>
-                <Input
-                  id="edit-assign_to"
-                  value={formData.assign_to}
-                  onChange={(e) =>
-                    setFormData({ ...formData, assign_to: e.target.value })
-                  }
-                  className="col-span-3"
-                  required
-                />
+                <div className="col-span-3">
+                  <Select
+                    value={formData.assign_to}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, assign_to: value })
+                    }
+                  >
+                    <SelectTrigger className={errors.assign_to ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Choisir un responsable" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.nom} {user.prenom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -614,7 +688,6 @@ const router = useRouter();
           </DialogContent>
         </Dialog>
 
-        {/* Share Project Modal */}
         <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -628,16 +701,18 @@ const router = useRouter();
                 <Label htmlFor="share-email" className="text-right">
                   Email
                 </Label>
-                <Input
-                  id="share-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className="col-span-3"
-                  required
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="share-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className={errors.email ? "border-red-500" : ""}
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -652,7 +727,6 @@ const router = useRouter();
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
