@@ -79,8 +79,9 @@ export default function LOGIN() {
     setError("");
 
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/login?email=${formData.email}&password=${formData.password}`, {
-        method: "POST"
+      const response = await fetch(`http://alphatek.fr:3110/api/login`, {
+        method: "POST",
+        body: JSON.stringify(formData),
       });
       console.log(formData.email, formData.password);
 
