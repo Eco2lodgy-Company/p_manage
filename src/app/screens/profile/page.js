@@ -82,7 +82,7 @@ export default function Profile() {
         throw new Error("Aucun ID utilisateur trouvé dans le localStorage");
       }
 
-      const response = await fetch("http://alphatek.fr:3110/api/user/changePass", {
+      const response = await fetch("http://alphatek.fr:3110/api/users/changePass", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
