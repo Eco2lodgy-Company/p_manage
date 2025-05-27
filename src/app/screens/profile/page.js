@@ -18,30 +18,31 @@ import { User, Edit, LogOut } from "lucide-react";
 
 // Sample user data (replace with API call)
 const userData = {
-  name: "Jean Dupont",
-  email: "jean.dupont@example.com",
+  nom: "Jean Dupont",
+  prenom: "Jean Dupont",
+  mail: "jean.dupont@example.com",
   role: "Manager",
   joinDate: "2023-05-01",
-  tasks: [
-    {
-      id: "T001",
-      name: "Foundation Work",
-      project: "Project Alpha",
-      status: "Terminée",
-      dueDate: "2024-02-15",
-    },
-    {
-      id: "T002",
-      name: "Structural Framing",
-      project: "Project Beta",
-      status: "En Cours",
-      dueDate: "2024-04-01",
-    },
-  ],
-  projects: [
-    { id: "INV001", title: "Project Alpha", status: "En Cours" },
-    { id: "INV002", title: "Project Beta", status: "Terminée" },
-  ],
+  // tasks: [
+  //   {
+  //     id: "T001",
+  //     nom: "Foundation Work",
+  //     project: "Project Alpha",
+  //     status: "Terminée",
+  //     dueDate: "2024-02-15",
+  //   },
+  //   {
+  //     id: "T002",
+  //     name: "Structural Framing",
+  //     project: "Project Beta",
+  //     status: "En Cours",
+  //     dueDate: "2024-04-01",
+  //   },
+  // ],
+  // projects: [
+  //   { id: "INV001", title: "Project Alpha", status: "En Cours" },
+  //   { id: "INV002", title: "Project Beta", status: "Terminée" },
+  // ],
 };
 
 
