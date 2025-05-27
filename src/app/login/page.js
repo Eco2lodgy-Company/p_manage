@@ -100,7 +100,6 @@ export default function LOGIN() {
       }
 
       const { role, mail, id } = result;
-      const token = result.data.token;
 
       // Stocker dans localStorage
       localStorage.setItem("email", mail);
