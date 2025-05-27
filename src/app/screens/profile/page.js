@@ -44,10 +44,51 @@ const userData = {
   ],
 };
 
+
 export default function Profile() {
   const [profile, setProfile] = useState(userData);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [formData, setFormData] = useState({ name: profile.name, email: profile.email });
+
+  useEffect(() => {
+    // Retrieve data from local storage
+    const id = localStorage.getItem("myKey");
+    if (storedData) {
+      setData(storedData);
+    }
+
+     const fetchProfile = async () => {
+    try{
+
+      const response = await fetch(`http://alphatek.fr:3110/api/users/byid?id=${id}`, {
+          method: "GET",
+        });
+         if (!response.ok) {
+                  throw new Error("Erreur de réseau");
+                }
+                const data = await response.json();
+                console.log("Profile data fetched:", data);
+                setProfile(data.data);
+                setFormData({ name: data.name, email: data.email });
+                console.log("Profile data set:", data);
+    }catch (error) {
+      console.error("Erreur lors de la récupération du profil:", error);
+    }
+  }
+  fetchProfile();
+  }, []);
+
+
+  const fetchProfile = async () => {
+    try{
+
+      const response = await fetch(`http://alphatek.fr:3110/api/users/byid?id=${id}`, {
+          method: "GET",
+        });
+    }catch (error) {
+      console.error("Erreur lors de la récupération du profil:", error);
+    }
+  }
 
   const handleEditProfile = () => {
     setProfile({ ...profile, name: formData.name, email: formData.email });
