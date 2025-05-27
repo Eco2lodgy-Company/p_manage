@@ -141,7 +141,7 @@ export default function LOGIN() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-50 to-indigo-50 p-4"
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-sky-50 to-indigo-50 p-4"
     style={{backgroundImage: "url('/back.jpg')", backgroundSize: "cover", backgroundPosition: "center"}}>
      
       <motion.div
@@ -150,7 +150,7 @@ export default function LOGIN() {
         variants={logoVariants}
         className="mb-8 text-center"
       >
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-800 rounded-full shadow-lg mb-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-sky-600 rounded-full shadow-lg mb-4">
           <UserCircle className="text-white w-8 h-8" />
         </div>
         <Toaster/>
@@ -170,18 +170,18 @@ export default function LOGIN() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 10 }}
-              className="mx-auto mb-4 flex items-center justify-center w-16 h-16 bg-green-100 rounded-full"
+              className="mx-auto mb-4 flex items-center justify-center w-16 h-16 bg-sky-600 rounded-full"
             >
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-sky-600" />
             </motion.div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Connexion réussie!</h2>
             <p className="text-gray-600 mb-6">Vous allez être redirigé vers votre tableau de bord.</p>
-            <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         ) : (
           <div className="p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <LogIn className="w-5 h-5 mr-2 text-green-800" />
+              <LogIn className="w-5 h-5 mr-2 text-sky-600" />
               Connexion
             </h2>
             
@@ -216,7 +216,7 @@ export default function LOGIN() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="block w-full pl-11 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-700"
+                    className="block w-full pl-11 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm text-gray-700"
                     placeholder="votre@email.com"
                     required
                   />
@@ -243,7 +243,7 @@ export default function LOGIN() {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-11 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-700"
+                    className="block w-full pl-11 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm text-gray-700"
                     placeholder="••••••••"
                     required
                   />
@@ -267,7 +267,7 @@ export default function LOGIN() {
                   {/* <input
                     id="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
                   /> */}
                   {/* <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                     Se souvenir de moi
@@ -280,7 +280,7 @@ export default function LOGIN() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex items-center justify-center py-3 px-4 bg-green-800 text-white font-medium rounded-lg shadow-md hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all ${
+                className={`w-full flex items-center justify-center py-3 px-4 bg-sky-600 text-white font-medium rounded-lg shadow-md hover:from-sky-700 hover:to-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all ${
                   isLoading ? "opacity-80 cursor-not-allowed" : ""
                 }`}
               >
@@ -303,9 +303,9 @@ export default function LOGIN() {
         className="mt-8 text-center text-xs text-gray-500"
       >
         En vous connectant, vous acceptez notre{" "}
-        <a href="#" className="text-green-600 hover:underline">Politique de confidentialité</a>
+        <a href="#" className="text-sky-600 hover:underline">Politique de confidentialité</a>
         {" "}et nos{" "}
-        <a href="#" className="text-green-600 hover:underline">Conditions d'utilisation</a>.
+        <a href="#" className="text-sky-600 hover:underline">Conditions d'utilisation</a>.
       </motion.p>
     </div>
   );
