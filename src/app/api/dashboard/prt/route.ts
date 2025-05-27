@@ -6,10 +6,10 @@ export async function GET() {
     try{
         const client = await connectionPool.connect();
         console.log("connected!")
-        const projects = await client.query("SELECT 'projet' AS type, id, title AS nom, description, start_date, end_date, state, created_at FROM projets ORDER BY created_at DESC LIMIT 3;");
+        const projects = await client.query("SELECT 'projet' AS type, id, title AS nom, description, start_date, end_date, state, created_at FROM projets ORDER BY id DESC LIMIT 3;");
         const prodata = projects.rows;
 
-        const tasks = await client.query("SELECT 'tache' AS type, id, titre AS nom, description, start_date, NULL AS end_date, state, created_at FROM taches ORDER BY created_at DESC LIMIT 3;");
+        const tasks = await client.query("SELECT 'tache' AS type, id, titre AS nom, description, start_date, NULL AS end_date, state, created_at FROM taches ORDER BY id DESC LIMIT 3;");
         const taskdata = tasks.rows;
         // console.log("data",data);
         client.release();
