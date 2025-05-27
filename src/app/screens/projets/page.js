@@ -2,16 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import CryptoJS from "crypto-js";
+import crypto from "crypto";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -36,8 +29,8 @@ import { Trash2, Edit, Share2, Eye } from "lucide-react";
 
 // Define Zod schema for project validation
 const projectSchema = z.object({
-  title: z.string().trim().min(1, "Le titre est requis").max(100, "Le titre ne doit pas dépasser 100 caractères"),
-  description: z.string().min(500, "La description est requise").max(50, "La description ne doit pas dépasser 500 caractères"),
+  title: z.string().min(1, "Le titre est requis").max(100, "Le titre ne doit pas dépasser 100 caractères"),
+  description: z.string().min(1, "La description est requise").max(500, "La description ne doit pas dépasser 500 caractères"),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La date de début doit être au format YYYY-MM-DD").min(1, "La date de début est requise"),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La date de fin doit être au format YYYY-MM-DD").min(1, "La date de fin est requise"),
   assign_to: z.string().min(1, "Le responsable est requis"),
@@ -46,13 +39,12 @@ const projectSchema = z.object({
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
-  const [users, setUsers] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [isViewOpen, setIsViewingOpen] = useState(false);
-  const [isEditOpen, setIsEditingOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isAddOpen, setIsAddingOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -82,26 +74,8 @@ export default function Projects() {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(`http://alphatek.fr:3110/api/users/`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
-      const data = await response.json();
-      setUsers(data.data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des utilisateurs:", error);
-      toast.error("Erreur lors de la récupération des utilisateurs");
-    }
-  };
-
   useEffect(() => {
     fetchProjects();
-    fetchUsers();
   }, []);
 
   const validateForm = (data, isSharing = false) => {
@@ -215,9 +189,9 @@ export default function Projects() {
     }
 
     const generateKeyWithTimestamp = (length = 32) => {
-      const randomBytes = CryptoJS.lib.WordArray.random(length);
-      const base64 = randomBytes.toString(CryptoJS.enc.Base64);
-      const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const bytes = crypto.randomBytes(length);
+      const base64 = bytes.toString("base64");
+      const base64url = base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
       const timestamp = Date.now();
       return base64url + timestamp.toString();
     };
@@ -418,23 +392,14 @@ export default function Projects() {
                       Responsable
                     </Label>
                     <div className="col-span-3">
-                      <Select
+                      <Input
+                        id="assign_to"
                         value={formData.assign_to}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, assign_to: value })
+                        onChange={(e) =>
+                          setFormData({ ...formData, assign_to: e.target.value })
                         }
-                      >
-                        <SelectTrigger className={errors.assign_to ? "border-red-500" : ""}>
-                          <SelectValue placeholder="Choisir un responsable" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.nom} {user.prenom}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        className={errors.assign_to ? "border-red-500" : ""}
+                      />
                       {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
                     </div>
                   </div>
@@ -475,7 +440,7 @@ export default function Projects() {
                         <TableCell className="font-medium">{project.id}</TableCell>
                         <TableCell>{project.title}</TableCell>
                         <TableCell>{project.description}</TableCell>
-                        <TableCell>{users.find(u => u.id === project.assign_to)?.nom || project.assign_to}</TableCell>
+                        <TableCell>{project.assign_to}</TableCell>
                         <TableCell>{project.start_date}</TableCell>
                         <TableCell>{project.end_date}</TableCell>
                         <TableCell className="text-right">
@@ -553,7 +518,7 @@ export default function Projects() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Responsable</Label>
-                  <span className="col-span-3">{users.find(u => u.id === selectedProject.assign_to)?.nom || selectedProject.assign_to}</span>
+                  <span className="col-span-3">{selectedProject.assign_to}</span>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right font-bold">Date de début</Label>
@@ -656,23 +621,14 @@ export default function Projects() {
                   Responsable
                 </Label>
                 <div className="col-span-3">
-                  <Select
+                  <Input
+                    id="edit-assign_to"
                     value={formData.assign_to}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, assign_to: value })
+                    onChange={(e) =>
+                      setFormData({ ...formData, assign_to: e.target.value })
                     }
-                  >
-                    <SelectTrigger className={errors.assign_to ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Choisir un responsable" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.nom} {user.prenom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    className={errors.assign_to ? "border-red-500" : ""}
+                  />
                   {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
                 </div>
               </div>
