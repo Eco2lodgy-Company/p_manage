@@ -180,12 +180,12 @@ export default function Profile() {
                 <p className="text-sm font-semibold text-gray-600">Nom</p>
                 <p className="text-lg text-gray-800 flex items-center">
                   <User className="h-5 w-5 text-sky-500 mr-2" />
-                  {profile.name}
+                  {profile.nom + " " + profile.prenom}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Email</p>
-                <p className="text-lg text-gray-800">{profile.email}</p>
+                <p className="text-lg text-gray-800">{profile.mail}</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-600">Rôle</p>
