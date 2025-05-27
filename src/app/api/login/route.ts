@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     try {
       const result = await client.query(
-        "SELECT id, role,mail, password FROM users WHERE email = $1",
+        "SELECT id, role,mail, password FROM users WHERE mail = $1",
         [email]
       );
 
