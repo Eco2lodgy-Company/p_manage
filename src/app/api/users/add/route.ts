@@ -15,10 +15,10 @@ export async function POST(request: Request) {
             );
         }
 
-        // Validation du format du mot de passe (hash bcrypt)
-        if (newPassword.length < 60 || newPassword.length > 60) {
+        // Validation de la longueur des mots de passe
+        if (oldPassword.length < 8 || newPassword.length < 8) {
             return NextResponse.json(
-                { error: "Invalid password format (must be a valid bcrypt hash)" },
+                { error: "Passwords must be at least 8 characters long" },
                 { status: 400 }
             );
         }
@@ -51,10 +51,14 @@ export async function POST(request: Request) {
             );
         }
 
+        // Hacher le nouveau mot de passe
+        const saltRounds = 10;
+        const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
         // Mettre à jour le mot de passe avec le nouveau hash
         const updateResult = await client.query(
             "UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email",
-            [newPassword, id]
+            [hashedNewPassword, id]
         );
 
         const updatedUser = updateResult.rows[0];
