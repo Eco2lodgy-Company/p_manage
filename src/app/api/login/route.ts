@@ -2,15 +2,11 @@ import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 
-// Clé secrète pour JWT (devrait être dans une variable d'environnement)
-const JWT_SECRET = process.env.JWT_SECRET || "votre_clé_secrète";
 
 export async function POST(request: Request) {
   try {
-    // Récupérer les données du body
     const { email, password } = await request.json();
 
-    // Vérifier que les champs sont fournis
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email et mot de passe requis" },
@@ -18,17 +14,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Connexion à la base de données
     const client = await connectionPool.connect();
 
     try {
-      // Requête pour trouver l'utilisateur
       const result = await client.query(
-        "SELECT id, email, password FROM users WHERE email = $1",
+        "SELECT id, role,mail, password FROM users WHERE email = $1",
         [email]
       );
 
-      // Vérifier si l'utilisateur existe
       if (result.rows.length === 0) {
         return NextResponse.json(
           { error: "Email ou mot de passe incorrect" },
