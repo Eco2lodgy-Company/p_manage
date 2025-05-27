@@ -2,25 +2,23 @@ import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 
-
-// Schéma de validation des données d'entrée
-
-
-// Interface pour la réponse
-interface LoginResponse {
-  token?: string;
-  error?: string;
-}
-
 // Clé secrète pour JWT (devrait être dans une variable d'environnement)
 const JWT_SECRET = process.env.JWT_SECRET || "votre_clé_secrète";
 
-// POST pour gérer le login
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    // Récupérer les données du body
+    const { email, password } = await request.json();
 
+    // Vérifier que les champs sont fournis
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email et mot de passe requis" },
+        { status: 400 }
+      );
+    }
+
+    // Connexion à la base de données
     const client = await connectionPool.connect();
 
     try {
@@ -49,14 +47,19 @@ export async function POST(request: Request) {
         );
       }
 
-     const { id } = user["id"];
+      // Générer un token JWT
+    //   const token = jwt.sign(
+    //     { userId: user.id, email: user.email },
+    //     JWT_SECRET,
+    //     { expiresIn: "1h" }
+    //   );
 
       // Libérer la connexion
       client.release();
 
       // Retourner le token
       return NextResponse.json(
-        { id, message: "Connexion réussie" },
+        {  message: "Connexion réussie" },
         { status: 200 }
       );
     } catch (error) {
@@ -64,17 +67,9 @@ export async function POST(request: Request) {
       throw error;
     }
   } catch (error) {
-    // Gestion des erreurs
-    
-    if (error instanceof Error) {
-      console.error("Erreur de connexion:", error.message);
-      return NextResponse.json(
-        { error: "Erreur serveur" },
-        { status: 500 }
-      );
-    }
+    console.error("Erreur de connexion:", error);
     return NextResponse.json(
-      { error: "Une erreur inconnue s'est produite" },
+      { error: "Erreur serveur" },
       { status: 500 }
     );
   }
