@@ -1,13 +1,13 @@
 import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { id, oldPassword, newPassword } = body;
 
-        // Basic validation
+        // Validation de base
         if (!id || !oldPassword || !newPassword) {
             return NextResponse.json(
                 { error: "User ID, old password, and new password are required" },
@@ -15,10 +15,10 @@ export async function POST(request: Request) {
             );
         }
 
-        // Password strength validation (optional, since client-side hashing)
-        if (newPassword.length < 60 || newPassword.length > 60) {
+        // Validation de la longueur des mots de passe
+        if (oldPassword.length < 8 || newPassword.length < 8) {
             return NextResponse.json(
-                { error: "Invalid password format (must be a valid bcrypt hash)" },
+                { error: "Passwords must be at least 8 characters long" },
                 { status: 400 }
             );
         }
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         const client = await connectionPool.connect();
         console.log("connected!");
 
-        // Verify old password
+        // Vérifier l'ancien mot de passe
         const verifyResult = await client.query(
             "SELECT password FROM users WHERE id = $1",
             [id]
@@ -51,10 +51,14 @@ export async function POST(request: Request) {
             );
         }
 
-        // Update password with pre-hashed newPassword
+        // Hacher le nouveau mot de passe
+        const saltRounds = 10;
+        const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Mettre à jour le mot de passe avec le nouveau hash
         const updateResult = await client.query(
             "UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email",
-            [newPassword, id]
+            [hashedNewPassword, id]
         );
 
         const updatedUser = updateResult.rows[0];
