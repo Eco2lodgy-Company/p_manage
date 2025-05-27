@@ -15,7 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Edit, LogOut } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner"
+
 
 export default function Profile() {
   const [profile, setProfile] = useState({
