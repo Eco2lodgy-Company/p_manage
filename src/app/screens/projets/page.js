@@ -290,7 +290,7 @@ export default function Projects() {
       localStorage.setItem("projectId", project.id);
     }
     const id = localStorage.getItem("projectId") || "0";
-    router.push(`screens/projets/details?id=${project.id}`);
+    router.push(`/projets/details?id=${project.id}`);
   };
 
   const openDeleteModal = (project) => {
