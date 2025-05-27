@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
         // Mettre à jour le mot de passe avec le nouveau hash
         const updateResult = await client.query(
-            "UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email",
+            "UPDATE users SET password = $1 WHERE id = $2 RETURNING id, mail",
             [hashedNewPassword, id]
         );
 
