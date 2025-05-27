@@ -46,13 +46,15 @@ export async function POST(request: Request) {
     //     JWT_SECRET,
     //     { expiresIn: "1h" }
     //   );
+    const id = user.id;
+    const role = user.role;
 
       // Libérer la connexion
       client.release();
 
       // Retourner le token
       return NextResponse.json(
-        {  message: "Connexion réussie" },
+        { id,role, message: "Connexion réussie" },
         { status: 200 }
       );
     } catch (error) {
