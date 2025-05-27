@@ -9,7 +9,7 @@ export async function GET(request: Request) {
         const client = await connectionPool.connect();
         console.log("connected!")
         const result = await client.query("SELECT * FROM users WHERE id=$1 ORDER BY id",[id]);
-        const data = result.rows;
+        const data = result.rows[0];
         console.log("data",data);
         client.release();
         return NextResponse.json({data}, {status: 200});
