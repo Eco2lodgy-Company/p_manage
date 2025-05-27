@@ -1,13 +1,13 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { z } from "zod";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-
+} from "@/components/ui/select";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import {
@@ -32,6 +32,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, Edit, Eye, Plus } from "lucide-react";
 
+// Define Zod schema for user validation
+const userSchema = z.object({
+  nom: z.string().min(1, "Le nom est requis").max(50, "Le nom ne doit pas dépasser 50 caractères"),
+  prenom: z.string().min(1, "Le prénom est requis").max(50, "Le prénom ne doit pas dépasser 50 caractères"),
+  telephone: z.string().optional().refine(
+    (val) => !val || /^[0-9]{10}$/.test(val),
+    "Le numéro de téléphone doit contenir exactement 10 chiffres"
+  ),
+  mail: z.string().email("L'email doit être valide").min(1, "L'email est requis"),
+  password: z.string().optional().refine(
+    (val) => !val || val.length >= 8,
+    "Le mot de passe doit contenir au moins 8 caractères"
+  ),
+  role: z.enum(["admin", "user", "guest"], {
+    errorMap: () => ({ message: "Le rôle doit être 'admin', 'user' ou 'guest'" }),
+  }),
+});
+
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -47,40 +65,49 @@ export default function Users() {
     password: "",
     role: "",
   });
+  const [errors, setErrors] = useState({});
 
   const handleGetUsers = async () => {
-    try{
+    try {
       const response = await fetch(`http://alphatek.fr:3110/api/users/`, {
-        method: "GET"
+        method: "GET",
       });
       if (!response.ok) {
-        throw new Error("erreur de réseau");
+        throw new Error("Erreur de réseau");
       }
-    
-       const data = await response.json();
-         setUsers(data.data);
-      // if (data && Array.isArray(data)) {
-      //   setUsers(data.data.map((user, index) => ({
-      //     ...user,
-      //     id: `USR${(index + 1).toString().padStart(3, "0")}`,
-      //     created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
-      //   })));
-      // }
-    }catch (error) {
-      console.error("Erreur lors de la recuperation des utilisateurs:", error);
+      const data = await response.json();
+      setUsers(data.data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs:", error);
+      toast.error("Erreur lors de la récupération des utilisateurs");
     }
-  }
+  };
 
   useEffect(() => {
     handleGetUsers();
   }, []);
 
-  const handleAddUser = async() => {
-    // Basic validation
-    if (!formData.nom || !formData.prenom || !formData.mail || !formData.role) {
-      alert("Veuillez remplir les champs obligatoires : Nom, Prénom, Email, Rôle.");
+  const validateForm = (data) => {
+    const result = userSchema.safeParse(data);
+    if (!result.success) {
+      const fieldErrors = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0];
+        fieldErrors[field] = err.message;
+      });
+      setErrors(fieldErrors);
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  const handleAddUser = async () => {
+    if (!validateForm(formData)) {
+      toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
+
     const newUser = {
       id: `USR${(users.length + 1).toString().padStart(3, "0")}`,
       nom: formData.nom,
@@ -92,47 +119,36 @@ export default function Users() {
       created_at: new Date().toISOString().split("T")[0],
     };
 
-    try{
+    try {
       const response = await fetch(`http://alphatek.fr:3110/api/users/add`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
       });
       if (!response.ok) {
-        throw new Error("erreur de réseau");
+        throw new Error("Erreur de réseau");
       }
-    
-       const data = await response.json();
-         setUsers(data.data);
-         toast.success("Utilisateur ajouté avec succès !");
-      // if (data && Array.isArray(data)) {
-      //   setUsers(data.data.map((user, index) => ({
-      //     ...user,
-      //     id: `USR${(index + 1).toString().padStart(3, "0")}`,
-      //     created_at: user.created_at.split("T")[0], // Format date to YYYY-MM-DD
-      //   })));
-      // }
-    }catch (error) {
-      console.error("Erreur lors de la recuperation des utilisateurs:", error);
-      toast.error("Erreur lors de l'ajout  de l\'utilisateur:", error);
-
+      const data = await response.json();
+      setUsers(data.data);
+      toast.success("Utilisateur ajouté avec succès !");
+      setFormData({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        mail: "",
+        password: "",
+        role: "",
+      });
+      setIsAddOpen(false);
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de l'utilisateur:", error);
+      toast.error("Erreur lors de l'ajout de l'utilisateur");
     }
-
-    setUsers([...users, newUser]);
-    setFormData({
-      nom: "",
-      prenom: "",
-      telephone: "",
-      mail: "",
-      password: "",
-      role: "",
-    });
-    setIsAddOpen(false);
   };
 
-  const handleEditUser = async()  => {
-    // Basic validation
-    if (!formData.nom || !formData.prenom || !formData.mail || !formData.role) {
-      alert("Veuillez remplir les champs obligatoires : Nom, Prénom, Email, Rôle.");
+  const handleEditUser = async () => {
+    if (!validateForm(formData)) {
+      toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
 
@@ -144,86 +160,70 @@ export default function Users() {
       mail: formData.mail,
       password: formData.password,
       role: formData.role,
-      
     };
 
-    try{
+    try {
       const response = await fetch(`http://alphatek.fr:3110/api/users/edit`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userToEdit),
       });
-      console.log("Request body:", JSON.stringify(userToEdit));
-      console.log("Response:", response);
       if (!response.ok) {
-        throw new Error("erreur de réseau");
+        throw new Error("Erreur de réseau");
       }
-    
-       const data = await response.json();
-         toast.success(data.message);
-          setUsers(
-      users.map((u) =>
-        u.id === selectedUser.id
-          ? {
-              ...u,
-              nom: formData.nom,
-              prenom: formData.prenom,
-              telephone: formData.telephone,
-              mail: formData.mail,
-              password: formData.password || u.password,
-              role: formData.role,
-            }
-          : u
-      )
-    );
-      
-    }catch (error) {
-      console.error("Erreur lors de la modification de l\'utilisateur:", error);
-      toast.error("Erreur lors de la modification de l\'utilisateur:", error);
-
+      const data = await response.json();
+      toast.success(data.message);
+      setUsers(
+        users.map((u) =>
+          u.id === selectedUser.id
+            ? {
+                ...u,
+                nom: formData.nom,
+                prenom: formData.prenom,
+                telephone: formData.telephone,
+                mail: formData.mail,
+                password: formData.password || u.password,
+                role: formData.role,
+              }
+            : u
+        )
+      );
+      setIsEditOpen(false);
+      setFormData({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        mail: "",
+        password: "",
+        role: "",
+      });
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("Erreur lors de la modification de l'utilisateur:", error);
+      toast.error("Erreur lors de la modification de l'utilisateur");
     }
-
-   
-    setIsEditOpen(false);
-    setFormData({
-      nom: "",
-      prenom: "",
-      telephone: "",
-      mail: "",
-      password: "",
-      role: "",
-    });
-    setSelectedUser(null);
   };
 
-  const handleDeleteUser = async() => {
-    const userToDelete = {
-      id: selectedUser.id,
-    }
-    try{
+  const handleDeleteUser = async () => {
+    const userToDelete = { id: selectedUser.id };
+    try {
       const response = await fetch(`http://alphatek.fr:3110/api/users/delete`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userToDelete),
       });
-      console.log("Request body:", JSON.stringify(userToDelete));
-      console.log("Response:", response);
       if (!response.ok) {
-        throw new Error("erreur de réseau");
+        throw new Error("Erreur de réseau");
       }
-    
-       const data = await response.json();
-         toast.success(data.message);
-          setUsers(
-      
-    );
-      
-    }catch (error) {
-      console.error("Erreur lors de la supression de l\'utilisateur:", error);
-      toast.error("Erreur lors de la supression de l\'utilisateur:", error);
-
+      const data = await response.json();
+      toast.success(data.message);
+      setUsers(users.filter((u) => u.id !== selectedUser.id));
+      setIsDeleteOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'utilisateur:", error);
+      toast.error("Erreur lors de la suppression de l'utilisateur");
     }
-    setUsers(users.filter((u) => u.id !== selectedUser.id));
-    setIsDeleteOpen(false);
-    setSelectedUser(null);
   };
 
   const openEditModal = (user) => {
@@ -237,6 +237,7 @@ export default function Users() {
       password: "",
       role: user.role,
     });
+    setErrors({});
     setIsEditOpen(true);
   };
 
@@ -247,23 +248,16 @@ export default function Users() {
 
   const openDeleteModal = (user) => {
     setSelectedUser(user);
-    setFormData({
-      id: user.id,
-
-    });
     setIsDeleteOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
-      {/* Fixed header */}
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Utilisateurs</h1>
       </div>
       <Toaster />
-      {/* Main content */}
       <div className="flex-1 flex flex-col p-6 pt-20">
-        {/* Add User Button */}
         <div className="flex justify-end mb-4">
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
@@ -287,104 +281,107 @@ export default function Users() {
                   <Label htmlFor="nom" className="text-right">
                     Nom
                   </Label>
-                  <Input
-                    id="nom"
-                    value={formData.nom}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nom: e.target.value })
-                    }
-                    className="col-span-3"
-                    required
-                  />
+                  <div className="col-span-3">
+                    <Input
+                      id="nom"
+                      value={formData.nom}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nom: e.target.value })
+                      }
+                      className={errors.nom ? "border-red-500" : ""}
+                    />
+                    {errors.nom && <p className="text-red-500 text-sm mt-1">{errors.nom}</p>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="prenom" className="text-right">
                     Prénom
                   </Label>
-                  <Input
-                    id="prenom"
-                    value={formData.prenom}
-                    onChange={(e) =>
-                      setFormData({ ...formData, prenom: e.target.value })
-                    }
-                    className="col-span-3"
-                    required
-                  />
+                  <div className="col-span-3">
+                    <Input
+                      id="prenom"
+                      value={formData.prenom}
+                      onChange={(e) =>
+                        setFormData({ ...formData, prenom: e.target.value })
+                      }
+                      className={errors.prenom ? "border-red-500" : ""}
+                    />
+                    {errors.prenom && <p className="text-red-500 text-sm mt-1">{errors.prenom}</p>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="telephone" className="text-right">
                     Téléphone
                   </Label>
-                  <Input
-                    id="telephone"
-                    type="tel"
-                    value={formData.telephone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, telephone: e.target.value })
-                    }
-                    min={8}
-                    className="col-span-3"
-                  />
+                  <div className="col-span-3">
+                    <Input
+                      id="telephone"
+                      type="tel"
+                      value={formData.telephone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, telephone: e.target.value })
+                      }
+                      className={errors.telephone ? "border-red-500" : ""}
+                    />
+                    {errors.telephone && <p className="text-red-500 text-sm mt-1">{errors.telephone}</p>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="mail" className="text-right">
                     Email
                   </Label>
-                  <Input
-                    id="mail"
-                    type="email"
-                    value={formData.mail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mail: e.target.value })
-                    }
-                    className="col-span-3"
-                    required
-                  />
+                  <div className="col-span-3">
+                    <Input
+                      id="mail"
+                      type="email"
+                      value={formData.mail}
+                      onChange={(e) =>
+                        setFormData({ ...formData, mail: e.target.value })
+                      }
+                      className={errors.mail ? "border-red-500" : ""}
+                    />
+                    {errors.mail && <p className="text-red-500 text-sm mt-1">{errors.mail}</p>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="password" className="text-right">
                     Mot de passe
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    min={8}
-                    className="col-span-3"
-                  />
+                  <div className="col-span-3">
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className={errors.password ? "border-red-500" : ""}
+                    />
+                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="role" className="text-right">
                     Rôle
                   </Label>
-                  {/* <Input
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
-                    }
-                    
-                    className="col-span-3"
-                    required
-                  /> */}
-                  <Select
-                   value={formData.role}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, role: value })
-                    }>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="choisir role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                      <SelectItem value="user">Employé(é)</SelectItem>
-                      <SelectItem value="guest">Invité</SelectItem>
-                    </SelectContent>
-                  </Select>
-
+                  <div className="col-span-3">
+                    <Select
+                      value={formData.role}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, role: value })
+                      }
+                    >
+                      <SelectTrigger className={errors.role ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Choisir un rôle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Administrateur</SelectItem>
+                        <SelectItem value="user">Employé(e)</SelectItem>
+                        <SelectItem value="guest">Invité</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -399,76 +396,66 @@ export default function Users() {
             </DialogContent>
           </Dialog>
         </div>
-        {/* Table Container */}
         <div className="flex-1 bg-white shadow-md rounded-lg overflow-hidden">
           <div className="w-full h-full overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-sky-50">
-                  <TableHead className="w-[100px] font-bold text-sky-700">
-                    ID
-                  </TableHead>
+                  <TableHead className="w-[100px] font-bold text-sky-700">ID</TableHead>
                   <TableHead className="font-bold text-sky-700">Nom</TableHead>
-                  <TableHead className="font-bold text-sky-700">
-                    Prénom
-                  </TableHead>
-                  <TableHead className="font-bold text-sky-700">
-                    Téléphone
-                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">Prénom</TableHead>
+                  <TableHead className="font-bold text-sky-700">Téléphone</TableHead>
                   <TableHead className="font-bold text-sky-700">Email</TableHead>
                   <TableHead className="font-bold text-sky-700">Rôle</TableHead>
-                  <TableHead className="font-bold text-sky-700">
-                    Date de création
-                  </TableHead>
-                  <TableHead className="text-right font-bold text-sky-700">
-                    Actions
-                  </TableHead>
+                  <TableHead className="font-bold text-sky-700">Date de création</TableHead>
+                  <TableHead className="text-right font-bold text-sky-700">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users && users.length > 0 ? (
-                users.map((user) => (
-                  <TableRow
-                    key={user.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <TableCell className="font-medium">{user.id}</TableCell>
-                    <TableCell>{user.nom}</TableCell>
-                    <TableCell>{user.prenom}</TableCell>
-                    <TableCell>{user.telephone}</TableCell>
-                    <TableCell>{user.mail}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.created_at}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openViewModal(user)}
-                          className="text-sky-500 hover:text-sky-700"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openEditModal(user)}
-                          className="text-sky-500 hover:text-sky-700"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openDeleteModal(user)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )) ) : (
+                  users.map((user) => (
+                    <TableRow
+                      key={user.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <TableCell className="font-medium">{user.id}</TableCell>
+                      <TableCell>{user.nom}</TableCell>
+                      <TableCell>{user.prenom}</TableCell>
+                      <TableCell>{user.telephone}</TableCell>
+                      <TableCell>{user.mail}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell>{user.created_at}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openViewModal(user)}
+                            className="text-sky-500 hover:text-sky-700"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openEditModal(user)}
+                            className="text-sky-500 hover:text-sky-700"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openDeleteModal(user)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-4">
                       Aucun utilisateur trouvé
@@ -481,59 +468,57 @@ export default function Users() {
         </div>
       </div>
 
-      {/* View Details Modal */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Détails de l’Utilisateur</DialogTitle>
-          <DialogDescription>
-            Informations complètes sur l’utilisateur sélectionné.
-          </DialogDescription>
-        </DialogHeader>
-        {selectedUser && (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">ID</Label>
-              <span className="col-span-3">{selectedUser.id}</span>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Détails de l’Utilisateur</DialogTitle>
+            <DialogDescription>
+              Informations complètes sur l’utilisateur sélectionné.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">ID</Label>
+                <span className="col-span-3">{selectedUser.id}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Nom</Label>
+                <span className="col-span-3">{selectedUser.nom}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Prénom</Label>
+                <span className="col-span-3">{selectedUser.prenom}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Téléphone</Label>
+                <span className="col-span-3">{selectedUser.telephone}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Email</Label>
+                <span className="col-span-3">{selectedUser.mail}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Rôle</Label>
+                <span className="col-span-3">{selectedUser.role}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Date de création</Label>
+                <span className="col-span-3">{selectedUser.created_at}</span>
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Nom</Label>
-              <span className="col-span-3">{selectedUser.nom}</span>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Prénom</Label>
-              <span className="col-span-3">{selectedUser.prenom}</span>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Téléphone</Label>
-              <span className="col-span-3">{selectedUser.telephone}</span>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Email</Label>
-              <span className="col-span-3">{selectedUser.mail}</span>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Rôle</Label>
-              <span className="col-span-3">{selectedUser.role}</span>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Date de création</Label>
-              <span className="col-span-3">{selectedUser.created_at}</span>
-            </div>
-          </div>
-        )}
-        <DialogFooter>
-          <Button
-            onClick={() => setIsViewOpen(false)}
-            className="bg-sky-500 hover:bg-sky-600"
-          >
-            Fermer
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={() => setIsViewOpen(false)}
+              className="bg-sky-500 hover:bg-sky-600"
+            >
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
-      {/* Edit User Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -547,87 +532,108 @@ export default function Users() {
               <Label htmlFor="edit-nom" className="text-right">
                 Nom
               </Label>
-              <Input
-                id="edit-nom"
-                value={formData.nom}
-                onChange={(e) =>
-                  setFormData({ ...formData, nom: e.target.value })
-                }
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-nom"
+                  value={formData.nom}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nom: e.target.value })
+                  }
+                  className={errors.nom ? "border-red-500" : ""}
+                />
+                {errors.nom && <p className="text-red-500 text-sm mt-1">{errors.nom}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-prenom" className="text-right">
                 Prénom
               </Label>
-              <Input
-                id="edit-prenom"
-                value={formData.prenom}
-                onChange={(e) =>
-                  setFormData({ ...formData, prenom: e.target.value })
-                }
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-prenom"
+                  value={formData.prenom}
+                  onChange={(e) =>
+                    setFormData({ ...formData, prenom: e.target.value })
+                  }
+                  className={errors.prenom ? "border-red-500" : ""}
+                />
+                {errors.prenom && <p className="text-red-500 text-sm mt-1">{errors.prenom}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-telephone" className="text-right">
                 Téléphone
               </Label>
-              <Input
-                id="edit-telephone"
-                type="tel"
-                value={formData.telephone}
-                onChange={(e) =>
-                  setFormData({ ...formData, telephone: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-telephone"
+                  type="tel"
+                  value={formData.telephone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, telephone: e.target.value })
+                  }
+                  className={errors.telephone ? "border-red-500" : ""}
+                />
+                {errors.telephone && <p className="text-red-500 text-sm mt-1">{errors.telephone}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-mail" className="text-right">
                 Email
               </Label>
-              <Input
-                id="edit-mail"
-                type="email"
-                value={formData.mail}
-                onChange={(e) =>
-                  setFormData({ ...formData, mail: e.target.value })
-                }
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-mail"
+                  type="email"
+                  value={formData.mail}
+                  onChange={(e) =>
+                    setFormData({ ...formData, mail: e.target.value })
+                  }
+                  className={errors.mail ? "border-red-500" : ""}
+                />
+                {errors.mail && <p className="text-red-500 text-sm mt-1">{errors.mail}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-password" className="text-right">
                 Mot de passe
               </Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                placeholder="Laissez vide pour ne pas modifier"
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  placeholder="Laissez vide pour ne pas modifier"
+                  className={errors.password ? "border-red-500" : ""}
+                />
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-role" className="text-right">
                 Rôle
               </Label>
-              <Input
-                id="edit-role"
-                value={formData.role}
-                onChange={(e) =>
-                  setFormData({ ...formData, role: e.target.value })
-                }
-                className="col-span-3"
-                required
-              />
+              <div className="col-span-3">
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, role: value })
+                  }
+                >
+                  <SelectTrigger className={errors.role ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Choisir un rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrateur</SelectItem>
+                    <SelectItem value="user">Employé(e)</SelectItem>
+                    <SelectItem value="guest">Invité</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -641,7 +647,6 @@ export default function Users() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -669,5 +674,4 @@ export default function Users() {
       </Dialog>
     </div>
   );
-  
 }
