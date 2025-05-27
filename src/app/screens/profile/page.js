@@ -52,13 +52,14 @@ export default function Profile() {
 
   useEffect(() => {
     // Retrieve data from local storage
-    const id = localStorage.getItem("id");
     // if (id) {
     //   setData(storedData);
     // }
 
      const fetchProfile = async () => {
     try{
+    const id = localStorage.getItem("id");
+      console.log("Fetching profile for ID:", id);
 
       const response = await fetch(`http://alphatek.fr:3110/api/users/byid?id=${id}`, {
           method: "GET",
