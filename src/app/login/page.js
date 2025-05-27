@@ -94,24 +94,19 @@ export default function LOGIN() {
 
       console.log("Connexion réussie :", result);
 
-      if (!result.data) {
+      if (!result) {
         throw new Error("Données utilisateur invalides");
       }
 
-      const { role, mail, id } = result.data;
+      const { role, mail, id } = result;
       const token = result.data.token;
 
       // Stocker dans localStorage
-      localStorage.setItem("username", mail);
+      localStorage.setItem("email", mail);
       localStorage.setItem("logedUserId", id);
-      localStorage.setItem("token", token);
-      localStorage.setItem("token", token);
-      const expiresAt = Date.now() + 3600 * 1000; // 1h en millisecondes
       localStorage.setItem("role", role);
 
-      // Stocker le token et le rôle dans les cookies pour le middleware
-      document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Strict`;
-      document.cookie = `userRole=${role}; path=/; max-age=3600; SameSite=Strict`;
+     
 
       console.log("Token:", token);
       console.log("Role:", role);
