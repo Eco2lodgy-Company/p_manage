@@ -1,107 +1,82 @@
 import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
-import * as bcrypt from 'bcrypt';
-
-// Configuration
-const SALT_ROUNDS = 10;
+import * as bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
     try {
-        // Récupérer et valider les données
         const body = await request.json();
-        const { nom, prenom, telephone, mail, password, role } = body;
+        const { id, oldPassword, newPassword } = body;
 
-        // Validation complète des données
-        if (!nom || !prenom || !telephone || !mail || !password || !role) {
+        // Validation de base
+        if (!id || !oldPassword || !newPassword) {
             return NextResponse.json(
-                { error: "Tous les champs sont requis" },
+                { error: "User ID, old password, and new password are required" },
                 { status: 400 }
             );
         }
 
-        if (password.length < 8) {
+        // Validation du format du mot de passe (hash bcrypt)
+        if (newPassword.length < 60 || newPassword.length > 60) {
             return NextResponse.json(
-                { error: "Le mot de passe doit contenir au moins 8 caractères" },
+                { error: "Invalid password format (must be a valid bcrypt hash)" },
                 { status: 400 }
             );
         }
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-            return NextResponse.json(
-                { error: "Format d'email invalide" },
-                { status: 400 }
-            );
-        }
-
-        // Hachage du mot de passe
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
         const client = await connectionPool.connect();
-        
-        try {
-            // Vérification si l'email existe déjà
-            const checkQuery = `SELECT id FROM users WHERE mail = $1`;
-            const checkResult = await client.query(checkQuery, [mail]);
-            
-            if (checkResult.rows.length > 0) {
-                return NextResponse.json(
-                    { error: "Un utilisateur avec cet email existe déjà" },
-                    { status: 409 }
-                );
-            }
+        console.log("connected!");
 
-            // Insertion avec transaction
-            await client.query('BEGIN');
-            
-            const insertQuery = `
-                INSERT INTO users(nom, prenom, telephone, mail, password, role)
-                VALUES($1, $2, $3, $4, $5, $6)
-                RETURNING id, nom, prenom, mail, role;
-            `;
-            
-            const values = [nom, prenom, telephone, mail, hashedPassword, role];
-            const result = await client.query(insertQuery, values);
-            
-            await client.query('COMMIT');
-            
-            // Ne retournez jamais le mot de passe même hashé
-            const userData = result.rows[0];
-            
-            return NextResponse.json(
-                { 
-                    success: true,
-                    message: "Utilisateur créé avec succès",
-                    data: userData 
-                }, 
-                { status: 201 }
-            );
-            
-        } catch (dbError) {
-            await client.query('ROLLBACK');
-            throw dbError;
-        } finally {
+        // Vérifier l'ancien mot de passe
+        const verifyResult = await client.query(
+            "SELECT password FROM users WHERE id = $1",
+            [id]
+        );
+
+        if (verifyResult.rowCount === 0) {
             client.release();
-        }
-        
-    } catch (error) {
-        console.error("Erreur:", error);
-        
-        if (error instanceof Error) {
             return NextResponse.json(
-                { 
-                    success: false,
-                    error: "Erreur serveur",
-                    details: process.env.NODE_ENV === 'development' ? error.message : undefined
-                },
+                { error: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        const storedPassword = verifyResult.rows[0].password;
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, storedPassword);
+
+        if (!isOldPasswordValid) {
+            client.release();
+            return NextResponse.json(
+                { error: "Incorrect old password" },
+                { status: 401 }
+            );
+        }
+
+        // Mettre à jour le mot de passe avec le nouveau hash
+        const updateResult = await client.query(
+            "UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email",
+            [newPassword, id]
+        );
+
+        const updatedUser = updateResult.rows[0];
+        console.log("updated user:", updatedUser);
+        client.release();
+
+        return NextResponse.json(
+            { message: "Password updated successfully", data: updatedUser },
+            { status: 200 }
+        );
+
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Error updating password:", error.message);
+            return NextResponse.json(
+                { error: error.message },
                 { status: 500 }
             );
         }
-        
+        console.error("Unknown error connecting to db");
         return NextResponse.json(
-            { 
-                success: false,
-                error: "Erreur inconnue" 
-            },
+            { error: "An unknown error occurred" },
             { status: 500 }
         );
     }

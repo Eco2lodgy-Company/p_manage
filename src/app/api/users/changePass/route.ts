@@ -1,5 +1,6 @@
 import connectionPool from "@/lib/db";
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
     try {
@@ -14,10 +15,10 @@ export async function POST(request: Request) {
             );
         }
 
-        // Password strength validation
-        if (newPassword.length < 8) {
+        // Password strength validation (optional, since client-side hashing)
+        if (newPassword.length < 60 || newPassword.length > 60) {
             return NextResponse.json(
-                { error: "New password must be at least 8 characters long" },
+                { error: "Invalid password format (must be a valid bcrypt hash)" },
                 { status: 400 }
             );
         }
@@ -39,8 +40,10 @@ export async function POST(request: Request) {
             );
         }
 
-        const currentPassword = verifyResult.rows[0].password;
-        if (currentPassword !== oldPassword) {
+        const storedPassword = verifyResult.rows[0].password;
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, storedPassword);
+
+        if (!isOldPasswordValid) {
             client.release();
             return NextResponse.json(
                 { error: "Incorrect old password" },
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // Update password
+        // Update password with pre-hashed newPassword
         const updateResult = await client.query(
             "UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email",
             [newPassword, id]
