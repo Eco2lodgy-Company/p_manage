@@ -148,7 +148,7 @@ export default function Dashboard() {
                       <h3 className="text-md font-semibold text-gray-800">{task.nom || "Unnamed Task"}</h3>
                       <div
                         className={`rounded-full px-3 py-1 text-white text-sm ${
-                          task.state === "Terminée" ? "bg-green-500" : "bg-yellow-500"
+                          task.state === "done" ? "bg-green-500" : "bg-yellow-500"
                         }`}
                       >
                         {getstatusname(task.state) || "Unknown"}
