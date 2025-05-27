@@ -123,9 +123,9 @@ export default function LOGIN() {
       //       break;
       //   }
       // }, 1500);
-      if(role === "Administrateur") {
+      if(role === "admin") {
         setSuccess(true);
-        router.push("/dashboard");
+        router.push("/screens/dashboard");
       }
       else {
        setError("Vous n'avez pas accès à cette page.");
