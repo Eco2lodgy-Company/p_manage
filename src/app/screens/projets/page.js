@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { z } from "https://cdn.jsdelivr.net/npm/zod@3.24/dist/index.min.mjs";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
 import CryptoJS from "crypto-js";
 import { Toaster } from "@/components/ui/sonner";
