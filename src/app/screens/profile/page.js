@@ -49,11 +49,11 @@ export default function Profile() {
   const [profile, setProfile] = useState(userData);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [formData, setFormData] = useState({ name: profile.name, email: profile.email });
-useEffect(() => {
-  const id = localStorage.getItem("id");
-      console.log("Fetching profile for ID:", id);
+// useEffect(() => {
+//   const id = localStorage.getItem("id");
+//       console.log("Fetching profile for ID:", id);
 
-})
+// })
   useEffect(() => {
     // Retrieve data from local storage
     // if (id) {

@@ -103,7 +103,7 @@ export default function LOGIN() {
 
       // Stocker dans localStorage
       localStorage.setItem("email", mail);
-      localStorage.setItem("logedUserId", id);
+      localStorage.setItem("id", id);
       localStorage.setItem("role", role);
 
      
