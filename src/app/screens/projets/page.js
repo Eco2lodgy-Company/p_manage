@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Share2, Eye } from "lucideation";
+import { Trash2, Edit, Share2, Eye } from "lucide-react";
 
 // Define Zod schema for project validation
 const projectSchema = z.object({
