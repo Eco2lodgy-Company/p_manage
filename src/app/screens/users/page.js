@@ -37,7 +37,7 @@ const userSchema = z.object({
   nom: z.string().min(1, "Le nom est requis").max(50, "Le nom ne doit pas dépasser 50 caractères"),
   prenom: z.string().min(1, "Le prénom est requis").max(50, "Le prénom ne doit pas dépasser 50 caractères"),
   telephone: z.string().optional().refine(
-    (val) => !val || /^[0-9]{10}$/.test(val),
+    (val) => !val || /^[0-9]{8}$/.test(val),
     "Le numéro de téléphone doit contenir exactement 10 chiffres"
   ),
   mail: z.string().email("L'email doit être valide").min(1, "L'email est requis"),
