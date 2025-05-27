@@ -87,6 +87,7 @@ export default function LOGIN() {
 
       const result = await response.json();
       console.log(response);
+      console.log(result);
 
       if (!response.ok) {
         throw new Error(result.message || "Échec de la connexion");
