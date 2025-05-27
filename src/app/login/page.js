@@ -79,7 +79,7 @@ export default function LOGIN() {
     setError("");
 
     try {
-      const response = await fetch(`http://195.35.24.128:8081/api/authenticate?username=${formData.email}&password=${formData.password}`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/login?email=${formData.email}&password=${formData.password}`, {
         method: "POST"
       });
       console.log(formData.email, formData.password);
@@ -97,11 +97,11 @@ export default function LOGIN() {
         throw new Error("Données utilisateur invalides");
       }
 
-      const { role, email, id } = result.data.userInfo;
+      const { role, mail, id } = result.data;
       const token = result.data.token;
 
       // Stocker dans localStorage
-      localStorage.setItem("username", email);
+      localStorage.setItem("username", mail);
       localStorage.setItem("logedUserId", id);
       localStorage.setItem("token", token);
       localStorage.setItem("token", token);
