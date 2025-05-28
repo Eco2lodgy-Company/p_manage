@@ -66,7 +66,7 @@ const Sidebar = () => {
           <Menu size={28} />
         </button>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 bg-sky-900 bg-opacity-50 z-50 flex">
+          <div className="fixed inset-0 bg-sky-900 bg-opacity-50 z-50 flex bg-background">
             <div className="bg-sky-500 text-white w-64 h-full overflow-y-auto shadow-xl">
               <div className="flex items-center justify-between p-4 border-b border-sky-300">
                 <div className="flex items-center">
@@ -118,7 +118,7 @@ const Sidebar = () => {
         expanded ? "w-64" : "w-20"
       }`}
     >
-      <div className="flex items-center p-4 border-b border-sky-300">
+      <div className="flex items-center p-4 border-b border-sky-300 bg-background">
         <div className="bg-sky-600 h-12 w-12 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
           APP
         </div>
