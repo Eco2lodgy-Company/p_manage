@@ -437,8 +437,8 @@ export default function Projects() {
                             </SelectTrigger>
                             <SelectContent>
                               {employees && employees.map((employee) => (
-                                <SelectItem key={employee.id} value={employee.name}>
-                                  {employee.name}
+                                <SelectItem key={employee.id} value={employee.id}>
+                                  {employee.nom} {employee.prenom}
                                 </SelectItem>
                               ))}
                               <SelectItem value="light">Light</SelectItem>
