@@ -110,32 +110,32 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
       <ToastContainer />
-      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
+      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 0 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Tableau de Bord</h1>
       </div>
       <div className="mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between">
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-red-500 w-full sm:w-[48%] md:w-[23%] mb-4">
-          <h1 className="text-lg font-bold text-sky-700">Tâches Non Assignées</h1>
+          <h1 className="text-lg font-bold ">Tâches Non Assignées</h1>
           <h1 className="text-3xl font-bold text-red-500">{dashboardData.taches_non_assignees || 0}</h1>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-yellow-500 w-full sm:w-[48%] md:w-[23%] mb-4">
-          <h1 className="text-lg font-bold text-sky-700">Tâches En Cours</h1>
+          <h1 className="text-lg font-bold ">Tâches En Cours</h1>
           <h1 className="text-3xl font-bold text-yellow-500">{dashboardData.taches_en_cours || 0}</h1>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-green-500 w-full sm:w-[48%] md:w-[23%] mb-4">
-          <h1 className="text-lg font-bold text-sky-700">Tâches Terminées</h1>
+          <h1 className="text-lg font-bold ">Tâches Terminées</h1>
           <h1 className="text-3xl font-bold text-green-500">{dashboardData.taches_terminees || 0}</h1>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-blue-500 w-full sm:w-[48%] md:w-[23%] mb-4">
-          <h1 className="text-lg font-bold text-sky-700">Tâches Totales</h1>
+          <h1 className="text-lg font-bold ">Tâches Totales</h1>
           <h1 className="text-3xl font-bold text-blue-500">{dashboardData.total_taches || 0}</h1>
         </div>
       </div>
       <div className="flex-1 p-4 flex flex-row flex-wrap justify-around">
-        <div className="bg-white border-l-4 border-sky-500 shadow-md rounded-lg p-6 max-w-md w-full mt-4 md:mt-0">
+        <div className="bg-white border-l-4  shadow-md rounded-lg p-6 max-w-md w-full mt-4 md:mt-0">
           <div className="flex flex-col space-y-6 w-full">
-            <div className="bg-sky-50 p-4 rounded-lg shadow-sm text-center border border-sky-200">
-              <h2 className="text-xl font-bold text-sky-700">Tâches</h2>
+            <div className=" p-4 rounded-lg shadow-sm text-center border ">
+              <h2 className="text-xl font-bold ">Tâches</h2>
               <div className="flex flex-col space-y-2 mt-4">
                 {isLoading ? (
                   <div>Loading tasks...</div>
@@ -143,7 +143,7 @@ export default function Dashboard() {
                   latestTasks.map((task, index) => (
                     <div
                       key={index}
-                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
+                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover: transition-colors border "
                     >
                       <h3 className="text-md font-semibold text-gray-800">{task.nom || "Unnamed Task"}</h3>
                       <div
@@ -160,8 +160,8 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            <div className="bg-sky-50 p-4 rounded-lg shadow-sm text-center border border-sky-200">
-              <h2 className="text-xl font-bold text-sky-700">Projets</h2>
+            <div className=" p-4 rounded-lg shadow-sm text-center border ">
+              <h2 className="text-xl font-bold ">Projets</h2>
               <div className="flex flex-col space-y-2 mt-4">
                 {isLoading ? (
                   <div>Loading projects...</div>
@@ -169,7 +169,7 @@ export default function Dashboard() {
                   latestProjects.map((project, index) => (
                     <div
                       key={index}
-                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover:bg-sky-100 transition-colors border border-sky-200"
+                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover: transition-colors border "
                     >
                       <h3 className="text-md font-semibold text-gray-800">{project.nom || "Unnamed Project"}</h3>
                       <div
@@ -189,9 +189,9 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="bg-white flex flex-col shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
-          <Card className="flex flex-col border-l-4 border-sky-500">
+          <Card className="flex flex-col border-l-4 ">
             <CardHeader className="items-center pb-0">
-              <CardTitle className="text-xl font-bold text-sky-700">
+              <CardTitle className="text-xl font-bold ">
                 Statistiques des Projets
               </CardTitle>
               <CardDescription className="text-gray-600">
@@ -262,7 +262,7 @@ export default function Dashboard() {
               )}
             </CardContent>
             <CardFooter className="flex-col gap-2 text-sm">
-              <div className="flex items-center gap-2 font-medium leading-none text-sky-700">
+              <div className="flex items-center gap-2 font-medium leading-none ">
                 {/* En hausse de 5.2% ce mois-ci <TrendingUp className="h-4 w-4" /> */}
               </div>
               <div className="leading-none text-muted-foreground">
