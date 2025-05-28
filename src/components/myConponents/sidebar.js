@@ -61,7 +61,7 @@ const Sidebar = () => {
       <>
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="fixed top-4 left-4 z-50 p-3 bg-sky-500 text-white rounded-lg shadow-lg hover:bg-sky-600"
+          className="fixed top-4 left-4 z-50 bg-background p-3 bg-sky-500 text-white rounded-lg shadow-lg hover:bg-sky-600"
         >
           <Menu size={28} />
         </button>
@@ -114,7 +114,7 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`h-screen flex flex-col text-white transition-all duration-300 fixed left-0 top-0 bottom-0 bg-sky-500 ${
+      className={`h-screen flex flex-col text-white transition-all bg-background duration-300 fixed left-0 top-0 bottom-0 bg-sky-500 ${
         expanded ? "w-64" : "w-20"
       }`}
     >
