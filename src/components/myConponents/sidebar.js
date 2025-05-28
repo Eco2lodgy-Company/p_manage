@@ -77,7 +77,7 @@ const Sidebar = () => {
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg hover:bg-sky-600"
+                  className="p-2 rounded-lg hover:bg-popover"
                 >
                   <X size={28} />
                 </button>
@@ -139,7 +139,7 @@ const Sidebar = () => {
                 <button
                   onClick={() => router.push(item.href)}
                   className={`flex items-center w-full p-4 rounded-lg transition-colors ${
-                    active ? "bg-sky-600 text-white" : "hover:bg-sky-600"
+                    active ? "bg-sky-600 text-white" : "hover:bg-popover"
                   }`}
                 >
                   <item.icon size={32} className={active ? "text-white" : "text-sky-200"} />
