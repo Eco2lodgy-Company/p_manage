@@ -423,14 +423,6 @@ export default function Projects() {
                       Responsable
                     </Label>
                     <div className="col-span-3">
-                      <Input
-                        id="assign_to"
-                        value={formData.assign_to}
-                        onChange={(e) =>
-                          setFormData({ ...formData, assign_to: e.target.value })
-                        }
-                        className={errors.assign_to ? "border-red-500" : ""}
-                      />
                       <Select>
                             <SelectTrigger className="w-[180px]">
                               <SelectValue placeholder="Responsable" />
@@ -441,9 +433,6 @@ export default function Projects() {
                                   {employee.nom} {employee.prenom}
                                 </SelectItem>
                               ))}
-                              <SelectItem value="light">Light</SelectItem>
-                              <SelectItem value="dark">Dark</SelectItem>
-                              <SelectItem value="system">System</SelectItem>
                             </SelectContent>
                       </Select>
 
