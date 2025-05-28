@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import crypto from "crypto";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import {  Select,  SelectContent,  SelectItem,  SelectTrigger,  SelectValue,} from "@/components/ui/select"
+
 import {
   Table,
   TableBody,
@@ -46,6 +48,7 @@ export default function Projects() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [employees, setEmployees] = useState(null);
   const [formData, setFormData] = useState({
     id: "",
     title: "",
@@ -74,8 +77,36 @@ export default function Projects() {
     }
   };
 
+  const fetchEmployees = async () => {
+      try {
+        const response = await fetch(`http://alphatek.fr:3110/api/users/emp`, {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de réseau");
+        }
+        const data = await response.json();
+        
+        const emploeeAray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+        if (emploeeAray.length > 0) {
+          setEmployees(emploeeAray);
+          
+        } else {
+          setEmployees([]);
+          toast.error("Tâches non trouvées ou format incorrect");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des tâches:", error);
+        setEmployees([]);
+        toast.error("Erreur lors de la récupération des tâches");
+      } finally {
+        setLoading(false);
+      }
+    };
+
   useEffect(() => {
     fetchProjects();
+    fetchEmployees();
   }, []);
 
   const validateForm = (data, isSharing = false) => {
@@ -400,6 +431,22 @@ export default function Projects() {
                         }
                         className={errors.assign_to ? "border-red-500" : ""}
                       />
+                      <Select>
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Responsable" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {employees && employees.map((employee) => (
+                                <SelectItem key={employee.id} value={employee.name}>
+                                  {employee.name}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="light">Light</SelectItem>
+                              <SelectItem value="dark">Dark</SelectItem>
+                              <SelectItem value="system">System</SelectItem>
+                            </SelectContent>
+                      </Select>
+
                       {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
                     </div>
                   </div>

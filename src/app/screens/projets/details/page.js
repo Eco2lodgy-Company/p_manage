@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar, CheckCircle } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
+
 function ProjectDetailsContent() {
   const searchParams = useSearchParams();
   const [id, setId] = useState(null);
@@ -78,8 +79,11 @@ function ProjectDetailsContent() {
       }
     };
 
+    
+
     fetchProjectDetails();
     fetchProjectTasks();
+    // fetchEmployees();
   }, [id]);
 
   // Loading state
