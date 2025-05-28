@@ -130,7 +130,7 @@ const Sidebar = () => {
           {expanded ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
         </button> */}
       </div>
-      <nav className="flex-1 pt-4 overflow-y-auto" ref={navRef}>
+      <nav className="flex-1 pt-4 overflow-y-auto bg-background" ref={navRef}>
         <ul className="space-y-3 px-3">
           {menuItems.map((item, index) => {
             const active = isActive(item.href);
