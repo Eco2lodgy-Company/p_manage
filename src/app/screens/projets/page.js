@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Share2, Eye } from "lucide-react";
+import { Trash2, Edit, Share2, Eye, Archive } from "lucide-react";
 
 // Define Zod schema for project validation
 const projectSchema = z.object({
@@ -23,12 +23,14 @@ const projectSchema = z.object({
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [formData, setFormData] = useState({
@@ -41,6 +43,8 @@ export default function Projects() {
     email: "",
   });
   const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Tous");
   const router = useRouter();
 
   // Fetch projects from API
@@ -53,6 +57,7 @@ export default function Projects() {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       setProjects(data.data);
+      setFilteredProjects(data.data);
     } catch (error) {
       console.error("Erreur lors de la récupération des projets:", error);
       toast.error("Erreur lors de la récupération des projets");
@@ -81,6 +86,30 @@ export default function Projects() {
     fetchProjects();
     fetchEmployees();
   }, []);
+
+  // Filter and search projects
+  useEffect(() => {
+    let updatedProjects = [...projects];
+    
+    // Apply status filter
+    if (statusFilter !== "Tous") {
+      updatedProjects = updatedProjects.filter((project) => {
+        const status = getStatus(project.start_date, project.end_date);
+        return status === statusFilter;
+      });
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      updatedProjects = updatedProjects.filter(
+        (project) =>
+          project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredProjects(updatedProjects);
+  }, [searchTerm, statusFilter, projects]);
 
   // Validate form data
   const validateForm = (data, isSharing = false) => {
@@ -218,6 +247,26 @@ export default function Projects() {
     }
   };
 
+  // Archive project
+  const handleArchiveProject = async () => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects/archive`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedProject.id }),
+      });
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      toast.success(data.message || "Projet archivé avec succès");
+      await fetchProjects();
+      setIsArchiveOpen(false);
+      setSelectedProject(null);
+    } catch (error) {
+      console.error("Erreur lors de l'archivage du projet:", error);
+      toast.error("Erreur lors de l'archivage du projet");
+    }
+  };
+
   // Open edit modal
   const openEditModal = (project) => {
     setSelectedProject(project);
@@ -257,6 +306,12 @@ export default function Projects() {
     setIsDeleteOpen(true);
   };
 
+  // Open archive modal
+  const openArchiveModal = (project) => {
+    setSelectedProject(project);
+    setIsArchiveOpen(true);
+  };
+
   // Calculate progress based on dates
   const calculateProgress = (startDate, endDate) => {
     const start = new Date(startDate);
@@ -286,7 +341,26 @@ export default function Projects() {
         <h1 className="text-2xl font-bold">Projets</h1>
       </div>
       <div className="mt-20 w-full max-w-7xl mx-auto">
-        <div className="flex justify-end mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <Input
+              placeholder="Rechercher par titre ou description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full sm:w-64"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filtrer par statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Tous">Tous</SelectItem>
+                <SelectItem value="Non démarré">Non démarré</SelectItem>
+                <SelectItem value="En cours">En cours</SelectItem>
+                <SelectItem value="Terminé">Terminé</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="bg-sky-500 hover:bg-sky-600 text-white">Ajouter un Projet</Button>
@@ -376,26 +450,26 @@ export default function Projects() {
           </Dialog>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-          {projects.length > 0 ? (
-            projects.map((project) => {
+          {filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => {
               const progress = calculateProgress(project.start_date, project.end_date);
               const status = getStatus(project.start_date, project.end_date);
               return (
                 <div
                   key={project.id}
-                  className="bg-white shadow-md rounded-lg p-6 flex flex-col gap-4 hover:shadow-lg transition-shadow w-full"
+                  className="bg-white shadow-md rounded-lg p-4 flex flex-col gap-2 hover:shadow-lg transition-shadow w-full"
                 >
-                  <h2 className="text-xl font-bold text-sky-700">{project.title}</h2>
-                  <p className="text-gray-600 line-clamp-3">{project.description}</p>
-                  <div className="flex flex-col gap-2">
+                  <h2 className="text-lg font-bold text-sky-700">{project.title}</h2>
+                  <p className="text-gray-600 line-clamp-2 text-sm">{project.description}</p>
+                  <div className="flex flex-col gap-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Échéance</span>
-                      <span className="text-sm text-gray-600">{project.end_date}</span>
+                      <span className="text-xs font-medium text-gray-700">Échéance</span>
+                      <span className="text-xs text-gray-600">{project.end_date}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Statut</span>
+                      <span className="text-xs font-medium text-gray-700">Statut</span>
                       <span
-                        className={`text-sm font-semibold ${
+                        className={`text-xs font-semibold ${
                           status === "Terminé"
                             ? "text-green-500"
                             : status === "En cours"
@@ -406,9 +480,9 @@ export default function Projects() {
                         {status}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2.5 rounded-full ${
+                        className={`h-2 rounded-full ${
                           status === "Terminé"
                             ? "bg-green-500"
                             : status === "En cours"
@@ -419,12 +493,12 @@ export default function Projects() {
                       ></div>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-1">
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => openViewModal(project)}
-                      className="text-sky-500 hover:text-sky-700 border-sky-500"
+                      className="text-sky-500 hover:text-sky-700 border-sky-500 h-8 w-8"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -432,7 +506,7 @@ export default function Projects() {
                       variant="outline"
                       size="icon"
                       onClick={() => openEditModal(project)}
-                      className="text-sky-500 hover:text-sky-700 border-sky-500"
+                      className="text-sky-500 hover:text-sky-700 border-sky-500 h-8 w-8"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -440,15 +514,23 @@ export default function Projects() {
                       variant="outline"
                       size="icon"
                       onClick={() => openShareModal(project)}
-                      className="text-sky-500 hover:text-sky-700 border-sky-500"
+                      className="text-sky-500 hover:text-sky-700 border-sky-500 h-8 w-8"
                     >
                       <Share2 className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
+                      onClick={() => openArchiveModal(project)}
+                      className="text-purple-500 hover:text-purple-700 border-purple-500 h-8 w-8"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => openDeleteModal(project)}
-                      className="text-red-500 hover:text-red-700 border-red-500"
+                      className="text-red-500 hover:text-red-700 border-red-500 h-8 w-8"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -632,6 +714,24 @@ export default function Projects() {
             </Button>
             <Button onClick={handleDeleteProject} className="bg-red-500 hover:bg-red-600 text-white">
               Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Archive Dialog */}
+      <Dialog open={isArchiveOpen} onOpenChange={setIsArchiveOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmer l'Archivage</DialogTitle>
+            <DialogDescription>Êtes-vous sûr de vouloir archiver ce projet ?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsArchiveOpen(false)} className="border-sky-500 text-sky-500 hover:bg-sky-50">
+              Annuler
+            </Button>
+            <Button onClick={handleArchiveProject} className="bg-purple-500 hover:bg-purple-600 text-white">
+              Archiver
             </Button>
           </DialogFooter>
         </DialogContent>
