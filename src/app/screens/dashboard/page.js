@@ -1,220 +1,275 @@
-'use client';
-import React from 'react';
-import { Pie, PieChart } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PlusCircle, ChevronDown } from 'lucide-react';
+"use client";
+import React, { useEffect, useState, useMemo } from "react";
+import { TrendingUp } from "lucide-react";
+import { Label, Pie, PieChart } from "recharts";
+import { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Dashboard() {
-  // Pie Chart Data for "Répartition département"
-  const chartData = [
-    { status: 'R&D', nombre: 48, fill: 'var(--chart-1)' },
-    { status: 'Marketing', nombre: 30, fill: 'var(--chart-2)' },
-    { status: 'Finance', nombre: 20, fill: 'var(--chart-3)' },
-  ];
+  const [dashboardData, setDashboardData] = useState({
+    total_taches: 0,
+    taches_non_assignees: 0,
+    taches_en_cours: 0,
+    taches_terminees: 0,
+    total_projets: 0,
+    projets_en_cours: 0,
+    projets_termines: 0,
+    projets_non_demarres: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [latestTasks, setLatestTasks] = useState([]);
+  const [latestProjects, setLatestProjects] = useState([]);
 
-  const chartConfig = {
-    nombre: { label: 'Nombre' },
-    'R&D': { label: 'R&D', color: 'var(--chart-1)' },
-    Marketing: { label: 'Marketing', color: 'var(--chart-2)' },
-    Finance: { label: 'Finance', color: 'var(--chart-3)' },
+  const getDashData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/dashboard/`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      console.log("Dashboard API Response:", data.data);
+      setDashboardData(data.data[0]); // Assuming data.data is an array
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données:", error);
+      toast.error("Erreur lors de la récupération des données");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const totalNombre = chartData.reduce((acc, curr) => acc + curr.nombre, 0);
+  const getLatest = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/dashboard/prt`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur de réseau");
+      }
+      const data = await response.json();
+      console.log("Latest API Response:", data);
 
-  // Mocked data for "Activités récentes" and "Tâches à venir"
-  const recentActivities = [
-    { name: 'Rapport de projet mis à jour', color: 'border-l-chart-1' },
-    { name: 'Tâche complétée: Design de l’interface', color: 'border-l-chart-2' },
-    { name: 'Il y a 2 heures par Sophie M.', color: 'border-l-chart-3' },
-    { name: 'Il y a 5 heures par Mario C.', color: 'border-l-destructive' },
-    { name: 'Alerte: Budget dépassé pour le projet Eco-Build', color: 'border-l-destructive' },
-  ];
+      // Adjust based on actual API response structure
+      // Example: If response is { projects: [], tasks: [] }
+      setLatestProjects(data.prodata || []); // Extract projects
+      setLatestTasks(data.taskdata || []); // Extract tasks
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données:", error);
+      toast.error("Erreur lors de la récupération des données");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const upcomingTasks = [
-    { name: 'Finaliser le rapport mensuel', due: 'Aujourd’hui' },
-    { name: 'Réunion avec les investisseurs', due: '14/10/2025' },
-    { name: 'Révision du plan marketing', due: '15/10/2025' },
-    { name: 'Formation équipe développement', due: '10/10/2025' },
-  ];
+  useEffect(() => {
+    getDashData();
+    getLatest();
+  }, []);
+
+  // Debug state updates
+  useEffect(() => {
+    console.log("Updated latestTasks:", latestTasks);
+    console.log("Updated latestProjects:", latestProjects);
+  }, [latestTasks, latestProjects]);
+
+  const chartData = useMemo(
+    () => [
+      { status: "termines", nombre: parseInt(dashboardData.projets_termines )|| 0, fill: "green" },
+      { status: "en_cours", nombre: parseInt(dashboardData.projets_en_cours) || 0, fill: "yellow" },
+      { status: "en_attente", nombre: parseInt(dashboardData.projets_non_demarres) || 0, fill: "orange" },
+      
+    ],
+    [dashboardData]
+  );
+
+  const chartConfig = {
+    nombre: { label: "Nombre" },
+    termines: { label: "Terminés", color: "green" },
+    en_cours: { label: "En Cours", color: "yellow" },
+    en_attente: { label: "En Attente", color: "orange" },
+  
+  };
+  const getstatusname = (name) => {
+    const statusNames = {
+      done: "Terminés",
+      in_progress: "En Cours",
+      pending: "En Attente",    
+    };
+    return statusNames[name] || name;
+  };
+
+  const totalNombre = useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.nombre, 0);
+  }, [chartData]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
-      {/* Header */}
-      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-background text-foreground p-4 shadow-md z-10 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">Eco-Build SA</span>
-          <ChevronDown className="h-4 w-4" />
+    <div className="min-h-screen bg-gray-100 bg-background flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
+      <ToastContainer />
+      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 0 text-white p-4 shadow-md text-center z-10">
+        <h1 className="text-2xl font-bold">Tableau de Bord</h1>
+      </div>
+      <div className="mt-23 top-6 left-0 md:left-64 lg:left-64 xl:left-64 right-0 p-4 flex flex-wrap justify-between">
+        <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-red-500 w-full sm:w-[48%] md:w-[23%] mb-4">
+          <h1 className="text-lg font-bold ">Tâches Non Assignées</h1>
+          <h1 className="text-3xl font-bold text-red-500">{dashboardData.taches_non_assignees || 0}</h1>
         </div>
-        <h1 className="text-2xl font-bold">Tableau de bord</h1>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Tous les départements</span>
-            <ChevronDown className="h-4 w-4" />
-          </div>
-          <button className="bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm">
-            Exporter
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Admin</span>
-            <ChevronDown className="h-4 w-4" />
-          </div>
+        <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-yellow-500 w-full sm:w-[48%] md:w-[23%] mb-4">
+          <h1 className="text-lg font-bold ">Tâches En Cours</h1>
+          <h1 className="text-3xl font-bold text-yellow-500">{dashboardData.taches_en_cours || 0}</h1>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-green-500 w-full sm:w-[48%] md:w-[23%] mb-4">
+          <h1 className="text-lg font-bold ">Tâches Terminées</h1>
+          <h1 className="text-3xl font-bold text-green-500">{dashboardData.taches_terminees || 0}</h1>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-md text-center border-l-4 border-blue-500 w-full sm:w-[48%] md:w-[23%] mb-4">
+          <h1 className="text-lg font-bold ">Tâches Totales</h1>
+          <h1 className="text-3xl font-bold text-blue-500">{dashboardData.total_taches || 0}</h1>
         </div>
       </div>
-
-      {/* Top Cards */}
-      <div className="mt-16 p-4 flex flex-wrap justify-between gap-4">
-        <div className="bg-card text-card-foreground p-4 rounded-lg shadow-md text-center border-l-4 border-l-chart-1 w-full sm:w-[48%] md:w-[23%]">
-          <h2 className="text-lg font-bold">Projets actifs</h2>
-          <p className="text-3xl font-bold">12</p>
-          <p className="text-sm text-muted-foreground">+4% par rapport au dernier mois</p>
-        </div>
-        <div className="bg-card text-card-foreground p-4 rounded-lg shadow-md text-center border-l-4 border-l-chart-2 w-full sm:w-[48%] md:w-[23%]">
-          <h2 className="text-lg font-bold">Tâches en cours</h2>
-          <p className="text-3xl font-bold">42</p>
-          <p className="text-sm text-muted-foreground">-3% par rapport au dernier mois</p>
-        </div>
-        <div className="bg-card text-card-foreground p-4 rounded-lg shadow-md text-center border-l-4 border-l-chart-3 w-full sm:w-[48%] md:w-[23%]">
-          <h2 className="text-lg font-bold">Employés</h2>
-          <p className="text-3xl font-bold">85</p>
-          <p className="text-sm text-muted-foreground">+12% par rapport au dernier mois</p>
-        </div>
-        <div className="bg-card text-card-foreground p-4 rounded-lg shadow-md text-center border-l-4 border-l-chart-4 w-full sm:w-[48%] md:w-[23%]">
-          <h2 className="text-lg font-bold">Budget utilisé</h2>
-          <p className="text-3xl font-bold">68%</p>
-          <div className="w-full bg-muted h-2 rounded-full mt-2">
-            <div className="bg-chart-4 h-2 rounded-full" style={{ width: '68%' }}></div>
+      <div className="flex-1 p-4 flex flex-row flex-wrap justify-around">
+        <div className="bg-white border-l-4  shadow-md rounded-lg p-6 max-w-md w-full mt-4 md:mt-0">
+          <div className="flex flex-col space-y-6 w-full">
+            <div className=" p-4 rounded-lg shadow-sm text-center border ">
+              <h2 className="text-xl font-bold ">Tâches</h2>
+              <div className="flex flex-col space-y-2 mt-4">
+                {isLoading ? (
+                  <div>Loading tasks...</div>
+                ) : latestTasks.length > 0 ? (
+                  latestTasks.map((task, index) => (
+                    <div
+                      key={index}
+                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover: transition-colors border "
+                    >
+                      <h3 className="text-md font-semibold text-gray-800">{task.nom || "Unnamed Task"}</h3>
+                      <div
+                        className={`rounded-full px-3 py-1 text-white text-sm ${
+                          task.state === "done" ? "bg-green-500" : "bg-yellow-500"
+                        }`}
+                      >
+                        {getstatusname(task.state) || "Unknown"}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div>No tasks available</div>
+                )}
+              </div>
+            </div>
+            <div className=" p-4 rounded-lg shadow-sm text-center border ">
+              <h2 className="text-xl font-bold ">Projets</h2>
+              <div className="flex flex-col space-y-2 mt-4">
+                {isLoading ? (
+                  <div>Loading projects...</div>
+                ) : latestProjects.length > 0 ? (
+                  latestProjects.map((project, index) => (
+                    <div
+                      key={index}
+                      className="bg-white flex flex-row justify-between p-3 rounded-lg shadow-sm hover: transition-colors border "
+                    >
+                      <h3 className="text-md font-semibold text-gray-800">{project.nom || "Unnamed Project"}</h3>
+                      <div
+                        className={`rounded-full px-3 py-1 text-white text-sm ${
+                          project.state === "done" ? "bg-green-500" : "bg-yellow-500"
+                        }`}
+                      >
+                        {getstatusname(project.state) || "Unknown"}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div>No projects available</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-4 flex flex-row flex-wrap justify-around gap-4">
-        {/* Left Column */}
-        <div className="flex flex-col w-full md:w-[48%] gap-4">
-          {/* Progress Chart Placeholder */}
-          <div className="bg-card text-card-foreground shadow-md rounded-lg p-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Progression des projets</h2>
-              <select className="bg-muted text-muted-foreground rounded px-2 py-1 text-sm">
-                <option>Dernier mois</option>
-                <option>Ce mois</option>
-                <option>Dernière année</option>
-              </select>
-            </div>
-            <div className="flex justify-between text-muted-foreground text-sm mt-4">
-              <span>Lun</span>
-              <span>Mar</span>
-              <span>Mer</span>
-              <span>Jeu</span>
-              <span>Sam</span>
-            </div>
-            <div className="h-40 bg-muted rounded mt-2 flex items-center justify-center">
-              <p className="text-muted-foreground">[Line Chart Placeholder]</p>
-            </div>
-          </div>
-
-          {/* Recent Activities */}
-          <div className="bg-card text-card-foreground shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-bold">Activités récentes</h2>
-            <div className="flex flex-col space-y-4 mt-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center p-3 rounded-lg border-l-4 ${activity.color}`}
-                >
-                  <span className="text-sm text-card-foreground">{activity.name}</span>
-                </div>
-              ))}
-            </div>
-            <button className="mt-4 flex items-center gap-2 text-primary hover:underline text-sm">
-              Voir tout
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="flex flex-col w-full md:w-[48%] gap-4">
-          {/* Pie Chart */}
-          <div className="bg-card text-card-foreground shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-bold text-center">Répartition département</h2>
-            <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px] mt-4">
-              <PieChart>
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <Pie
-                  data={chartData}
-                  dataKey="nombre"
-                  nameKey="status"
-                  innerRadius={60}
-                  strokeWidth={5}
-                >
-                  <Label
-                    content={({ viewBox }) => {
-                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                        return (
-                          <text
-                            x={viewBox.cx}
-                            y={viewBox.cy}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                          >
-                            <tspan
-                              x={viewBox.cx}
-                              y={viewBox.cy}
-                              className="fill-foreground text-3xl font-bold"
-                            >
-                              {totalNombre}
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) + 24}
-                              className="fill-muted-foreground text-sm"
-                            >
-                              Total
-                            </tspan>
-                          </text>
-                        );
-                      }
-                    }}
-                  />
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-            <div className="flex flex-wrap justify-center gap-4 mt-4">
-              {chartData.map((item) => (
-                <div key={item.status} className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: chartConfig[item.status].color }}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {chartConfig[item.status].label} ({item.nombre}%)
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button className="mt-4 flex items-center gap-2 text-primary hover:underline text-sm mx-auto">
-              Voir tout
-            </button>
-          </div>
-
-          {/* Upcoming Tasks */}
-          <div className="bg-card text-card-foreground shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-bold">Tâches à venir</h2>
-            <div className="flex flex-col space-y-4 mt-4">
-              {upcomingTasks.map((task, index) => (
-                <div
-                  key={index}
-                  className="flex flex-row justify-between p-3 rounded-lg border-l-4 border-l-chart-1"
-                >
-                  <span className="text-sm text-card-foreground">{task.name}</span>
-                  <span className="text-sm text-muted-foreground">Échéance: {task.due}</span>
-                </div>
-              ))}
-            </div>
-            <button className="mt-4 flex items-center gap-2 text-primary hover:underline text-sm">
-              <PlusCircle className="h-4 w-4" /> Ajouter une tâche
-            </button>
-          </div>
+        <div className="bg-white flex flex-col shadow-md rounded-lg p-6 max-w-md w-full text-center mt-4 md:mt-0 md:ml-4">
+          <Card className="flex flex-col border-l-4 ">
+            <CardHeader className="items-center pb-0">
+              <CardTitle className="text-xl font-bold ">
+                Statistiques des Projets
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                {/* Janvier - Juin 2024 */}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-0">
+              {isLoading ? (
+                <div>Loading chart...</div>
+              ) : (
+                <>
+                  <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
+                    <PieChart>
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      <Pie
+                        data={chartData}
+                        dataKey="nombre"
+                        nameKey="status"
+                        innerRadius={60}
+                        strokeWidth={5}
+                      >
+                        <Label
+                          content={({ viewBox }) => {
+                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                              return (
+                                <text
+                                  x={viewBox.cx}
+                                  y={viewBox.cy}
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                >
+                                  <tspan
+                                    x={viewBox.cx}
+                                    y={viewBox.cy}
+                                    className="fill-foreground text-3xl font-bold"
+                                  >
+                                    {dashboardData.total_projets || 0}
+                                  </tspan>
+                                  <tspan
+                                    x={viewBox.cx}
+                                    y={(viewBox.cy || 0) + 24}
+                                    className="fill-muted-foreground"
+                                  >
+                                    Projets
+                                  </tspan>
+                                </text>
+                              );
+                            }
+                          }}
+                        />
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="flex flex-wrap justify-center gap-4 mt-4">
+                    {chartData.map((item) => (
+                      <div key={item.status} className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: chartConfig[item.status].color }}
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {chartConfig[item.status].label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </CardContent>
+            <CardFooter className="flex-col gap-2 text-sm">
+              <div className="flex items-center gap-2 font-medium leading-none ">
+                {/* En hausse de 5.2% ce mois-ci <TrendingUp className="h-4 w-4" /> */}
+              </div>
+              <div className="leading-none text-muted-foreground">
+                {/* Total des projets pour les 6 derniers mois */}
+              </div>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     </div>
