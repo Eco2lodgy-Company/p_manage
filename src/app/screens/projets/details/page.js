@@ -279,7 +279,7 @@ function ProjectDetailsContent() {
       </div>
       <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Column: Project Information */}
+          {/* Left Column: Remaining Project Information */}
           <div className="lg:col-span-1">
             <Card className="w-full border-l-4 border-sky-500 bg-white shadow-md">
               <CardHeader className="p-4">
@@ -292,14 +292,6 @@ function ProjectDetailsContent() {
                   <div>
                     <p className="text-xs font-semibold text-gray-600">ID</p>
                     <p className="text-sm text-gray-800">{projectData.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600">Titre</p>
-                    <p className="text-sm text-gray-800">{projectData.title}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600">Description</p>
-                    <p className="text-sm text-gray-800 line-clamp-3">{projectData.description}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-600">Montant ($)</p>
@@ -360,63 +352,71 @@ function ProjectDetailsContent() {
               </TabsList>
 
               <TabsContent value="dashboard" className="mt-4">
-                <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg font-bold text-sky-700">Liste des Tâches</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-sky-50">
-                            <TableHead className="font-bold text-sky-700 text-xs">Titre</TableHead>
-                            <TableHead className="font-bold text-sky-700 text-xs">Description</TableHead>
-                            <TableHead className="font-bold text-sky-700 text-xs">Échéance</TableHead>
-                            <TableHead className="font-bold text-sky-700 text-xs">Statut</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredTasks.length > 0 ? filteredTasks.map((task) => {
-                            const startDate = task.start_date ? new Date(task.start_date) : null;
-                            let endDate = "";
-                            if (startDate && !isNaN(startDate) && task.echeance) {
-                              const end = new Date(startDate);
-                              end.setDate(end.getDate() + Number(task.echeance));
-                              endDate = convertDate(end);
-                            }
-                            return (
-                              <TableRow
-                                key={task.id}
-                                className="hover:bg-sky-100 transition-colors"
-                              >
-                                <TableCell className="text-xs">{task.titre || ""}</TableCell>
-                                <TableCell className="text-xs line-clamp-2">{task.description || ""}</TableCell>
-                                <TableCell className="text-xs">{endDate || "N/A"}</TableCell>
-                                <TableCell>
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-white text-xs ${
-                                      task.state === "done"
-                                        ? "bg-green-500"
-                                        : task.state === "in_progress"
-                                        ? "bg-yellow-500"
-                                        : "bg-orange-500"
-                                    }`}
-                                  >
-                                    {getstatename(task.state) || "N/A"}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          }) : (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-center text-gray-600">Aucune tâche disponible</TableCell>
+                <div className="space-y-4">
+                  {/* Project Name and Description */}
+                  <div className="bg-white p-4 rounded-lg shadow-md">
+                    <h2 className="text-xl font-bold text-sky-700">{projectData.title}</h2>
+                    <p className="text-sm text-gray-600 mt-2">{projectData.description}</p>
+                  </div>
+                  {/* Task List */}
+                  <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-lg font-bold text-sky-700">Liste des Tâches</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-sky-50">
+                              <TableHead className="font-bold text-sky-700 text-xs">Titre</TableHead>
+                              <TableHead className="font-bold text-sky-700 text-xs">Description</TableHead>
+                              <TableHead className="font-bold text-sky-700 text-xs">Échéance</TableHead>
+                              <TableHead className="font-bold text-sky-700 text-xs">Statut</TableHead>
                             </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredTasks.length > 0 ? filteredTasks.map((task) => {
+                              const startDate = task.start_date ? new Date(task.start_date) : null;
+                              let endDate = "";
+                              if (startDate && !isNaN(startDate) && task.echeance) {
+                                const end = new Date(startDate);
+                                end.setDate(end.getDate() + Number(task.echeance));
+                                endDate = convertDate(end);
+                              }
+                              return (
+                                <TableRow
+                                  key={task.id}
+                                  className="hover:bg-sky-100 transition-colors"
+                                >
+                                  <TableCell className="text-xs">{task.titre || ""}</TableCell>
+                                  <TableCell className="text-xs line-clamp-2">{task.description || ""}</TableCell>
+                                  <TableCell className="text-xs">{endDate || "N/A"}</TableCell>
+                                  <TableCell>
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-white text-xs ${
+                                        task.state === "done"
+                                          ? "bg-green-500"
+                                          : task.state === "in_progress"
+                                          ? "bg-yellow-500"
+                                          : "bg-orange-500"
+                                      }`}
+                                    >
+                                      {getstatename(task.state) || "N/A"}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }) : (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center text-gray-600">Aucune tâche disponible</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="kanban" className="mt-4">
