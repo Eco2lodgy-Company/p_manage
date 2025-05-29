@@ -375,7 +375,7 @@ export default function Projects() {
             </DialogContent>
           </Dialog>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {projects.length > 0 ? (
             projects.map((project) => {
               const progress = calculateProgress(project.start_date, project.end_date);
@@ -457,7 +457,7 @@ export default function Projects() {
               );
             })
           ) : (
-            <div className="col-span-3 text-center text-gray-600">Aucun projet trouvé.</div>
+            <div className="col-span-2 text-center text-gray-600">Aucun projet trouvé.</div>
           )}
         </div>
       </div>
