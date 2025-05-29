@@ -6,13 +6,14 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar, CheckCircle, Share2 } from "lucide-react";
+import { Calendar as CalendarIcon, CheckCircle, Share2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
+import Calendar from "react-calendar"; // Assuming react-calendar is installed
 
 function ProjectDetailsContent() {
   const searchParams = useSearchParams();
@@ -164,7 +165,8 @@ function ProjectDetailsContent() {
     const duration = (end - start) / (1000 * 60 * 60 * 24);
     return {
       name: task.titre || "Tâche",
-      start: start.toString(),
+      start: convertDate(task.start_date),
+      end: convertDate(end),
       duration: task.echeance > 0 ? task.echeance : 1,
       status: task.state || "N/A",
     };
@@ -176,6 +178,8 @@ function ProjectDetailsContent() {
     name: task.titre || "Tâche",
     x: 100 + index * 150,
     y: 100 + (index % 2) * 100,
+    start: convertDate(task.start_date),
+    duration: task.echeance,
   })) : [];
 
   // PERT chart edges
@@ -278,104 +282,120 @@ function ProjectDetailsContent() {
         </div>
       </div>
       <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Column: Remaining Project Information */}
-          <div className="lg:col-span-1">
-            <Card className="w-full border-l-4 border-sky-500 bg-white shadow-md">
-              <CardHeader className="p-4">
-                <CardTitle className="text-lg font-bold text-sky-700">
-                  Informations du Projet
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600">ID</p>
-                    <p className="text-sm text-gray-800">{projectData.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600">Montant ($)</p>
-                    <p className="text-sm text-gray-800">{projectData.amount?.toFixed(2) || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600">Statut</p>
-                    <p className="text-sm text-gray-800 flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                      {getstatename(projectData.state) || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600">Dates</p>
-                    <p className="text-sm text-gray-800">
-                      De {convertDate(projectData.start_date)} à {convertDate(projectData.end_date)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Project Name and Description at the Top */}
+          <Card className="w-full bg-white shadow-md">
+            <CardContent className="p-4">
+              <h2 className="text-2xl font-bold text-sky-700">{projectData.title}</h2>
+              <p className="text-lg text-gray-600 mt-2">{projectData.description}</p>
+            </CardContent>
+          </Card>
 
-          {/* Right Column: Tasks and Visualization */}
-          <div className="lg:col-span-2 space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-sky-100 mb-4">
-                <TabsTrigger
-                  value="dashboard"
-                  className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                >
-                  Dashboard des Tâches
-                </TabsTrigger>
-                <TabsTrigger
-                  value="kanban"
-                  className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                >
-                  Kanban
-                </TabsTrigger>
-                <TabsTrigger
-                  value="gantt"
-                  className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                >
-                  Gantt
-                </TabsTrigger>
-                <TabsTrigger
-                  value="pert"
-                  className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                >
-                  PERT
-                </TabsTrigger>
-                <TabsTrigger
-                  value="planning"
-                  className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                >
-                  Planning
-                </TabsTrigger>
-              </TabsList>
+          {/* View Tabs */}
+          <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
+            <CardContent className="p-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-5 bg-sky-100 mb-4">
+                  <TabsTrigger
+                    value="dashboard"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    Dashboard des Tâches
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="kanban"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    Kanban
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="calendar"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    Calendar
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="gantt"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    Gantt
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="pert"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    PERT
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="planning"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    Planning
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="dashboard" className="mt-4">
-                <div className="space-y-4">
-                  {/* Project Name and Description */}
-                  <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h2 className="text-xl font-bold text-sky-700">{projectData.title}</h2>
-                    <p className="text-sm text-gray-600 mt-2">{projectData.description}</p>
-                  </div>
-                  {/* Task List */}
-                  <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-lg font-bold text-sky-700">Liste des Tâches</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-sky-50">
-                              <TableHead className="font-bold text-sky-700 text-xs">Titre</TableHead>
-                              <TableHead className="font-bold text-sky-700 text-xs">Description</TableHead>
-                              <TableHead className="font-bold text-sky-700 text-xs">Échéance</TableHead>
-                              <TableHead className="font-bold text-sky-700 text-xs">Statut</TableHead>
+                <TabsContent value="dashboard" className="mt-4">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-sky-50">
+                          <TableHead className="font-bold text-sky-700 text-xs">Titre</TableHead>
+                          <TableHead className="font-bold text-sky-700 text-xs">Description</TableHead>
+                          <TableHead className="font-bold text-sky-700 text-xs">Échéance</TableHead>
+                          <TableHead className="font-bold text-sky-700 text-xs">Statut</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTasks.length > 0 ? filteredTasks.map((task) => {
+                          const startDate = task.start_date ? new Date(task.start_date) : null;
+                          let endDate = "";
+                          if (startDate && !isNaN(startDate) && task.echeance) {
+                            const end = new Date(startDate);
+                            end.setDate(end.getDate() + Number(task.echeance));
+                            endDate = convertDate(end);
+                          }
+                          return (
+                            <TableRow
+                              key={task.id}
+                              className="hover:bg-sky-100 transition-colors"
+                            >
+                              <TableCell className="text-xs">{task.titre || ""}</TableCell>
+                              <TableCell className="text-xs line-clamp-2">{task.description || ""}</TableCell>
+                              <TableCell className="text-xs">{endDate || "N/A"}</TableCell>
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-white text-xs ${
+                                    task.state === "done"
+                                      ? "bg-green-500"
+                                      : task.state === "in_progress"
+                                      ? "bg-yellow-500"
+                                      : "bg-orange-500"
+                                  }`}
+                                >
+                                  {getstatename(task.state) || "N/A"}
+                                </span>
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredTasks.length > 0 ? filteredTasks.map((task) => {
+                          );
+                        }) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-gray-600">Aucune tâche disponible</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="kanban" className="mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {["To Do", "In Progress", "Completed"].map((status) => (
+                      <div key={status} className="bg-white p-4 rounded-lg shadow-md">
+                        <h3 className="text-md font-semibold text-sky-700">{status}</h3>
+                        <div className="mt-2 space-y-2">
+                          {filteredTasks
+                            .filter((task) => getstatename(task.state).replace("é", "e") === status.toLowerCase().replace(" ", ""))
+                            .map((task) => {
                               const startDate = task.start_date ? new Date(task.start_date) : null;
                               let endDate = "";
                               if (startDate && !isNaN(startDate) && task.echeance) {
@@ -384,168 +404,141 @@ function ProjectDetailsContent() {
                                 endDate = convertDate(end);
                               }
                               return (
-                                <TableRow
-                                  key={task.id}
-                                  className="hover:bg-sky-100 transition-colors"
-                                >
-                                  <TableCell className="text-xs">{task.titre || ""}</TableCell>
-                                  <TableCell className="text-xs line-clamp-2">{task.description || ""}</TableCell>
-                                  <TableCell className="text-xs">{endDate || "N/A"}</TableCell>
-                                  <TableCell>
-                                    <span
-                                      className={`px-2 py-1 rounded-full text-white text-xs ${
-                                        task.state === "done"
-                                          ? "bg-green-500"
-                                          : task.state === "in_progress"
-                                          ? "bg-yellow-500"
-                                          : "bg-orange-500"
-                                      }`}
-                                    >
-                                      {getstatename(task.state) || "N/A"}
-                                    </span>
-                                  </TableCell>
-                                </TableRow>
+                                <div key={task.id} className="p-2 bg-gray-100 rounded-md">
+                                  <p className="text-sm font-medium">{task.titre}</p>
+                                  <p className="text-xs text-gray-500 line-clamp-1">{task.description}</p>
+                                  <p className="text-xs text-gray-500">Échéance: {endDate}</p>
+                                </div>
                               );
-                            }) : (
-                              <TableRow>
-                                <TableCell colSpan={4} className="text-center text-gray-600">Aucune tâche disponible</TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
+                            })}
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+                    ))}
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="kanban" className="mt-4">
-                <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg font-bold text-sky-700">Vue Kanban</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <p className="text-gray-600 text-sm">Vue Kanban non implémentée (à venir).</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                <TabsContent value="calendar" className="mt-4">
+                  <Calendar
+                    value={new Date()}
+                    tileContent={({ date, view }) =>
+                      view === "month" && filteredTasks.some((task) => {
+                        const taskDate = new Date(task.start_date);
+                        return taskDate.toDateString() === date.toDateString();
+                      }) ? (
+                        <div className="text-xs bg-yellow-200 rounded-full w-5 h-5 flex items-center justify-center">
+                          {filteredTasks.filter((task) => {
+                            const taskDate = new Date(task.start_date);
+                            return taskDate.toDateString() === date.toDateString();
+                          }).length}
+                        </div>
+                      ) : null
+                    }
+                  />
+                </TabsContent>
 
-              <TabsContent value="gantt" className="mt-4">
-                <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg font-bold text-sky-700">Diagramme de Gantt</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="overflow-x-auto">
-                      {ganttData.length > 0 ? (
-                        <BarChart
-                          width={800}
-                          height={300}
-                          data={ganttData}
-                          layout="vertical"
-                          margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis type="number" dataKey="duration" hide />
-                          <YAxis type="category" dataKey="name" />
-                          <Tooltip
-                            formatter={(value, name, props) => [
-                              `${props.payload.start} (${value || 0} jours)`,
-                              props.payload.name,
-                            ]}
+                <TabsContent value="gantt" className="mt-4">
+                  <div className="overflow-x-auto">
+                    {ganttData.length > 0 ? (
+                      <BarChart
+                        width={window.innerWidth * 0.8} // Responsive width
+                        height={300}
+                        data={ganttData}
+                        layout="vertical"
+                        margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="duration" />
+                        <YAxis type="category" dataKey="name" width={150} />
+                        <Tooltip
+                          formatter={(value, name, props) => [
+                            `${props.payload.start} - ${props.payload.end} (${value || 0} jours)`,
+                            props.payload.name,
+                          ]}
+                        />
+                        <Bar dataKey="duration" fill="#0ea5e9" />
+                      </BarChart>
+                    ) : (
+                      <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de Gantt</p>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="pert" className="mt-4">
+                  <div className="overflow-x-auto">
+                    {pertNodes.length > 0 ? (
+                      <svg
+                        width={window.innerWidth * 0.8} // Responsive width
+                        height={400}
+                        role="img"
+                        aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
+                      >
+                        <defs>
+                          <marker
+                            id="arrow"
+                            viewBox="0 0 10 10"
+                            refX="5"
+                            refY="5"
+                            markerWidth="6"
+                            markerHeight="6"
+                            orient="auto-start-reverse"
+                          >
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+                          </marker>
+                        </defs>
+                        {pertEdges.map((edge, index) => (
+                          <line
+                            key={index}
+                            x1={edge.from?.x}
+                            y1={edge.from?.y}
+                            x2={edge.to?.x}
+                            y2={edge.to?.y}
+                            stroke="#0ea5e9"
+                            strokeWidth="2"
+                            markerEnd="url(#arrow)"
                           />
-                          <Bar dataKey="duration" fill="#0ea5e9" />
-                        </BarChart>
-                      ) : (
-                        <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de Gantt</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="pert" className="mt-4">
-                <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg font-bold text-sky-700">Diagramme de PERT</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="overflow-x-auto">
-                      {pertNodes.length > 0 ? (
-                        <svg
-                          width="800"
-                          height="300"
-                          role="img"
-                          aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
-                        >
-                          <defs>
-                            <marker
-                              id="arrow"
-                              viewBox="0 0 10 10"
-                              refX="5"
-                              refY="5"
-                              markerWidth="6"
-                              markerHeight="6"
-                              orient="auto-start-reverse"
-                            >
-                              <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
-                            </marker>
-                          </defs>
-                          {pertEdges.map((edge, index) => (
-                            <line
-                              key={index}
-                              x1={edge.from?.x}
-                              y1={edge.from?.y}
-                              x2={edge.to?.x}
-                              y2={edge.to?.y}
+                        ))}
+                        {pertNodes.map((node) => (
+                          <g key={node.id}>
+                            <circle
+                              cx={node.x}
+                              cy={node.y}
+                              r="30"
+                              fill="#bfdbfe"
                               stroke="#0ea5e9"
                               strokeWidth="2"
-                              markerEnd="url(#arrow)"
                             />
-                          ))}
-                          {pertNodes.map((node) => (
-                            <g key={node.id}>
-                              <circle
-                                cx={node.x}
-                                cy={node.y}
-                                r="30"
-                                fill="#bfdbfe"
-                                stroke="#0ea5e9"
-                                strokeWidth="2"
-                              />
-                              <text
-                                x={node.x}
-                                y={node.y}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                fill="#1e3a8a"
-                                fontSize="12"
-                              >
-                                {node.name}
-                              </text>
-                            </g>
-                          ))}
-                        </svg>
-                      ) : (
-                        <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de PERT</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                            <text
+                              x={node.x}
+                              y={node.y}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fill="#1e3a8a"
+                              fontSize="12"
+                            >
+                              {node.name} ({node.start}, {node.duration}j)
+                            </text>
+                          </g>
+                        ))}
+                      </svg>
+                    ) : (
+                      <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de PERT</p>
+                    )}
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="planning" className="mt-4">
-                <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-lg font-bold text-sky-700">Vue Planning</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <p className="text-gray-600 text-sm">Vue Planning non implémentée (à venir).</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+                <TabsContent value="planning" className="mt-4">
+                  <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-lg font-bold text-sky-700">Vue Planning</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <p className="text-gray-600 text-sm">Vue Planning non implémentée (à venir).</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
