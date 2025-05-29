@@ -1,118 +1,142 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, CheckCircle, Share2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, CheckCircle, Share2 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-// Simuler les paramètres de recherche et les données du projet
-const mockSearchParams = { get: (key) => key === "id" ? "1" : null };
-const mockRouter = { push: (path) => console.log(`Navigation vers: ${path}`) };
-const toast = { 
-  success: (msg) => console.log(`✅ Success: ${msg}`), 
-  error: (msg) => console.log(`❌ Error: ${msg}`) 
-};
-
-// Données de test
-const mockProjectData = {
-  title: "Projet Alpha",
-  description: "Développement d'une application de gestion de projets moderne avec interface utilisateur intuitive"
-};
-
-const mockTasks = [
-  {
-    id: 1,
-    titre: "Conception UI/UX",
-    description: "Créer les maquettes et prototypes de l'interface utilisateur",
-    start_date: "2024-05-20",
-    echeance: 7,
-    state: "done"
-  },
-  {
-    id: 2,
-    titre: "Développement Backend",
-    description: "Mise en place de l'API REST et de la base de données",
-    start_date: "2024-05-25",
-    echeance: 14,
-    state: "in_progress"
-  },
-  {
-    id: 3,
-    titre: "Développement Frontend",
-    description: "Intégration des maquettes et développement des composants React",
-    start_date: "2024-05-30",
-    echeance: 10,
-    state: "pending"
-  },
-  {
-    id: 4,
-    titre: "Tests et Débogage",
-    description: "Tests unitaires, tests d'intégration et correction des bugs",
-    start_date: "2024-06-05",
-    echeance: 5,
-    state: "pending"
-  },
-  {
-    id: 5,
-    titre: "Déploiement",
-    description: "Mise en production et configuration serveur",
-    start_date: "2024-06-10",
-    echeance: 3,
-    state: "pending"
-  }
-];
+import { z } from "zod";
+import Calendar from "react-calendar"; // Assuming react-calendar is installed
 
 function ProjectDetailsContent() {
-  const searchParams = mockSearchParams;
-  const router = mockRouter;
-  const [id, setId] = useState("1");
-  const [projectData, setProjectData] = useState(mockProjectData);
-  const [tasks, setTasks] = useState(mockTasks);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [id, setId] = useState(null);
+  const [projectData, setProjectData] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({ email: "" });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  
-  // États pour le calendrier
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fonction pour valider le formulaire
+  // Extract ID from searchParams
+  useEffect(() => {
+    const idFromParams = searchParams.get("id");
+    setId(idFromParams);
+  }, [searchParams]);
+
+  // Fetch project details and tasks
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProjectDetails = async () => {
+      try {
+        const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de réseau");
+        }
+        const data = await response.json();
+        if (data.data) {
+          setProjectData(data.data[0]);
+          console.log("Données du projet:", data.data[0]);
+        } else {
+          toast.error("Projet non trouvé");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des détails du projet:", error);
+        toast.error("Erreur lors de la récupération des détails du projet");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchProjectTasks = async () => {
+      try {
+        const response = await fetch(`http://alphatek.fr:3110/api/tasks/forprojects/?id=${id}`, {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de réseau");
+        }
+        const data = await response.json();
+        console.log("Raw tasks API response:", data);
+        const tasksArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+        if (tasksArray.length > 0) {
+          setTasks(tasksArray);
+          console.log("Tasks set:", tasksArray);
+        } else {
+          setTasks([]);
+          toast.error("Tâches non trouvées ou format incorrect");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des tâches:", error);
+        setTasks([]);
+        toast.error("Erreur lors de la récupération des tâches");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectDetails();
+    fetchProjectTasks();
+  }, [id]);
+
+  // Validate form data for sharing
   const validateForm = (data) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const newErrors = {};
-    
-    if (!data.email) {
-      newErrors.email = "L'email est requis";
-    } else if (!emailRegex.test(data.email)) {
-      newErrors.email = "Veuillez entrer une adresse email valide";
+    const schema = z.object({
+      email: z.string().email("Veuillez entrer une adresse email valide").min(1, "L'email est requis"),
+    });
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      const fieldErrors = {};
+      result.error.errors.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message;
+      });
+      setErrors(fieldErrors);
+      return false;
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
-  // Gérer le partage du projet
+  // Handle sharing project
   const handleShareProject = async () => {
     if (!validateForm(formData)) {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
-    
+    const generateKeyWithTimestamp = (length = 32) => {
+      const bytes = crypto.randomBytes(length);
+      const base64 = bytes.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      return base64 + Date.now().toString();
+    };
+    const shareData = {
+      email: formData.email,
+      token: generateKeyWithTimestamp(),
+      project_id: id,
+    };
     setIsSharing(true);
     try {
-      // Simulation d'un appel API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Invitation envoyée avec succès");
+      const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(shareData),
+      });
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      toast.success(data.message);
       setIsShareOpen(false);
       setFormData({ email: "" });
     } catch (error) {
@@ -123,7 +147,7 @@ function ProjectDetailsContent() {
     }
   };
 
-  // Convertir une date au format "AAAA-MM-DD"
+  // Convert a date to "AAAA-MM-DD" format
   const convertDate = (date) => {
     if (!date) return "";
     const d = new Date(date);
@@ -134,7 +158,39 @@ function ProjectDetailsContent() {
     return `${year}-${month}-${day}`;
   };
 
-  // Obtenir le nom de l'état
+  // Convert tasks to Gantt chart data
+  const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
+    const start = new Date(task.start_date);
+    const end = new Date(convertDate(task.start_date) + task.echeance);
+    const duration = (end - start) / (1000 * 60 * 60 * 24);
+    return {
+      name: task.titre || "Tâche",
+      start: convertDate(task.start_date),
+      end: convertDate(end),
+      duration: task.echeance > 0 ? task.echeance : 1,
+      status: task.state || "N/A",
+    };
+  }) : [];
+
+  // PERT chart node positions
+  const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
+    id: task.id || 0,
+    name: task.titre || "Tâche",
+    x: 100 + index * 150,
+    y: 100 + (index % 2) * 100,
+    start: convertDate(task.start_date),
+    duration: task.echeance,
+  })) : [];
+
+  // PERT chart edges
+  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
+    Array.isArray(task.dependances) ? task.dependances.map((depId) => {
+      const fromNode = pertNodes.find((n) => n.id === depId);
+      const toNode = pertNodes.find((n) => n.id === task.id);
+      return fromNode && toNode ? { from: fromNode, to: toNode } : null;
+    }).filter(Boolean) : []
+  ) : [];
+
   const getstatename = (state) => {
     switch (state) {
       case "done":
@@ -148,123 +204,10 @@ function ProjectDetailsContent() {
     }
   };
 
-  // Filtrer les tâches basé sur le terme de recherche
+  // Filter tasks based on search term
   const filteredTasks = Array.isArray(tasks) ? tasks.filter((task) =>
-    (task.titre?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+    (task.titre?.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
   ) : [];
-
-  // Fonctions pour le calendrier
-  const getDaysInMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
-
-  const getTasksForDate = (date) => {
-    const dateStr = convertDate(date);
-    return filteredTasks.filter(task => {
-      const taskStartDate = convertDate(task.start_date);
-      if (taskStartDate === dateStr) return true;
-      
-      // Vérifier si la date est dans la période de la tâche
-      const startDate = new Date(task.start_date);
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + (task.echeance || 0));
-      
-      return date >= startDate && date <= endDate;
-    });
-  };
-
-  const navigateMonth = (direction) => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() + direction);
-      return newDate;
-    });
-  };
-
-  // Générer le calendrier
-  const generateCalendar = () => {
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDay = getFirstDayOfMonth(currentDate);
-    const days = [];
-    
-    // Jours vides au début
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-24 p-1"></div>);
-    }
-    
-    // Jours du mois
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      const tasksForDay = getTasksForDate(date);
-      const isSelected = selectedDate && 
-        selectedDate.toDateString() === date.toDateString();
-      
-      days.push(
-        <div
-          key={day}
-          className={`h-24 p-1 border border-gray-200 cursor-pointer hover:bg-sky-50 transition-colors ${
-            isSelected ? 'bg-sky-100 border-sky-300' : ''
-          }`}
-          onClick={() => setSelectedDate(date)}
-        >
-          <div className="text-sm font-medium text-gray-700">{day}</div>
-          <div className="mt-1 space-y-1">
-            {tasksForDay.slice(0, 2).map(task => (
-              <div
-                key={task.id}
-                className={`text-xs px-1 py-0.5 rounded truncate ${
-                  task.state === 'done' 
-                    ? 'bg-green-100 text-green-800'
-                    : task.state === 'in_progress'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-orange-100 text-orange-800'
-                }`}
-                title={task.titre}
-              >
-                {task.titre}
-              </div>
-            ))}
-            {tasksForDay.length > 2 && (
-              <div className="text-xs text-gray-500">
-                +{tasksForDay.length - 2} autres
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-    
-    return days;
-  };
-
-  // Données pour le diagramme de Gantt
-  const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
-    const start = new Date(task.start_date);
-    const duration = task.echeance > 0 ? task.echeance : 1;
-    return {
-      name: task.titre || "Tâche",
-      start: convertDate(task.start_date),
-      duration: duration,
-      status: task.state || "N/A",
-    };
-  }) : [];
-
-  // Données pour le diagramme PERT
-  const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
-    id: task.id || 0,
-    name: task.titre || "Tâche",
-    x: 100 + index * 150,
-    y: 100 + (index % 2) * 100,
-    start: convertDate(task.start_date),
-    duration: task.echeance,
-  })) : [];
-
-  const pertEdges = [];
 
   if (loading) {
     return (
@@ -284,6 +227,7 @@ function ProjectDetailsContent() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
+      <Toaster />
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md flex justify-between items-center z-10">
         <Button
           variant="outline"
@@ -337,10 +281,9 @@ function ProjectDetailsContent() {
           </Dialog>
         </div>
       </div>
-
       <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 gap-4">
-          {/* Project Name and Description */}
+          {/* Project Name and Description at the Top */}
           <Card className="w-full bg-white shadow-md">
             <CardContent className="p-4">
               <h2 className="text-2xl font-bold text-sky-700">{projectData.title}</h2>
@@ -357,7 +300,7 @@ function ProjectDetailsContent() {
                     value="dashboard"
                     className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
                   >
-                    Dashboard
+                    Dashboard des Tâches
                   </TabsTrigger>
                   <TabsTrigger
                     value="kanban"
@@ -369,7 +312,7 @@ function ProjectDetailsContent() {
                     value="calendar"
                     className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
                   >
-                    Calendrier
+                    Calendar
                   </TabsTrigger>
                   <TabsTrigger
                     value="gantt"
@@ -383,9 +326,14 @@ function ProjectDetailsContent() {
                   >
                     PERT
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="planning"
+                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
+                  >
+                    Planning
+                  </TabsTrigger>
                 </TabsList>
 
-                {/* Dashboard Tab */}
                 <TabsContent value="dashboard" className="mt-4">
                   <div className="overflow-x-auto">
                     <Table>
@@ -412,7 +360,7 @@ function ProjectDetailsContent() {
                               className="hover:bg-sky-100 transition-colors"
                             >
                               <TableCell className="text-xs">{task.titre || ""}</TableCell>
-                              <TableCell className="text-xs">{task.description || ""}</TableCell>
+                              <TableCell className="text-xs line-clamp-2">{task.description || ""}</TableCell>
                               <TableCell className="text-xs">{endDate || "N/A"}</TableCell>
                               <TableCell>
                                 <span
@@ -439,26 +387,15 @@ function ProjectDetailsContent() {
                   </div>
                 </TabsContent>
 
-                {/* Kanban Tab */}
                 <TabsContent value="kanban" className="mt-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {[
-                      { key: "pending", title: "À faire", color: "bg-orange-50 border-orange-200" },
-                      { key: "in_progress", title: "En cours", color: "bg-yellow-50 border-yellow-200" },
-                      { key: "done", title: "Terminé", color: "bg-green-50 border-green-200" }
-                    ].map((column) => {
-                      const columnTasks = filteredTasks.filter(task => task.state === column.key);
-                      
-                      return (
-                        <div key={column.key} className={`${column.color} border-2 rounded-lg p-4 min-h-96`}>
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800">{column.title}</h3>
-                            <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm font-medium">
-                              {columnTasks.length}
-                            </span>
-                          </div>
-                          <div className="space-y-3">
-                            {columnTasks.map((task) => {
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {["To Do", "In Progress", "Completed"].map((status) => (
+                      <div key={status} className="bg-white p-4 rounded-lg shadow-md">
+                        <h3 className="text-md font-semibold text-sky-700">{status}</h3>
+                        <div className="mt-2 space-y-2">
+                          {filteredTasks
+                            .filter((task) => getstatename(task.state).replace("é", "e") === status.toLowerCase().replace(" ", ""))
+                            .map((task) => {
                               const startDate = task.start_date ? new Date(task.start_date) : null;
                               let endDate = "";
                               if (startDate && !isNaN(startDate) && task.echeance) {
@@ -466,142 +403,47 @@ function ProjectDetailsContent() {
                                 end.setDate(end.getDate() + Number(task.echeance));
                                 endDate = convertDate(end);
                               }
-                              
                               return (
-                                <div key={task.id} className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <h4 className="font-medium text-gray-900 text-sm leading-tight">{task.titre}</h4>
-                                    <span
-                                      className={`px-2 py-1 rounded text-xs font-medium ${
-                                        task.state === "done"
-                                          ? "bg-green-100 text-green-800"
-                                          : task.state === "in_progress"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : "bg-orange-100 text-orange-800"
-                                      }`}
-                                    >
-                                      {getstatename(task.state)}
-                                    </span>
-                                  </div>
-                                  <p className="text-gray-600 text-xs mb-3 line-clamp-2">{task.description}</p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500">
-                                    <span>Début: {convertDate(task.start_date)}</span>
-                                    <span>Fin: {endDate || "N/A"}</span>
-                                  </div>
-                                  <div className="mt-2 flex items-center justify-between">
-                                    <span className="text-xs text-gray-500">
-                                      Durée: {task.echeance || 0} jour{(task.echeance || 0) > 1 ? 's' : ''}
-                                    </span>
-                                    <div className="flex items-center space-x-1">
-                                      {task.state === "done" && <CheckCircle className="h-4 w-4 text-green-500" />}
-                                    </div>
-                                  </div>
+                                <div key={task.id} className="p-2 bg-gray-100 rounded-md">
+                                  <p className="text-sm font-medium">{task.titre}</p>
+                                  <p className="text-xs text-gray-500 line-clamp-1">{task.description}</p>
+                                  <p className="text-xs text-gray-500">Échéance: {endDate}</p>
                                 </div>
                               );
                             })}
-                            
-                            {columnTasks.length === 0 && (
-                              <div className="text-center text-gray-500 py-8">
-                                <p className="text-sm">Aucune tâche dans cette colonne</p>
-                              </div>
-                            )}
-                          </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </TabsContent>
 
-                {/* Calendar Tab */}
                 <TabsContent value="calendar" className="mt-4">
-                  <div className="bg-white rounded-lg shadow-sm border">
-                    {/* En-tête du calendrier */}
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigateMonth(-1)}
-                          className="p-2"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentDate(new Date())}
-                          className="px-3 py-2 text-sm"
-                        >
-                          Aujourd'hui
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigateMonth(1)}
-                          className="p-2"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Jours de la semaine */}
-                    <div className="grid grid-cols-7 border-b">
-                      {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map(day => (
-                        <div key={day} className="p-2 text-center text-sm font-medium text-gray-700 bg-gray-50">
-                          {day}
+                  <Calendar
+                    value={new Date()}
+                    tileContent={({ date, view }) =>
+                      view === "month" && filteredTasks.some((task) => {
+                        const taskDate = new Date(task.start_date);
+                        return taskDate.toDateString() === date.toDateString();
+                      }) ? (
+                        <div className="text-xs bg-yellow-200 rounded-full w-5 h-5 flex items-center justify-center">
+                          {filteredTasks.filter((task) => {
+                            const taskDate = new Date(task.start_date);
+                            return taskDate.toDateString() === date.toDateString();
+                          }).length}
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Grille du calendrier */}
-                    <div className="grid grid-cols-7">
-                      {generateCalendar()}
-                    </div>
-
-                    {/* Détails de la date sélectionnée */}
-                    {selectedDate && (
-                      <div className="p-4 border-t bg-gray-50">
-                        <h4 className="font-medium text-gray-900 mb-2">
-                          Tâches pour le {selectedDate.toLocaleDateString('fr-FR')}
-                        </h4>
-                        <div className="space-y-2">
-                          {getTasksForDate(selectedDate).map(task => (
-                            <div key={task.id} className="flex items-center space-x-2 text-sm">
-                              <span
-                                className={`w-3 h-3 rounded-full ${
-                                  task.state === 'done' 
-                                    ? 'bg-green-500'
-                                    : task.state === 'in_progress'
-                                    ? 'bg-yellow-500'
-                                    : 'bg-orange-500'
-                                }`}
-                              ></span>
-                              <span className="text-gray-900">{task.titre}</span>
-                              <span className="text-gray-500">({getstatename(task.state)})</span>
-                            </div>
-                          ))}
-                          {getTasksForDate(selectedDate).length === 0 && (
-                            <p className="text-gray-500 text-sm">Aucune tâche pour cette date</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                      ) : null
+                    }
+                  />
                 </TabsContent>
 
-                {/* Gantt Tab */}
                 <TabsContent value="gantt" className="mt-4">
                   <div className="overflow-x-auto">
                     {ganttData.length > 0 ? (
                       <BarChart
-                        width={Math.max(800, ganttData.length * 100)}
+                        width={window.innerWidth * 0.8} // Responsive width
                         height={300}
                         data={ganttData}
-                        layout="horizontal"
+                        layout="vertical"
                         margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
@@ -609,7 +451,7 @@ function ProjectDetailsContent() {
                         <YAxis type="category" dataKey="name" width={150} />
                         <Tooltip
                           formatter={(value, name, props) => [
-                            `${props.payload.start} (${value || 0} jours)`,
+                            `${props.payload.start} - ${props.payload.end} (${value || 0} jours)`,
                             props.payload.name,
                           ]}
                         />
@@ -621,15 +463,28 @@ function ProjectDetailsContent() {
                   </div>
                 </TabsContent>
 
-                {/* PERT Tab */}
                 <TabsContent value="pert" className="mt-4">
                   <div className="overflow-x-auto">
                     {pertNodes.length > 0 ? (
                       <svg
-                        width={Math.max(800, pertNodes.length * 150)}
+                        width={window.innerWidth * 0.8} // Responsive width
                         height={400}
-                        className="border rounded"
+                        role="img"
+                        aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
                       >
+                        <defs>
+                          <marker
+                            id="arrow"
+                            viewBox="0 0 10 10"
+                            refX="5"
+                            refY="5"
+                            markerWidth="6"
+                            markerHeight="6"
+                            orient="auto-start-reverse"
+                          >
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+                          </marker>
+                        </defs>
                         {pertEdges.map((edge, index) => (
                           <line
                             key={index}
@@ -639,6 +494,7 @@ function ProjectDetailsContent() {
                             y2={edge.to?.y}
                             stroke="#0ea5e9"
                             strokeWidth="2"
+                            markerEnd="url(#arrow)"
                           />
                         ))}
                         {pertNodes.map((node) => (
@@ -646,31 +502,20 @@ function ProjectDetailsContent() {
                             <circle
                               cx={node.x}
                               cy={node.y}
-                              r="40"
+                              r="30"
                               fill="#bfdbfe"
                               stroke="#0ea5e9"
                               strokeWidth="2"
                             />
                             <text
                               x={node.x}
-                              y={node.y - 5}
+                              y={node.y}
                               textAnchor="middle"
                               dominantBaseline="middle"
                               fill="#1e3a8a"
                               fontSize="12"
-                              fontWeight="bold"
                             >
-                              {node.name.substring(0, 15)}
-                            </text>
-                            <text
-                              x={node.x}
-                              y={node.y + 10}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              fill="#1e3a8a"
-                              fontSize="10"
-                            >
-                              {node.duration}j
+                              {node.name} ({node.start}, {node.duration}j)
                             </text>
                           </g>
                         ))}
@@ -679,6 +524,17 @@ function ProjectDetailsContent() {
                       <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de PERT</p>
                     )}
                   </div>
+                </TabsContent>
+
+                <TabsContent value="planning" className="mt-4">
+                  <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-lg font-bold text-sky-700">Vue Planning</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <p className="text-gray-600 text-sm">Vue Planning non implémentée (à venir).</p>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
             </CardContent>
