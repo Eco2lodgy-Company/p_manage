@@ -285,7 +285,7 @@ export default function Projects() {
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
         <h1 className="text-2xl font-bold">Projets</h1>
       </div>
-      <div className="mt-20 max-w-7xl mx-auto">
+      <div className="mt-20 w-full max-w-7xl mx-auto">
         <div className="flex justify-end mb-6">
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
@@ -375,7 +375,7 @@ export default function Projects() {
             </DialogContent>
           </Dialog>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
           {projects.length > 0 ? (
             projects.map((project) => {
               const progress = calculateProgress(project.start_date, project.end_date);
@@ -383,7 +383,7 @@ export default function Projects() {
               return (
                 <div
                   key={project.id}
-                  className="bg-white shadow-md rounded-lg p-6 flex flex-col gap-4 hover:shadow-lg transition-shadow"
+                  className="bg-white shadow-md rounded-lg p-6 flex flex-col gap-4 hover:shadow-lg transition-shadow w-full"
                 >
                   <h2 className="text-xl font-bold text-sky-700">{project.title}</h2>
                   <p className="text-gray-600 line-clamp-3">{project.description}</p>
