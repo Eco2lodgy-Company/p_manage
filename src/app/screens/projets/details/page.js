@@ -4,7 +4,9 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, CheckCircle, Share2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,12 +14,410 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
-import TaskStatistics from "../components/TaskStatistics";
-import KanbanView from "../components/KanbanView";
-import CalendarView from "../components/CalendarView";
-import TaskList from "../components/TaskList";
+import { format, parseISO, isValid } from 'date-fns';
+
+// TaskStatistics Component
+const TaskStatistics = ({ tasks }) => {
+  const stats = {
+    total: tasks.length,
+    completed: tasks.filter(task => task.state === 'done').length,
+    inProgress: tasks.filter(task => task.state === 'in_progress').length,
+    pending: tasks.filter(task => task.state === 'pending' || !task.state).length,
+  };
+
+  const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-blue-600 font-medium">Total des tâches</p>
+              <p className="text-2xl font-bold text-blue-800">{stats.total}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 text-xl">📋</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-green-50 border-green-200">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-600 font-medium">Terminées</p>
+              <p className="text-2xl font-bold text-green-800">{stats.completed}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <span className="text-green-600 text-xl">✅</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-yellow-50 border-yellow-200">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-yellow-600 font-medium">En cours</p>
+              <p className="text-2xl font-bold text-yellow-800">{stats.inProgress}</p>
+            </div>
+            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+              <span className="text-yellow-600 text-xl">⏳</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-orange-50 border-orange-200">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-orange-600 font-medium">Taux de completion</p>
+              <p className="text-2xl font-bold text-orange-800">{completionRate}%</p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <span className="text-orange-600 text-xl">📊</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// KanbanView Component
+const KanbanView = ({ tasks, convertDate }) => {
+  const getstatename = (state) => {
+    switch (state) {
+      case "done":
+        return "Terminé";
+      case "in_progress":
+        return "En cours";
+      case "pending":
+      default:
+        return "En attente";
+    }
+  };
+
+  const columns = [
+    {
+      id: 'pending',
+      title: 'En attente',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      headerColor: 'text-gray-700'
+    },
+    {
+      id: 'in_progress',
+      title: 'En cours',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      headerColor: 'text-blue-700'
+    },
+    {
+      id: 'done',
+      title: 'Terminé',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      headerColor: 'text-green-700'
+    }
+  ];
+
+  const getTasksByStatus = (status) => {
+    return tasks.filter(task => (task.state || 'pending') === status);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'done':
+        return 'bg-green-500';
+      case 'in_progress':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {columns.map((column) => {
+        const columnTasks = getTasksByStatus(column.id);
+        return (
+          <Card key={column.id} className={`${column.bgColor} ${column.borderColor} border-l-4`}>
+            <CardHeader className="pb-3">
+              <CardTitle className={`text-lg font-semibold ${column.headerColor} flex items-center justify-between`}>
+                {column.title}
+                <span className="bg-white text-gray-600 text-sm px-2 py-1 rounded-full">
+                  {columnTasks.length}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {columnTasks.length > 0 ? columnTasks.map((task) => {
+                const startDate = task.start_date ? new Date(task.start_date) : null;
+                let endDate = "";
+                if (startDate && !isNaN(startDate) && task.echeance) {
+                  const end = new Date(startDate);
+                  end.setDate(end.getDate() + Number(task.echeance));
+                  endDate = convertDate(end);
+                }
+                
+                return (
+                  <Card key={task.id} className="bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium text-gray-900 text-sm">{task.titre || 'Sans titre'}</h4>
+                        <span className={`w-3 h-3 rounded-full ${getStatusColor(task.state)} flex-shrink-0`}></span>
+                      </div>
+                      {task.description && (
+                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+                      )}
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Échéance: {endDate || 'N/A'}</span>
+                        <span className={`px-2 py-1 rounded-full text-white ${getStatusColor(task.state)}`}>
+                          {getstatename(task.state)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 text-sm">Aucune tâche</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+};
+
+// CalendarView Component
+const CalendarView = ({ tasks, convertDate }) => {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  const getTasksForDate = (date) => {
+    if (!date) return [];
+    
+    return tasks.filter(task => {
+      if (!task.start_date) return false;
+      
+      const taskDate = new Date(task.start_date);
+      if (!isValid(taskDate)) return false;
+      
+      return taskDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const getDatesWithTasks = () => {
+    const dates = [];
+    tasks.forEach(task => {
+      if (task.start_date) {
+        const taskDate = new Date(task.start_date);
+        if (isValid(taskDate)) {
+          dates.push(taskDate);
+        }
+      }
+    });
+    return dates;
+  };
+
+  const tasksForSelectedDate = getTasksForDate(selectedDate);
+  const datesWithTasks = getDatesWithTasks();
+
+  const getstatename = (state) => {
+    switch (state) {
+      case "done":
+        return "Terminé";
+      case "in_progress":
+        return "En cours";
+      case "pending":
+      default:
+        return "En attente";
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'done':
+        return 'bg-green-500';
+      case 'in_progress':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-sky-700">
+            Calendrier des tâches
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            modifiers={{
+              hasTask: datesWithTasks
+            }}
+            modifiersClassNames={{
+              hasTask: "bg-sky-100 text-sky-900 font-semibold"
+            }}
+            className="rounded-md border pointer-events-auto"
+          />
+          <div className="mt-4 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-sky-100 border border-sky-200 rounded"></div>
+              <span>Jours avec des tâches</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-sky-700">
+            Tâches du {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : ''}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tasksForSelectedDate.length > 0 ? (
+            <div className="space-y-3">
+              {tasksForSelectedDate.map((task) => {
+                const startDate = task.start_date ? new Date(task.start_date) : null;
+                let endDate = "";
+                if (startDate && !isNaN(startDate) && task.echeance) {
+                  const end = new Date(startDate);
+                  end.setDate(end.getDate() + Number(task.echeance));
+                  endDate = convertDate(end);
+                }
+
+                return (
+                  <Card key={task.id} className="bg-gray-50 border border-gray-200">
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium text-gray-900 text-sm">{task.titre || 'Sans titre'}</h4>
+                        <span className={`w-3 h-3 rounded-full ${getStatusColor(task.state)} flex-shrink-0`}></span>
+                      </div>
+                      {task.description && (
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{task.description}</p>
+                      )}
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-500">Échéance: {endDate || 'N/A'}</span>
+                        <span className={`px-2 py-1 rounded-full text-white ${getStatusColor(task.state)}`}>
+                          {getstatename(task.state)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">Aucune tâche pour cette date</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// TaskList Component
+const TaskList = ({ tasks, filteredTasks, convertDate }) => {
+  const getstatename = (state) => {
+    switch (state) {
+      case "done":
+        return "Terminé";
+      case "in_progress":
+        return "En cours";
+      case "pending":
+      default:
+        return "En attente";
+    }
+  };
+
+  return (
+    <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold text-sky-700">
+          Liste des tâches ({filteredTasks.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-sky-50">
+                <TableHead className="font-bold text-sky-700 text-sm">Titre</TableHead>
+                <TableHead className="font-bold text-sky-700 text-sm">Description</TableHead>
+                <TableHead className="font-bold text-sky-700 text-sm">Date de début</TableHead>
+                <TableHead className="font-bold text-sky-700 text-sm">Échéance</TableHead>
+                <TableHead className="font-bold text-sky-700 text-sm">Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.length > 0 ? filteredTasks.map((task) => {
+                const startDate = task.start_date ? new Date(task.start_date) : null;
+                let endDate = "";
+                if (startDate && !isNaN(startDate) && task.echeance) {
+                  const end = new Date(startDate);
+                  end.setDate(end.getDate() + Number(task.echeance));
+                  endDate = convertDate(end);
+                }
+                return (
+                  <TableRow
+                    key={task.id}
+                    className="hover:bg-sky-50 transition-colors"
+                  >
+                    <TableCell className="text-sm font-medium">{task.titre || "Sans titre"}</TableCell>
+                    <TableCell className="text-sm max-w-xs">
+                      <div className="line-clamp-2">{task.description || "Aucune description"}</div>
+                    </TableCell>
+                    <TableCell className="text-sm">{convertDate(task.start_date) || "N/A"}</TableCell>
+                    <TableCell className="text-sm">{endDate || "N/A"}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
+                          task.state === "done"
+                            ? "bg-green-500"
+                            : task.state === "in_progress"
+                            ? "bg-blue-500"
+                            : "bg-gray-500"
+                        }`}
+                      >
+                        {getstatename(task.state)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              }) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-gray-600 py-8">
+                    Aucune tâche disponible
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 function ProjectDetailsContent() {
+  // ... keep existing code (all state variables and useEffect hooks)
   const searchParams = useSearchParams();
   const router = useRouter();
   const [id, setId] = useState(null);
@@ -31,13 +431,11 @@ function ProjectDetailsContent() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // Extract ID from searchParams
   useEffect(() => {
     const idFromParams = searchParams.get("id");
     setId(idFromParams);
   }, [searchParams]);
 
-  // Fetch project details and tasks
   useEffect(() => {
     if (!id) return;
 
@@ -95,7 +493,6 @@ function ProjectDetailsContent() {
     fetchProjectTasks();
   }, [id]);
 
-  // Validate form data for sharing
   const validateForm = (data) => {
     const schema = z.object({
       email: z.string().email("Veuillez entrer une adresse email valide").min(1, "L'email est requis"),
@@ -113,7 +510,6 @@ function ProjectDetailsContent() {
     return true;
   };
 
-  // Handle sharing project
   const handleShareProject = async () => {
     if (!validateForm(formData)) {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
@@ -149,7 +545,6 @@ function ProjectDetailsContent() {
     }
   };
 
-  // Convert a date to "AAAA-MM-DD" format
   const convertDate = (date) => {
     if (!date) return "";
     const d = new Date(date);
@@ -160,7 +555,6 @@ function ProjectDetailsContent() {
     return `${year}-${month}-${day}`;
   };
 
-  // Convert tasks to Gantt chart data
   const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
     const start = new Date(task.start_date);
     const end = new Date(convertDate(task.start_date) + task.echeance);
@@ -174,7 +568,6 @@ function ProjectDetailsContent() {
     };
   }) : [];
 
-  // PERT chart node positions
   const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
     id: task.id || 0,
     name: task.titre || "Tâche",
@@ -184,7 +577,6 @@ function ProjectDetailsContent() {
     duration: task.echeance,
   })) : [];
 
-  // PERT chart edges
   const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
     Array.isArray(task.dependances) ? task.dependances.map((depId) => {
       const fromNode = pertNodes.find((n) => n.id === depId);
@@ -206,7 +598,6 @@ function ProjectDetailsContent() {
     }
   };
 
-  // Filter tasks based on search term
   const filteredTasks = Array.isArray(tasks) ? tasks.filter((task) =>
     (task.titre?.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
   ) : [];
@@ -230,6 +621,7 @@ function ProjectDetailsContent() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
       <Toaster />
+      {/* ... keep existing code (header section) */}
       <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md flex justify-between items-center z-10">
         <Button
           variant="outline"
@@ -283,9 +675,10 @@ function ProjectDetailsContent() {
           </Dialog>
         </div>
       </div>
+      
       <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 gap-6">
-          {/* Project Name and Description at the Top */}
+        <div className="grid grid-cols-1 gap-4">
+          {/* Project Name and Description */}
           <Card className="w-full bg-white shadow-md">
             <CardContent className="p-4">
               <h2 className="text-2xl font-bold text-sky-700">{projectData.title}</h2>
@@ -300,7 +693,7 @@ function ProjectDetailsContent() {
           <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
             <CardContent className="p-4">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 bg-sky-100 mb-4">
+                <TabsList className="grid w-full grid-cols-4 bg-sky-100 mb-4">
                   <TabsTrigger
                     value="dashboard"
                     className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
@@ -325,34 +718,27 @@ function ProjectDetailsContent() {
                   >
                     Gantt
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="pert"
-                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                  >
-                    PERT
-                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="dashboard" className="mt-4">
                   <div className="text-center py-8">
-                    <h3 className="text-lg font-semibold text-sky-700 mb-2">Vue d'ensemble du projet</h3>
-                    <p className="text-gray-600">Consultez les statistiques ci-dessus et la liste des tâches ci-dessous.</p>
+                    <p className="text-gray-600 text-sm">Tableau de bord - Statistiques affichées ci-dessus</p>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="kanban" className="mt-4">
-                  <KanbanView tasks={filteredTasks} convertDate={convertDate} />
+                  <KanbanView tasks={tasks} convertDate={convertDate} />
                 </TabsContent>
 
                 <TabsContent value="calendar" className="mt-4">
-                  <CalendarView tasks={filteredTasks} convertDate={convertDate} />
+                  <CalendarView tasks={tasks} convertDate={convertDate} />
                 </TabsContent>
 
                 <TabsContent value="gantt" className="mt-4">
                   <div className="overflow-x-auto">
                     {ganttData.length > 0 ? (
                       <BarChart
-                        width={window.innerWidth * 0.8} // Responsive width
+                        width={window.innerWidth * 0.8}
                         height={300}
                         data={ganttData}
                         layout="vertical"
@@ -374,79 +760,12 @@ function ProjectDetailsContent() {
                     )}
                   </div>
                 </TabsContent>
-
-                <TabsContent value="pert" className="mt-4">
-                  <div className="overflow-x-auto">
-                    {pertNodes.length > 0 ? (
-                      <svg
-                        width={window.innerWidth * 0.8} // Responsive width
-                        height={400}
-                        role="img"
-                        aria-label="Diagramme de PERT montrant les tâches et leurs dépendances"
-                      >
-                        <defs>
-                          <marker
-                            id="arrow"
-                            viewBox="0 0 10 10"
-                            refX="5"
-                            refY="5"
-                            markerWidth="6"
-                            markerHeight="6"
-                            orient="auto-start-reverse"
-                          >
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
-                          </marker>
-                        </defs>
-                        {pertEdges.map((edge, index) => (
-                          <line
-                            key={index}
-                            x1={edge.from?.x}
-                            y1={edge.from?.y}
-                            x2={edge.to?.x}
-                            y2={edge.to?.y}
-                            stroke="#0ea5e9"
-                            strokeWidth="2"
-                            markerEnd="url(#arrow)"
-                          />
-                        ))}
-                        {pertNodes.map((node) => (
-                          <g key={node.id}>
-                            <circle
-                              cx={node.x}
-                              cy={node.y}
-                              r="30"
-                              fill="#bfdbfe"
-                              stroke="#0ea5e9"
-                              strokeWidth="2"
-                            />
-                            <text
-                              x={node.x}
-                              y={node.y}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              fill="#1e3a8a"
-                              fontSize="12"
-                            >
-                              {node.name} ({node.start}, {node.duration}j)
-                            </text>
-                          </g>
-                        ))}
-                      </svg>
-                    ) : (
-                      <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de PERT</p>
-                    )}
-                  </div>
-                </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
 
-          {/* Task List - Added directly below the tabs card */}
-          <TaskList 
-            tasks={tasks} 
-            filteredTasks={filteredTasks} 
-            convertDate={convertDate} 
-          />
+          {/* Task List */}
+          <TaskList tasks={tasks} filteredTasks={filteredTasks} convertDate={convertDate} />
         </div>
       </div>
     </div>
