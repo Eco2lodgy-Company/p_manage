@@ -4,7 +4,6 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar as CalendarIcon, CheckCircle, Share2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
@@ -13,7 +12,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
-import Calendar from "react-calendar"; // Assuming react-calendar is installed
+import TaskStatistics from "../components/TaskStatistics";
+import KanbanView from "../components/KanbanView";
+import CalendarView from "../components/CalendarView";
+import TaskList from "../components/TaskList";
 
 function ProjectDetailsContent() {
   const searchParams = useSearchParams();
@@ -282,7 +284,7 @@ function ProjectDetailsContent() {
         </div>
       </div>
       <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-6">
           {/* Project Name and Description at the Top */}
           <Card className="w-full bg-white shadow-md">
             <CardContent className="p-4">
@@ -290,6 +292,9 @@ function ProjectDetailsContent() {
               <p className="text-lg text-gray-600 mt-2">{projectData.description}</p>
             </CardContent>
           </Card>
+
+          {/* Task Statistics */}
+          <TaskStatistics tasks={tasks} />
 
           {/* View Tabs */}
           <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
@@ -300,7 +305,7 @@ function ProjectDetailsContent() {
                     value="dashboard"
                     className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
                   >
-                    Dashboard des Tâches
+                    Dashboard
                   </TabsTrigger>
                   <TabsTrigger
                     value="kanban"
@@ -312,7 +317,7 @@ function ProjectDetailsContent() {
                     value="calendar"
                     className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
                   >
-                    Calendar
+                    Calendrier
                   </TabsTrigger>
                   <TabsTrigger
                     value="gantt"
@@ -326,114 +331,21 @@ function ProjectDetailsContent() {
                   >
                     PERT
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="planning"
-                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                  >
-                    Planning
-                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="dashboard" className="mt-4">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-sky-50">
-                          <TableHead className="font-bold text-sky-700 text-xs">Titre</TableHead>
-                          <TableHead className="font-bold text-sky-700 text-xs">Description</TableHead>
-                          <TableHead className="font-bold text-sky-700 text-xs">Échéance</TableHead>
-                          <TableHead className="font-bold text-sky-700 text-xs">Statut</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredTasks.length > 0 ? filteredTasks.map((task) => {
-                          const startDate = task.start_date ? new Date(task.start_date) : null;
-                          let endDate = "";
-                          if (startDate && !isNaN(startDate) && task.echeance) {
-                            const end = new Date(startDate);
-                            end.setDate(end.getDate() + Number(task.echeance));
-                            endDate = convertDate(end);
-                          }
-                          return (
-                            <TableRow
-                              key={task.id}
-                              className="hover:bg-sky-100 transition-colors"
-                            >
-                              <TableCell className="text-xs">{task.titre || ""}</TableCell>
-                              <TableCell className="text-xs line-clamp-2">{task.description || ""}</TableCell>
-                              <TableCell className="text-xs">{endDate || "N/A"}</TableCell>
-                              <TableCell>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-white text-xs ${
-                                    task.state === "done"
-                                      ? "bg-green-500"
-                                      : task.state === "in_progress"
-                                      ? "bg-yellow-500"
-                                      : "bg-orange-500"
-                                  }`}
-                                >
-                                  {getstatename(task.state) || "N/A"}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        }) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-gray-600">Aucune tâche disponible</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                  <div className="text-center py-8">
+                    <h3 className="text-lg font-semibold text-sky-700 mb-2">Vue d'ensemble du projet</h3>
+                    <p className="text-gray-600">Consultez les statistiques ci-dessus et la liste des tâches ci-dessous.</p>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="kanban" className="mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {["To Do", "In Progress", "Completed"].map((status) => (
-                      <div key={status} className="bg-white p-4 rounded-lg shadow-md">
-                        <h3 className="text-md font-semibold text-sky-700">{status}</h3>
-                        <div className="mt-2 space-y-2">
-                          {filteredTasks
-                            .filter((task) => getstatename(task.state).replace("é", "e") === status.toLowerCase().replace(" ", ""))
-                            .map((task) => {
-                              const startDate = task.start_date ? new Date(task.start_date) : null;
-                              let endDate = "";
-                              if (startDate && !isNaN(startDate) && task.echeance) {
-                                const end = new Date(startDate);
-                                end.setDate(end.getDate() + Number(task.echeance));
-                                endDate = convertDate(end);
-                              }
-                              return (
-                                <div key={task.id} className="p-2 bg-gray-100 rounded-md">
-                                  <p className="text-sm font-medium">{task.titre}</p>
-                                  <p className="text-xs text-gray-500 line-clamp-1">{task.description}</p>
-                                  <p className="text-xs text-gray-500">Échéance: {endDate}</p>
-                                </div>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <KanbanView tasks={filteredTasks} convertDate={convertDate} />
                 </TabsContent>
 
                 <TabsContent value="calendar" className="mt-4">
-                  <Calendar
-                    value={new Date()}
-                    tileContent={({ date, view }) =>
-                      view === "month" && filteredTasks.some((task) => {
-                        const taskDate = new Date(task.start_date);
-                        return taskDate.toDateString() === date.toDateString();
-                      }) ? (
-                        <div className="text-xs bg-yellow-200 rounded-full w-5 h-5 flex items-center justify-center">
-                          {filteredTasks.filter((task) => {
-                            const taskDate = new Date(task.start_date);
-                            return taskDate.toDateString() === date.toDateString();
-                          }).length}
-                        </div>
-                      ) : null
-                    }
-                  />
+                  <CalendarView tasks={filteredTasks} convertDate={convertDate} />
                 </TabsContent>
 
                 <TabsContent value="gantt" className="mt-4">
@@ -525,20 +437,16 @@ function ProjectDetailsContent() {
                     )}
                   </div>
                 </TabsContent>
-
-                <TabsContent value="planning" className="mt-4">
-                  <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-lg font-bold text-sky-700">Vue Planning</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <p className="text-gray-600 text-sm">Vue Planning non implémentée (à venir).</p>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
+
+          {/* Task List - Added directly below the tabs card */}
+          <TaskList 
+            tasks={tasks} 
+            filteredTasks={filteredTasks} 
+            convertDate={convertDate} 
+          />
         </div>
       </div>
     </div>
