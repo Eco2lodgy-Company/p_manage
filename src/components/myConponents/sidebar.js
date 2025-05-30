@@ -49,7 +49,7 @@ const Sidebar = () => {
           </li>
           <li>
             <button
-              onClick={() => router.push("/screens/projects")}
+              onClick={() => router.push("/screens/projets")}
               className="flex items-center w-full p-2 text-left rounded-md transition-colors"
               style={{
                 color: "var(--header-text)",
@@ -63,7 +63,7 @@ const Sidebar = () => {
           </li>
           <li>
             <button
-              onClick={() => router.push("/screens/tasks")}
+              onClick={() => router.push("/screens/taches")}
               className="flex items-center w-full p-2 text-left rounded-md transition-colors"
               style={{
                 color: "var(--header-text)",
