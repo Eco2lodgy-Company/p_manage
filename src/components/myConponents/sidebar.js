@@ -77,6 +77,62 @@ const Sidebar = () => {
           </li>
           <li>
             <button
+              onClick={() => router.push("/screens/taches")}
+              className="flex items-center w-full p-2 text-left rounded-md transition-colors"
+              style={{
+                color: "var(--header-text)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+              <List className="w-5 h-5 mr-2" />
+              CRM
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => router.push("/screens/taches")}
+              className="flex items-center w-full p-2 text-left rounded-md transition-colors"
+              style={{
+                color: "var(--header-text)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+              <List className="w-5 h-5 mr-2" />
+              Comptabilité
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => router.push("/screens/taches")}
+              className="flex items-center w-full p-2 text-left rounded-md transition-colors"
+              style={{
+                color: "var(--header-text)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+              <List className="w-5 h-5 mr-2" />
+              Ressources Humaines
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => router.push("/screens/taches")}
+              className="flex items-center w-full p-2 text-left rounded-md transition-colors"
+              style={{
+                color: "var(--header-text)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+              <List className="w-5 h-5 mr-2" />
+              Ressources Matérielles
+            </button>
+          </li>
+          <li>
+            <button
               onClick={() => router.push("/settings")}
               className="flex items-center w-full p-2 text-left rounded-md transition-colors"
               style={{
