@@ -1,429 +1,219 @@
+
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, CheckCircle, Share2 } from "lucide-react";
+import { Calendar, CheckCircle, Clock, AlertCircle, Users, TrendingUp, BarChart3, ArrowLeft, Plus, Edit, Trash2, Share2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { z } from "zod";
+// import { format, parseISO, isValid } from 'date-fns';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { z } from "zod";
-import { format, parseISO, isValid } from 'date-fns';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-// TaskStatistics Component
-const TaskStatistics = ({ tasks }) => {
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter(task => task.state === 'done').length,
-    inProgress: tasks.filter(task => task.state === 'in_progress').length,
-    pending: tasks.filter(task => task.state === 'pending' || !task.state).length,
-  };
-
-  const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+// Composants internes
+const GanttChart = ({ tasks }) => {
+  const sortedTasks = [...tasks].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+  const getStatusInfo = (state) => ({
+    'in_progress': { color: 'bg-primary/10 text-primary border-primary/20', icon: Clock },
+    'done': { color: 'bg-success/10 text-success border-success/20', icon: CheckCircle },
+    'pending': { color: 'bg-warning/10 text-warning border-warning/20', icon: AlertCircle },
+  }[state] || { color: 'bg-muted/50 text-muted-foreground border-muted', icon: AlertCircle });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-600 font-medium">Total des tâches</p>
-              <p className="text-2xl font-bold text-blue-800">{stats.total}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 text-xl">📋</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-green-50 border-green-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-green-600 font-medium">Terminées</p>
-              <p className="text-2xl font-bold text-green-800">{stats.completed}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600 text-xl">✅</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-yellow-50 border-yellow-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-yellow-600 font-medium">En cours</p>
-              <p className="text-2xl font-bold text-yellow-800">{stats.inProgress}</p>
-            </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-              <span className="text-yellow-600 text-xl">⏳</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-orange-50 border-orange-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-orange-600 font-medium">Taux de completion</p>
-              <p className="text-2xl font-bold text-orange-800">{completionRate}%</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <span className="text-orange-600 text-xl">📊</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Diagramme de Gantt</h3>
+      <div className="bg-card border border-border rounded-lg p-4">
+        <div className="space-y-3">
+          {sortedTasks.map((task) => {
+            const startDate = new Date(task.start_date);
+            const duration = task.echeance || 1;
+            const statusInfo = getStatusInfo(task.state);
+            return (
+              <div key={task.id} className="flex items-center space-x-4">
+                <div className="w-32 truncate text-sm font-medium text-foreground">
+                  {task.titre}
+                </div>
+                <div className="flex-1 bg-muted rounded-full h-6 relative">
+                  <div
+                    className={`h-full rounded-full flex items-center px-2 text-xs font-medium ${
+                      task.state === 'done' ? 'bg-success text-success-foreground' :
+                      task.state === 'in_progress' ? 'bg-primary text-primary-foreground' :
+                      'bg-warning text-warning-foreground'
+                    }`}
+                    style={{ width: `${Math.max(20, duration * 10)}%` }}
+                  >
+                    {duration}j
+                  </div>
+                </div>
+                <div className="w-24 text-xs text-muted-foreground">
+                  {formatDate(task.start_date)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
 
-// KanbanView Component
-const KanbanView = ({ tasks, convertDate }) => {
-  const getstatename = (state) => {
-    switch (state) {
-      case "done":
-        return "Terminé";
-      case "in_progress":
-        return "En cours";
-      case "pending":
-      default:
-        return "En attente";
-    }
-  };
+const PertChart = ({ tasks }) => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Diagramme PERT</h3>
+      <div className="bg-card border border-border rounded-lg p-6">
+        <div className="flex flex-wrap gap-4 justify-center">
+          {tasks.map((task) => {
+            const statusInfo = getStatusInfo(task.state);
+            const Icon = statusInfo.icon;
+            return (
+              <div key={task.id} className="relative">
+                <div className={`w-32 h-20 rounded-lg border-2 ${statusInfo.color} p-3 flex flex-col justify-center items-center`}>
+                  <Icon className="w-4 h-4 mb-1" />
+                  <div className="text-xs font-medium text-center truncate w-full">
+                    {task.titre}
+                  </div>
+                  <div className="text-xs opacity-75">
+                    {task.echeance || 0}j
+                  </div>
+                </div>
+                {task.dependances && task.dependances.length > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {task.dependances.length}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
 
+const KanbanBoard = ({ tasks }) => {
   const columns = [
-    {
-      id: 'pending',
-      title: 'En attente',
-      bgColor: 'bg-gray-50',
-      borderColor: 'border-gray-200',
-      headerColor: 'text-gray-700'
-    },
-    {
-      id: 'in_progress',
-      title: 'En cours',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      headerColor: 'text-blue-700'
-    },
-    {
-      id: 'done',
-      title: 'Terminé',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      headerColor: 'text-green-700'
-    }
+    { key: 'pending', title: 'En attente', color: 'bg-warning/10 border-warning/20' },
+    { key: 'in_progress', title: 'En cours', color: 'bg-primary/10 border-primary/20' },
+    { key: 'done', title: 'Terminé', color: 'bg-success/10 border-success/20' },
   ];
 
-  const getTasksByStatus = (status) => {
-    return tasks.filter(task => (task.state || 'pending') === status);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'done':
-        return 'bg-green-500';
-      case 'in_progress':
-        return 'bg-blue-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {columns.map((column) => {
-        const columnTasks = getTasksByStatus(column.id);
-        return (
-          <Card key={column.id} className={`${column.bgColor} ${column.borderColor} border-l-4`}>
-            <CardHeader className="pb-3">
-              <CardTitle className={`text-lg font-semibold ${column.headerColor} flex items-center justify-between`}>
-                {column.title}
-                <span className="bg-white text-gray-600 text-sm px-2 py-1 rounded-full">
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Tableau Kanban</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {columns.map((column) => {
+          const columnTasks = tasks.filter((task) => task.state === column.key);
+          return (
+            <div key={column.key} className={`bg-card border border-border rounded-lg p-4 ${column.color}`}>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-foreground">{column.title}</h4>
+                <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
                   {columnTasks.length}
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {columnTasks.length > 0 ? columnTasks.map((task) => {
-                const startDate = task.start_date ? new Date(task.start_date) : null;
-                let endDate = "";
-                if (startDate && !isNaN(startDate) && task.echeance) {
-                  const end = new Date(startDate);
-                  end.setDate(end.getDate() + Number(task.echeance));
-                  endDate = convertDate(end);
-                }
-                
-                return (
-                  <Card key={task.id} className="bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 text-sm">{task.titre || 'Sans titre'}</h4>
-                        <span className={`w-3 h-3 rounded-full ${getStatusColor(task.state)} flex-shrink-0`}></span>
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
-                      )}
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>Échéance: {endDate || 'N/A'}</span>
-                        <span className={`px-2 py-1 rounded-full text-white ${getStatusColor(task.state)}`}>
-                          {getstatename(task.state)}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              }) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">Aucune tâche</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+              </div>
+              <div className="space-y-3">
+                {columnTasks.map((task) => (
+                  <div key={task.id} className="bg-background border border-border rounded-lg p-3 shadow-sm">
+                    <h5 className="font-medium text-foreground mb-1">{task.titre}</h5>
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{task.description}</p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{formatDate(task.start_date)}</span>
+                      <span>{task.echeance || 0}j</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
 
-// CalendarView Component
-const CalendarView = ({ tasks, convertDate }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  
-  const getTasksForDate = (date) => {
-    if (!date) return [];
-    
-    return tasks.filter(task => {
-      if (!task.start_date) return false;
-      
+const CalendarView = ({ tasks }) => {
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  const days = [];
+  for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
+  const getTasksForDay = (day) => {
+    if (!day) return [];
+    const dayDate = new Date(currentYear, currentMonth, day);
+    return tasks.filter((task) => {
       const taskDate = new Date(task.start_date);
-      if (!isValid(taskDate)) return false;
-      
-      return taskDate.toDateString() === date.toDateString();
+      return taskDate.toDateString() === dayDate.toDateString();
     });
   };
 
-  const getDatesWithTasks = () => {
-    const dates = [];
-    tasks.forEach(task => {
-      if (task.start_date) {
-        const taskDate = new Date(task.start_date);
-        if (isValid(taskDate)) {
-          dates.push(taskDate);
-        }
-      }
-    });
-    return dates;
-  };
-
-  const tasksForSelectedDate = getTasksForDate(selectedDate);
-  const datesWithTasks = getDatesWithTasks();
-
-  const getstatename = (state) => {
-    switch (state) {
-      case "done":
-        return "Terminé";
-      case "in_progress":
-        return "En cours";
-      case "pending":
-      default:
-        return "En attente";
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'done':
-        return 'bg-green-500';
-      case 'in_progress':
-        return 'bg-blue-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-sky-700">
-            Calendrier des tâches
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            modifiers={{
-              hasTask: datesWithTasks
-            }}
-            modifiersClassNames={{
-              hasTask: "bg-sky-100 text-sky-900 font-semibold"
-            }}
-            className="rounded-md border pointer-events-auto"
-          />
-          <div className="mt-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-sky-100 border border-sky-200 rounded"></div>
-              <span>Jours avec des tâches</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-sky-700">
-            Tâches du {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {tasksForSelectedDate.length > 0 ? (
-            <div className="space-y-3">
-              {tasksForSelectedDate.map((task) => {
-                const startDate = task.start_date ? new Date(task.start_date) : null;
-                let endDate = "";
-                if (startDate && !isNaN(startDate) && task.echeance) {
-                  const end = new Date(startDate);
-                  end.setDate(end.getDate() + Number(task.echeance));
-                  endDate = convertDate(end);
-                }
-
-                return (
-                  <Card key={task.id} className="bg-gray-50 border border-gray-200">
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 text-sm">{task.titre || 'Sans titre'}</h4>
-                        <span className={`w-3 h-3 rounded-full ${getStatusColor(task.state)} flex-shrink-0`}></span>
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{task.description}</p>
-                      )}
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500">Échéance: {endDate || 'N/A'}</span>
-                        <span className={`px-2 py-1 rounded-full text-white ${getStatusColor(task.state)}`}>
-                          {getstatename(task.state)}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">Aucune tâche pour cette date</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-// TaskList Component
-const TaskList = ({ tasks, filteredTasks, convertDate }) => {
-  const getstatename = (state) => {
-    switch (state) {
-      case "done":
-        return "Terminé";
-      case "in_progress":
-        return "En cours";
-      case "pending":
-      default:
-        return "En attente";
-    }
-  };
-
-  return (
-    <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-sky-700">
-          Liste des tâches ({filteredTasks.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-sky-50">
-                <TableHead className="font-bold text-sky-700 text-sm">Titre</TableHead>
-                <TableHead className="font-bold text-sky-700 text-sm">Description</TableHead>
-                <TableHead className="font-bold text-sky-700 text-sm">Date de début</TableHead>
-                <TableHead className="font-bold text-sky-700 text-sm">Échéance</TableHead>
-                <TableHead className="font-bold text-sky-700 text-sm">Statut</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.length > 0 ? filteredTasks.map((task) => {
-                const startDate = task.start_date ? new Date(task.start_date) : null;
-                let endDate = "";
-                if (startDate && !isNaN(startDate) && task.echeance) {
-                  const end = new Date(startDate);
-                  end.setDate(end.getDate() + Number(task.echeance));
-                  endDate = convertDate(end);
-                }
-                return (
-                  <TableRow
-                    key={task.id}
-                    className="hover:bg-sky-50 transition-colors"
-                  >
-                    <TableCell className="text-sm font-medium">{task.titre || "Sans titre"}</TableCell>
-                    <TableCell className="text-sm max-w-xs">
-                      <div className="line-clamp-2">{task.description || "Aucune description"}</div>
-                    </TableCell>
-                    <TableCell className="text-sm">{convertDate(task.start_date) || "N/A"}</TableCell>
-                    <TableCell className="text-sm">{endDate || "N/A"}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
-                          task.state === "done"
-                            ? "bg-green-500"
-                            : task.state === "in_progress"
-                            ? "bg-blue-500"
-                            : "bg-gray-500"
-                        }`}
-                      >
-                        {getstatename(task.state)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              }) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-600 py-8">
-                    Aucune tâche disponible
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Vue Calendrier</h3>
+      <div className="bg-card border border-border rounded-lg p-4">
+        <div className="mb-4">
+          <h4 className="text-lg font-semibold text-center text-foreground">
+            {new Date(currentYear, currentMonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+          </h4>
         </div>
-      </CardContent>
-    </Card>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map((day) => (
+            <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => {
+            const dayTasks = getTasksForDay(day);
+            return (
+              <div key={index} className="min-h-[80px] p-1 border border-border rounded">
+                {day && (
+                  <>
+                    <div className="text-sm font-medium text-foreground mb-1">{day}</div>
+                    <div className="space-y-1">
+                      {dayTasks.slice(0, 2).map((task) => {
+                        const statusInfo = getStatusInfo(task.state);
+                        return (
+                          <div key={task.id} className={`text-xs p-1 rounded truncate ${statusInfo.color}`}>
+                            {task.titre}
+                          </div>
+                        );
+                      })}
+                      {dayTasks.length > 2 && (
+                        <div className="text-xs text-muted-foreground">+{dayTasks.length - 2}</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 };
 
 function ProjectDetailsContent() {
-  // ... keep existing code (all state variables and useEffect hooks)
   const searchParams = useSearchParams();
   const router = useRouter();
   const [id, setId] = useState(null);
   const [projectData, setProjectData] = useState(null);
   const [tasks, setTasks] = useState([]);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState('tasks');
   const [searchTerm, setSearchTerm] = useState("");
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -444,16 +234,10 @@ function ProjectDetailsContent() {
         const response = await fetch(`http://alphatek.fr:3110/api/projects/details/?id=${id}`, {
           method: "GET",
         });
-        if (!response.ok) {
-          throw new Error("Erreur de réseau");
-        }
+        if (!response.ok) throw new Error("Erreur de réseau");
         const data = await response.json();
-        if (data.data) {
-          setProjectData(data.data[0]);
-          console.log("Données du projet:", data.data[0]);
-        } else {
-          toast.error("Projet non trouvé");
-        }
+        if (data.data) setProjectData(data.data[0]);
+        else toast.error("Projet non trouvé");
       } catch (error) {
         console.error("Erreur lors de la récupération des détails du projet:", error);
         toast.error("Erreur lors de la récupération des détails du projet");
@@ -467,16 +251,11 @@ function ProjectDetailsContent() {
         const response = await fetch(`http://alphatek.fr:3110/api/tasks/forprojects/?id=${id}`, {
           method: "GET",
         });
-        if (!response.ok) {
-          throw new Error("Erreur de réseau");
-        }
+        if (!response.ok) throw new Error("Erreur de réseau");
         const data = await response.json();
-        console.log("Raw tasks API response:", data);
         const tasksArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
-        if (tasksArray.length > 0) {
-          setTasks(tasksArray);
-          console.log("Tasks set:", tasksArray);
-        } else {
+        if (tasksArray.length > 0) setTasks(tasksArray);
+        else {
           setTasks([]);
           toast.error("Tâches non trouvées ou format incorrect");
         }
@@ -500,9 +279,7 @@ function ProjectDetailsContent() {
     const result = schema.safeParse(data);
     if (!result.success) {
       const fieldErrors = {};
-      result.error.errors.forEach((err) => {
-        fieldErrors[err.path[0]] = err.message;
-      });
+      result.error.errors.forEach((err) => (fieldErrors[err.path[0]] = err.message));
       setErrors(fieldErrors);
       return false;
     }
@@ -517,14 +294,9 @@ function ProjectDetailsContent() {
     }
     const generateKeyWithTimestamp = (length = 32) => {
       const bytes = crypto.randomBytes(length);
-      const base64 = bytes.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      return base64 + Date.now().toString();
+      return bytes.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") + Date.now().toString();
     };
-    const shareData = {
-      email: formData.email,
-      token: generateKeyWithTimestamp(),
-      project_id: id,
-    };
+    const shareData = { email: formData.email, token: generateKeyWithTimestamp(), project_id: id };
     setIsSharing(true);
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
@@ -555,217 +327,264 @@ function ProjectDetailsContent() {
     return `${year}-${month}-${day}`;
   };
 
-  const ganttData = Array.isArray(tasks) && tasks.length > 0 ? tasks.map((task) => {
-    const start = new Date(task.start_date);
-    const end = new Date(convertDate(task.start_date) + task.echeance);
-    const duration = (end - start) / (1000 * 60 * 60 * 24);
-    return {
-      name: task.titre || "Tâche",
-      start: convertDate(task.start_date),
-      end: convertDate(end),
-      duration: task.echeance > 0 ? task.echeance : 1,
-      status: task.state || "N/A",
-    };
-  }) : [];
-
-  const pertNodes = Array.isArray(tasks) ? tasks.map((task, index) => ({
-    id: task.id || 0,
-    name: task.titre || "Tâche",
-    x: 100 + index * 150,
-    y: 100 + (index % 2) * 100,
-    start: convertDate(task.start_date),
-    duration: task.echeance,
-  })) : [];
-
-  const pertEdges = Array.isArray(tasks) ? tasks.flatMap((task) =>
-    Array.isArray(task.dependances) ? task.dependances.map((depId) => {
-      const fromNode = pertNodes.find((n) => n.id === depId);
-      const toNode = pertNodes.find((n) => n.id === task.id);
-      return fromNode && toNode ? { from: fromNode, to: toNode } : null;
-    }).filter(Boolean) : []
-  ) : [];
-
-  const getstatename = (state) => {
-    switch (state) {
-      case "done":
-        return "Terminé";
-      case "in_progress":
-        return "En cours";
-      case "pending":
-        return "En attente";
-      default:
-        return "En attente";
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return "Non définie";
+    return new Date(dateString).toLocaleDateString("fr-FR");
   };
 
-  const filteredTasks = Array.isArray(tasks) ? tasks.filter((task) =>
-    (task.titre?.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) : [];
+  const getStatusInfo = (state) => ({
+    'in_progress': { label: 'En cours', color: 'bg-primary/10 text-primary border-primary/20', icon: Clock },
+    'done': { label: 'Terminé', color: 'bg-success/10 text-success border-success/20', icon: CheckCircle },
+    'pending': { label: 'En attente', color: 'bg-warning/10 text-warning border-warning/20', icon: AlertCircle },
+  }[state] || { label: 'Non défini', color: 'bg-muted/50 text-muted-foreground border-muted', icon: AlertCircle });
+
+  const projectTasks = useMemo(() => tasks.filter((task) => task.id_projet === id), [tasks, id]);
+  const taskStats = useMemo(() => {
+    const total = projectTasks.length;
+    const done = projectTasks.filter((task) => task.state === 'done').length;
+    const inProgress = projectTasks.filter((task) => task.state === 'in_progress').length;
+    const pending = projectTasks.filter((task) => task.state === 'pending').length;
+    const completion = total > 0 ? Math.round((done / total) * 100) : 0;
+    return { total, done, inProgress, pending, completion };
+  }, [projectTasks]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
-        <h1 className="text-2xl font-bold text-sky-700">Chargement...</h1>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <h1 className="text-2xl font-bold text-foreground">Chargement...</h1>
       </div>
     );
   }
 
   if (!projectData) {
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
-        <h1 className="text-2xl font-bold text-sky-700">Projet non trouvé</h1>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <h1 className="text-2xl font-bold text-foreground">Projet non trouvé</h1>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
-      <Toaster />
-      {/* ... keep existing code (header section) */}
-      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md flex justify-between items-center z-10">
-        <Button
-          variant="outline"
-          className="bg-white text-sky-500 hover:bg-sky-100 border-none mr-2"
-          onClick={() => router.push("/projets")}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          Retour
-        </Button>
-        <div className="flex items-center space-x-2">
-          <Input
-            placeholder="Rechercher une tâche..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-48 text-sm"
-          />
-          <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="bg-white text-sky-500 hover:bg-sky-100 border-none">
-                <Share2 className="h-5 w-5 mr-1" /> Partager
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Invitez</DialogTitle>
-                <DialogDescription>Ceci donnera un accès total à ce projet.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="share-email" className="text-right">Email</Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="share-email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className={errors.email ? "border-red-500" : ""}
-                    />
-                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+    <div className="min-h-screen bg-background p-6 md:ml-64 lg:ml-64 xl:ml-64">
+      <div className="max-w-7xl mx-auto">
+        <Toaster />
+        {/* En-tête */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+              onClick={() => router.push("/projets")}
+            >
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{projectData.title}</h1>
+              <p className="text-muted-foreground mt-1">{projectData.description}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Rechercher une tâche..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-64 text-sm"
+            />
+            <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="bg-muted text-foreground hover:bg-muted/80">
+                  <Share2 className="w-4 h-4 mr-2" /> Partager
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Invitez</DialogTitle>
+                  <DialogDescription>Ceci donnera un accès total à ce projet.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="share-email" className="text-right">
+                      Email
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="share-email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className={errors.email ? "border-destructive" : ""}
+                      />
+                      {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={handleShareProject}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    disabled={isSharing}
+                  >
+                    {isSharing ? "Envoi..." : "Partager"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Card principale avec tabs */}
+        <div className="bg-card border border-border rounded-lg shadow-sm">
+          {/* Tabs */}
+          <div className="border-b border-border px-6">
+            <nav className="flex space-x-8">
+              {[
+                { key: 'tasks', label: 'Tâches', icon: CheckCircle },
+                { key: 'gantt', label: 'GANTT', icon: BarChart3 },
+                { key: 'pert', label: 'PERT', icon: TrendingUp },
+                { key: 'kanban', label: 'Kanban', icon: Users },
+                { key: 'calendar', label: 'Calendrier', icon: Calendar },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
+                      activeTab === tab.key
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Contenu des tabs */}
+          <div className="p-6">
+            {activeTab === 'tasks' && (
+              <div className="space-y-6">
+                {/* Statistiques */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-background border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total</p>
+                        <p className="text-2xl font-bold text-foreground">{taskStats.total}</p>
+                      </div>
+                      <CheckCircle className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="bg-background border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Terminées</p>
+                        <p className="text-2xl font-bold text-success">{taskStats.done}</p>
+                      </div>
+                      <CheckCircle className="w-8 h-8 text-success" />
+                    </div>
+                  </div>
+                  <div className="bg-background border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">En cours</p>
+                        <p className="text-2xl font-bold text-primary">{taskStats.inProgress}</p>
+                      </div>
+                      <Clock className="w-8 h-8 text-primary" />
+                    </div>
+                  </div>
+                  <div className="bg-background border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Progression</p>
+                        <p className="text-2xl font-bold text-foreground">{taskStats.completion}%</p>
+                      </div>
+                      <TrendingUp className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Barre de progression */}
+                <div className="bg-background border border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-foreground">Progression du projet</span>
+                    <span className="text-sm text-muted-foreground">{taskStats.completion}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${taskStats.completion}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
-              <DialogFooter>
-                <Button onClick={handleShareProject} className="bg-sky-500 hover:bg-sky-600 text-white" disabled={isSharing}>
-                  {isSharing ? "Envoi..." : "Partager"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            )}
+
+            {activeTab === 'gantt' && <GanttChart tasks={projectTasks} />}
+            {activeTab === 'pert' && <PertChart tasks={projectTasks} />}
+            {activeTab === 'kanban' && <KanbanBoard tasks={projectTasks} />}
+            {activeTab === 'calendar' && <CalendarView tasks={projectTasks} />}
+          </div>
         </div>
-      </div>
-      
-      <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 gap-4">
-          {/* Project Name and Description */}
-          <Card className="w-full bg-white shadow-md">
-            <CardContent className="p-4">
-              <h2 className="text-2xl font-bold text-sky-700">{projectData.title}</h2>
-              <p className="text-lg text-gray-600 mt-2">{projectData.description}</p>
-            </CardContent>
-          </Card>
 
-          {/* Task Statistics */}
-          <TaskStatistics tasks={tasks} />
-
-          {/* View Tabs */}
-          <Card className="w-full bg-white shadow-md border-l-4 border-sky-500">
-            <CardContent className="p-4">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-sky-100 mb-4">
-                  <TabsTrigger
-                    value="dashboard"
-                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                  >
-                    Dashboard
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="kanban"
-                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                  >
-                    Kanban
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="calendar"
-                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                  >
-                    Calendrier
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="gantt"
-                    className="data-[state=active]:bg-sky-500 data-[state=active]:text-white text-sky-700 text-sm"
-                  >
-                    Gantt
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="dashboard" className="mt-4">
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 text-sm">Tableau de bord - Statistiques affichées ci-dessus</p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="kanban" className="mt-4">
-                  <KanbanView tasks={tasks} convertDate={convertDate} />
-                </TabsContent>
-
-                <TabsContent value="calendar" className="mt-4">
-                  <CalendarView tasks={tasks} convertDate={convertDate} />
-                </TabsContent>
-
-                <TabsContent value="gantt" className="mt-4">
-                  <div className="overflow-x-auto">
-                    {ganttData.length > 0 ? (
-                      <BarChart
-                        width={window.innerWidth * 0.8}
-                        height={300}
-                        data={ganttData}
-                        layout="vertical"
-                        margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="duration" />
-                        <YAxis type="category" dataKey="name" width={150} />
-                        <Tooltip
-                          formatter={(value, name, props) => [
-                            `${props.payload.start} - ${props.payload.end} (${value || 0} jours)`,
-                            props.payload.name,
-                          ]}
-                        />
-                        <Bar dataKey="duration" fill="#0ea5e9" />
-                      </BarChart>
-                    ) : (
-                      <p className="text-gray-600 text-sm">Aucune donnée disponible pour le diagramme de Gantt</p>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          {/* Task List */}
-          <TaskList tasks={tasks} filteredTasks={filteredTasks} convertDate={convertDate} />
+        {/* Liste des tâches */}
+        <div className="mt-8 bg-card border border-border rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Liste des tâches</h2>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                <Plus className="w-4 h-4" />
+                Nouvelle tâche
+              </Button>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              {projectTasks
+                .filter((task) =>
+                  task.titre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  task.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((task) => {
+                  const statusInfo = getStatusInfo(task.state);
+                  const Icon = statusInfo.icon;
+                  return (
+                    <div key={task.id} className="bg-background border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Icon className="w-4 h-4 text-muted-foreground" />
+                            <h3 className="font-semibold text-foreground">{task.titre}</h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                              {statusInfo.label}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground text-sm mb-3">{task.description}</p>
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                            <span>Début: {formatDate(task.start_date)}</span>
+                            <span>Durée: {task.echeance || 0} jours</span>
+                            <span>Assigné à: {task.asign_to || 'Non assigné'}</span>
+                            {task.dependances && task.dependances.length > 0 && (
+                              <span>Dépendances: {task.dependances.join(', ')}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -776,8 +595,8 @@ export default function ProjectDetails() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 items-center justify-center">
-          <h1 className="text-2xl font-bold text-sky-700">Chargement des paramètres...</h1>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <h1 className="text-2xl font-bold text-foreground">Chargement des paramètres...</h1>
         </div>
       }
     >
