@@ -249,7 +249,7 @@ export default function Users() {
       <div className="max-w-7xl mx-auto">
         <Toaster />
         {/* En-tête */}
-        <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-background text-white p-4 shadow-md flex justify-between items-center z-10">
+        <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-primary text-white p-4 shadow-md flex justify-between items-center z-10">
           <button
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             onClick={() => window.history.back()}
