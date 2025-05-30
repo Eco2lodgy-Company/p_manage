@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Calendar as CalendarIcon, Trash2, Edit, Eye, ChevronDown } from "lucide-react";
+import { Search, Calendar as CalendarIcon, Trash2, Edit, Eye } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,7 +13,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Calendar from "react-calendar";
 import Draggable from "react-draggable";
 import { z } from "zod";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Assuming a tooltip component
 
 // Define Zod schema for task validation
 const taskSchema = z.object({
@@ -93,8 +92,7 @@ const Tasks = () => {
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("table");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [viewMode, setViewMode] = useState("table"); // "table", "calendar", "kanban", "pert", "gantt"
   const [loading, setLoading] = useState(true);
 
   // Fetch tasks
@@ -111,13 +109,13 @@ const Tasks = () => {
         setTasks(tasksArray);
         setFilteredTasks(tasksArray);
       } else {
-        setTasks(staticTasks);
+        setTasks(staticTasks); // Fallback to static data
         setFilteredTasks(staticTasks);
         toast.warning("Aucune tâche récupérée, données statiques affichées.");
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des tâches:", error);
-      setTasks(staticTasks);
+      setTasks(staticTasks); // Fallback to static data
       setFilteredTasks(staticTasks);
       toast.error("Erreur lors de la récupération des tâches, données statiques affichées.");
     }
@@ -173,6 +171,7 @@ const Tasks = () => {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
+
     const newTask = {
       titre: formData.titre,
       description: formData.description,
@@ -182,6 +181,7 @@ const Tasks = () => {
       precedence: formData.precedence || undefined,
       asign_to: formData.asign_to || undefined,
     };
+
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/tasks/add`, {
         method: "POST",
@@ -214,6 +214,7 @@ const Tasks = () => {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
+
     const taskToEdit = {
       id: formData.id,
       titre: formData.titre,
@@ -224,6 +225,7 @@ const Tasks = () => {
       precedence: formData.precedence || undefined,
       asign_to: formData.asign_to || undefined,
     };
+
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/tasks/edit`, {
         method: "PATCH",
@@ -329,6 +331,8 @@ const Tasks = () => {
   // Filter and search tasks
   useEffect(() => {
     let updatedTasks = [...tasks];
+
+    // Apply search filter
     if (searchTerm) {
       updatedTasks = updatedTasks.filter(
         (task) =>
@@ -336,9 +340,14 @@ const Tasks = () => {
           task.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
+
+    // Apply status filter
     if (statusFilter !== "all") {
-      updatedTasks = updatedTasks.filter((task) => task.state === statusFilter);
+      updatedTasks = updatedTasks.filter(
+        (task) => task.state === statusFilter
+      );
     }
+
     setFilteredTasks(updatedTasks);
   }, [searchTerm, statusFilter, tasks]);
 
@@ -350,44 +359,50 @@ const Tasks = () => {
     setTasks(updatedTasks);
     setFilteredTasks(updatedTasks);
     toast.success(`Tâche déplacée vers ${getStatusName(newStatus)}`);
+    // Note: You may want to update the backend here with an API call
   };
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen flex flex-col md:ml-64 items-center justify-center"
+        style={{ backgroundColor: "var(--primary-bg)" }}
+      >
+        <h1 style={{ color: "var(--title-text)", fontWeight: "bold", fontSize: "1.5rem" }}>
+          Chargement...
+        </h1>
+      </div>
+    );
+  }
 
   // PERT Diagram Rendering
   const renderPertDiagram = () => {
     const nodes = filteredTasks.map((task, index) => ({
       id: task.id,
-      x: 150 + index * 200,
-      y: 100 + (parseInt(task.precedence) - 1) * 150,
+      x: 100 + index * 150,
+      y: 100 + (task.precedence === "1" ? 0 : task.precedence === "2" ? 50 : 100),
       label: task.titre,
     }));
+
     const edges = [];
     filteredTasks.forEach((task, index) => {
       if (index < filteredTasks.length - 1) {
         const nextTask = filteredTasks[index + 1];
         if (parseInt(task.precedence) <= parseInt(nextTask.precedence)) {
-          edges.push({ from: task.id, to: nextTask.id });
+          edges.push({
+            from: task.id,
+            to: nextTask.id,
+          });
         }
       }
     });
+
     return (
-      <svg width="100%" height="500" className="transition-all duration-300">
+      <svg width="100%" height="400">
         {nodes.map((node) => (
-          <g key={node.id} className="transition-all duration-300">
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r="40"
-              fill="linear-gradient(135deg, #4B5EAA, #8A9BFF)"
-              stroke="var(--border-accent)"
-              strokeWidth="2"
-            />
-            <text
-              x={node.x}
-              y={node.y}
-              textAnchor="middle"
-              dy=".3em"
-              style={{ fill: "#FFFFFF", fontSize: "14px", fontWeight: "bold" }}
-            >
+          <g key={node.id}>
+            <circle cx={node.x} cy={node.y} r="30" fill="var(--accent-yellow)" stroke="var(--border-accent)" />
+            <text x={node.x} y={node.y} textAnchor="middle" dy=".3em" style={{ fill: "var(--header-text)" }}>
               {node.label}
             </text>
           </g>
@@ -398,12 +413,12 @@ const Tasks = () => {
           return (
             <line
               key={idx}
-              x1={fromNode.x + 40}
+              x1={fromNode.x + 30}
               y1={fromNode.y}
-              x2={toNode.x - 40}
+              x2={toNode.x - 30}
               y2={toNode.y}
               stroke="var(--border-accent)"
-              strokeWidth="3"
+              strokeWidth="2"
               markerEnd="url(#arrow)"
             />
           );
@@ -419,36 +434,25 @@ const Tasks = () => {
 
   // Gantt Chart Rendering
   const renderGanttChart = () => {
-    const startDate = new Date(Math.min(...filteredTasks.map((t) => new Date(t.start_date))));
-    const endDate = new Date(
-      Math.max(...filteredTasks.map((t) => new Date(t.start_date).setDate(new Date(t.start_date).getDate() + Number(t.echeance))))
-    );
+    const startDate = new Date("2025-05-26");
+    const endDate = new Date("2025-06-01");
     const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
-    const pixelsPerDay = 800 / (totalDays || 1);
+    const pixelsPerDay = 800 / totalDays;
 
     return (
-      <div className="transition-all duration-300">
-        <div className="flex overflow-x-auto">
+      <div>
+        <div className="flex">
           {Array.from({ length: totalDays + 1 }).map((_, idx) => {
             const date = new Date(startDate);
             date.setDate(date.getDate() + idx);
             return (
-              <div
-                key={idx}
-                style={{
-                  width: `${pixelsPerDay}px`,
-                  textAlign: "center",
-                  color: "var(--body-text)",
-                  fontSize: "12px",
-                  padding: "5px",
-                }}
-              >
+              <div key={idx} style={{ width: `${pixelsPerDay}px`, textAlign: "center", color: "var(--body-text)" }}>
                 {date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
               </div>
             );
           })}
         </div>
-        <svg width="100%" height={filteredTasks.length * 60 + 30} className="transition-all duration-300">
+        <svg width="100%" height={filteredTasks.length * 50 + 20}>
           {filteredTasks.map((task, idx) => {
             const taskStart = new Date(task.start_date);
             const taskEnd = new Date(taskStart);
@@ -459,23 +463,21 @@ const Tasks = () => {
               <g key={task.id}>
                 <rect
                   x={startOffset * pixelsPerDay}
-                  y={idx * 60 + 20}
-                  width={duration * pixelsPerDay || 10}
-                  height="40"
-                  rx="8"
+                  y={idx * 50 + 10}
+                  width={duration * pixelsPerDay}
+                  height="30"
                   fill={
                     task.state === "done"
-                      ? "linear-gradient(135deg, #4CAF50, #81C784)"
+                      ? "var(--accent-green)"
                       : task.state === "in_progress"
-                      ? "linear-gradient(135deg, #FFCA28, #FFD54F)"
-                      : "linear-gradient(135deg, #F44336, #EF9A9A)"
+                      ? "var(--accent-yellow)"
+                      : "var(--accent-orange)"
                   }
-                  style={{ filter: "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))" }}
                 />
                 <text
-                  x={startOffset * pixelsPerDay + 10}
-                  y={idx * 60 + 40}
-                  style={{ fill: "#FFFFFF", fontSize: "14px", fontWeight: "500" }}
+                  x={startOffset * pixelsPerDay + 5}
+                  y={idx * 50 + 25}
+                  style={{ fill: "var(--header-text)" }}
                 >
                   {task.titre}
                 </text>
@@ -487,1288 +489,954 @@ const Tasks = () => {
     );
   };
 
-  if (loading) {
-    return (
+  return (
+    <div className="flex">
       <div
-        className="min-h-screen flex flex-col md:ml-64 items-center justify-center"
+        className="flex-1 md:ml-64 min-h-screen flex flex-col"
         style={{ backgroundColor: "var(--primary-bg)" }}
       >
-        <h1
-          className="animate-pulse"
-          style={{ color: "var(--title-text)", fontWeight: "bold", fontSize: "1.5rem" }}
-        >
-          Chargement...
-        </h1>
-      </div>
-    );
-  }
-
-  return (
-    <TooltipProvider>
-      <div className="flex">
-        {/* Sidebar */}
+        <Toaster />
+        {/* Header */}
         <div
-          className={`fixed top-16 left-0 h-[calc(100vh-64px)] p-4 transition-all duration-300 ${
-            sidebarOpen ? "w-64" : "w-16"
-          }`}
+          className="fixed top-0 left-0 md:left-64 right-0 p-4 shadow-md flex justify-between items-center z-10"
           style={{
-            backgroundColor: "linear-gradient(135deg, #4B5EAA, #8A9BFF)",
-            color: "#FFFFFF",
-            boxShadow: "4px 0 10px rgba(0, 0, 0, 0.1)",
+            backgroundColor: "var(--header-bg)",
+            color: "var(--header-text)",
           }}
         >
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="mb-4"
-            style={{ color: "#FFFFFF" }}
+            className="rounded-md"
+            style={{
+              backgroundColor: "var(--card-bg)",
+              color: "var(--header-bg)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--card-bg)")}
+            onClick={() => router.push("/dashboard")}
           >
-            <ChevronDown
-              className={`h-6 w-6 transition-transform ${sidebarOpen ? "rotate-180" : ""}`}
-            />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Retour
           </Button>
-          {sidebarOpen && (
-            <div className="space-y-2">
-              <div className="relative w-full">
-                <Input
-                  placeholder="Rechercher..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 rounded-lg"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    color: "#FFFFFF",
-                    border: "none",
-                  }}
-                />
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
-                  style={{ color: "#FFFFFF" }}
-                />
+          <h1
+            className="text-xl font-bold"
+            style={{ color: "var(--header-text)" }}
+          >
+            Gestion des Tâches
+          </h1>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
+          {/* Search, Filters, Tabs, and Add Task Button */}
+          <div
+            className="p-4 rounded-lg shadow-md mb-4"
+            style={{ backgroundColor: "var(--card-bg)" }}
+          >
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-col md:flex-row gap-4 items-center w-full md:w-auto">
+                <div className="relative w-full md:w-1/3">
+                  <Input
+                    placeholder="Rechercher une tâche..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                    style={{
+                      backgroundColor: "var(--task-card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  />
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
+                    style={{ color: "var(--body-text)" }}
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger
+                    className="w-full md:w-1/4"
+                    style={{
+                      backgroundColor: "var(--task-card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  >
+                    <SelectValue placeholder="Filtrer par statut" />
+                  </SelectTrigger>
+                  <SelectContent
+                    style={{
+                      backgroundColor: "var(--card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  >
+                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="pending">En attente</SelectItem>
+                    <SelectItem value="in_progress">En cours</SelectItem>
+                    <SelectItem value="done">Terminé</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  {["table", "calendar", "kanban", "pert", "gantt"].map((mode) => (
+                    <Button
+                      key={mode}
+                      onClick={() => setViewMode(mode)}
+                      className="rounded-md"
+                      style={{
+                        backgroundColor: viewMode === mode ? "var(--header-bg)" : "var(--tabs-bg)",
+                        color: viewMode === mode ? "var(--header-text)" : "var(--body-text-dark)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor =
+                          viewMode === mode ? "var(--header-bg)" : "var(--tabs-bg)")
+                      }
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </Button>
+                  ))}
+                </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger
-                  className="w-full"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    color: "#FFFFFF",
-                    border: "none",
-                  }}
-                >
-                  <SelectValue placeholder="Filtrer par statut" />
-                </SelectTrigger>
-                <SelectContent
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                    color: "#FFFFFF",
-                  }}
-                >
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="pending">En attente</SelectItem>
-                  <SelectItem value="in_progress">En cours</SelectItem>
-                  <SelectItem value="done">Terminé</SelectItem>
-                </SelectContent>
-              </Select>
+              <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="rounded-md"
+                    style={{
+                      backgroundColor: "var(--header-bg)",
+                      color: "var(--header-text)",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+                  >
+                    Ajouter une Tâche
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Ajouter une Tâche</DialogTitle>
+                    <DialogDescription>Remplissez les détails de la nouvelle tâche.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="titre" className="text-right">Titre</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="titre"
+                          value={formData.titre}
+                          onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
+                          className={errors.titre ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.titre && <p className="text-red-500 text-sm mt-1">{errors.titre}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="description" className="text-right">Description</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className={errors.description ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="id_projet" className="text-right">Projet</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="id_projet"
+                          value={formData.id_projet}
+                          onChange={(e) => setFormData({ ...formData, id_projet: e.target.value })}
+                          className={errors.id_projet ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.id_projet && <p className="text-red-500 text-sm mt-1">{errors.id_projet}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="start_date" className="text-right">Date de début</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="start_date"
+                          type="date"
+                          value={formData.start_date}
+                          onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                          className={errors.start_date ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="echeance" className="text-right">Échéance</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="echeance"
+                          type="number"
+                          value={formData.echeance}
+                          onChange={(e) => setFormData({ ...formData, echeance: e.target.value })}
+                          className={errors.echeance ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.echeance && <p className="text-red-500 text-sm mt-1">{errors.echeance}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="precedence" className="text-right">Précédence</Label>
+                      <div className="col-span-3">
+                        <Select
+                          value={formData.precedence}
+                          onValueChange={(value) => setFormData({ ...formData, precedence: value })}
+                        >
+                          <SelectTrigger
+                            className="w-full"
+                            style={{
+                              backgroundColor: "var(--task-card-bg)",
+                              color: "var(--body-text-dark)",
+                            }}
+                          >
+                            <SelectValue placeholder="Choisir une précédence" />
+                          </SelectTrigger>
+                          <SelectContent
+                            style={{
+                              backgroundColor: "var(--card-bg)",
+                              color: "var(--body-text-dark)",
+                            }}
+                          >
+                            <SelectItem value="1">Basse (1)</SelectItem>
+                            <SelectItem value="2">Moyenne (2)</SelectItem>
+                            <SelectItem value="3">Haute (3)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errors.precedence && <p className="text-red-500 text-sm mt-1">{errors.precedence}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="asign_to" className="text-right">Assignée à</Label>
+                      <div className="col-span-3">
+                        <Select
+                          value={formData.asign_to}
+                          onValueChange={(value) => setFormData({ ...formData, asign_to: value })}
+                        >
+                          <SelectTrigger
+                            className="w-full"
+                            style={{
+                              backgroundColor: "var(--task-card-bg)",
+                              color: "var(--body-text-dark)",
+                            }}
+                          >
+                            <SelectValue placeholder="Choisir un utilisateur" />
+                          </SelectTrigger>
+                          <SelectContent
+                            style={{
+                              backgroundColor: "var(--card-bg)",
+                              color: "var(--body-text-dark)",
+                            }}
+                          >
+                            {users.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.nom} {user.prenom}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.asign_to && <p className="text-red-500 text-sm mt-1">{errors.asign_to}</p>}
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={handleAddTask}
+                      style={{
+                        backgroundColor: "var(--header-bg)",
+                        color: "var(--header-text)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+                    >
+                      Ajouter
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Views */}
+          {viewMode === "table" && (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Liste des Tâches
+              </h2>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow
+                      style={{ backgroundColor: "var(--tabs-bg)" }}
+                    >
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Titre
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Description
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Projet
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Date de début
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Échéance
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Précédence
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Assignée à
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Statut
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTasks.length > 0 ? (
+                      filteredTasks.map((task) => {
+                        const startDate = task.start_date ? new Date(task.start_date) : null;
+                        let endDate = "";
+                        if (startDate && !isNaN(startDate) && task.echeance) {
+                          const end = new Date(startDate);
+                          end.setDate(startDate.getDate() + Number(task.echeance));
+                          endDate = convertDate(end);
+                        }
+                        return (
+                          <TableRow
+                            key={task.id}
+                            className="transition-colors"
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text-dark)" }}
+                            >
+                              {task.titre || ""}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs line-clamp-2"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.description || ""}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.id_projet || "aucun"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.start_date || "-"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {endDate || "N/A"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.precedence || "-"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {users.find(u => u.id === task.asign_to)?.nom || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className="px-2 py-1 rounded-full text-xs"
+                                style={{
+                                  color: "var(--header-text)",
+                                  backgroundColor:
+                                    task.state === "done"
+                                      ? "var(--accent-green)"
+                                      : task.state === "in_progress"
+                                      ? "var(--accent-yellow)"
+                                      : "var(--accent-orange)",
+                                }}
+                              >
+                                {getStatusName(task.state) || "N/A"}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openViewModal(task)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openEditModal(task)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openDeleteModal(task)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--accent-red, #ef4444)",
+                                    borderColor: "var(--accent-red, #ef4444)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--accent-red, #ef4444)")}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={9}
+                          className="text-center"
+                          style={{ color: "var(--body-text)" }}
+                        >
+                          Aucune tâche disponible
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {viewMode === "calendar" && (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Vue Calendrier
+              </h2>
+              <Calendar
+                value={new Date()}
+                tileContent={({ date, view }) =>
+                  view === "month" && filteredTasks.some((task) => {
+                    const taskDate = new Date(task.start_date);
+                    return taskDate.toDateString() === date.toDateString();
+                  }) ? (
+                    <div
+                      className="text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                      style={{
+                        backgroundColor: "var(--accent-yellow)",
+                        color: "var(--header-text)",
+                      }}
+                    >
+                      {filteredTasks.filter((task) => {
+                        const taskDate = new Date(task.start_date);
+                        return taskDate.toDateString() === date.toDateString();
+                      }).length}
+                    </div>
+                  ) : null
+                }
+              />
+            </div>
+          )}
+
+          {viewMode === "kanban" && (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Vue Kanban
+              </h2>
+              <div className="flex gap-4">
+                {["pending", "in_progress", "done"].map((status) => (
+                  <div
+                    key={status}
+                    className="flex-1 p-4 rounded-lg"
+                    style={{ backgroundColor: "var(--tabs-bg)" }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleKanbanDrop(null, status)}
+                  >
+                    <h3
+                      className="text-md font-bold mb-2"
+                      style={{ color: "var(--title-text)" }}
+                    >
+                      {getStatusName(status)}
+                    </h3>
+                    {filteredTasks
+                      .filter((task) => task.state === status)
+                      .map((task) => (
+                        <Draggable key={task.id}>
+                          <div
+                            className="p-2 mb-2 rounded-lg shadow-sm"
+                            style={{ backgroundColor: "var(--task-card-bg)" }}
+                            onDragEnd={() => handleKanbanDrop(task.id, status)}
+                          >
+                            <p style={{ color: "var(--body-text-dark)" }}>{task.titre}</p>
+                            <p className="text-xs" style={{ color: "var(--body-text)" }}>
+                              {task.description}
+                            </p>
+                            <div className="flex gap-1 mt-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => openViewModal(task)}
+                                className="h-8 w-8"
+                                style={{
+                                  color: "var(--border-accent)",
+                                  borderColor: "var(--border-accent)",
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => openEditModal(task)}
+                                className="h-8 w-8"
+                                style={{
+                                  color: "var(--border-accent)",
+                                  borderColor: "var(--border-accent)",
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => openDeleteModal(task)}
+                                className="h-8 w-8"
+                                style={{
+                                  color: "var(--accent-red, #ef4444)",
+                                  borderColor: "var(--accent-red, #ef4444)",
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Draggable>
+                      ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {viewMode === "pert" && (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Vue PERT
+              </h2>
+              {filteredTasks.length > 0 ? (
+                renderPertDiagram()
+              ) : (
+                <p style={{ color: "var(--body-text)" }}>Aucune tâche disponible</p>
+              )}
+            </div>
+          )}
+
+          {viewMode === "gantt" && (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Vue Gantt
+              </h2>
+              {filteredTasks.length > 0 ? (
+                renderGanttChart()
+              ) : (
+                <p style={{ color: "var(--body-text)" }}>Aucune tâche disponible</p>
+              )}
             </div>
           )}
         </div>
 
-        {/* Main Content */}
-        <div
-          className="flex-1 ml-16 md:ml-64 min-h-screen flex flex-col transition-all duration-300"
-          style={{ backgroundColor: "var(--primary-bg)", padding: "20px" }}
-        >
-          <Toaster />
-          {/* Header */}
-          <div
-            className="fixed top-0 left-16 md:left-64 right-0 p-4 shadow-md flex justify-between items-center z-10 rounded-lg"
-            style={{
-              background: "linear-gradient(135deg, #4B5EAA, #8A9BFF)",
-              color: "#FFFFFF",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <Button
-              className="rounded-full"
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                color: "#FFFFFF",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)")}
-              onClick={() => router.push("/dashboard")}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Retour
-            </Button>
-            <h1
-              className="text-2xl font-bold"
-              style={{ color: "#FFFFFF" }}
-            >
-              Gestion des Tâches
-            </h1>
-            <DialogTrigger asChild>
+        {/* View Dialog */}
+        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Détails de la Tâche</DialogTitle>
+              <DialogDescription>Informations complètes sur la tâche sélectionnée.</DialogDescription>
+            </DialogHeader>
+            {selectedTask && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    ID
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.id}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Titre
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.titre}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Description
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.description}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Projet
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.id_projet || "aucun"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Date de début
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.start_date || "-"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Échéance
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.echeance || "0"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Précédence
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedTask.precedence || "-"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Assignée à
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {users.find(u => u.id === selectedTask.asign_to)?.nom || "-"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Statut
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {getStatusName(selectedTask.state) || "N/A"}
+                  </span>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
               <Button
-                className="rounded-full"
+                onClick={() => setIsViewOpen(false)}
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.2)",
-                  color: "#FFFFFF",
+                  backgroundColor: "var(--header-bg)",
+                  color: "var(--header-text)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)")}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
               >
-                Ajouter une Tâche
+                Fermer
               </Button>
-            </DialogTrigger>
-          </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-          {/* Main Content Area */}
-          <div className="flex-1 p-4 mt-20 max-w-7xl mx-auto w-full">
-            {/* Tabs */}
-            <div className="mb-6">
-              <div className="flex space-x-2">
-                {["table", "calendar", "kanban", "pert", "gantt"].map((mode) => (
-                  <Button
-                    key={mode}
-                    onClick={() => setViewMode(mode)}
-                    className="rounded-full px-4 py-2 transition-all duration-300"
-                    style={{
-                      background: viewMode === mode ? "linear-gradient(135deg, #4B5EAA, #8A9BFF)" : "var(--tabs-bg)",
-                      color: viewMode === mode ? "#FFFFFF" : "var(--body-text-dark)",
-                      boxShadow: viewMode === mode ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        viewMode === mode ? "linear-gradient(135deg, #4B5EAA, #8A9BFF)" : "var(--tabs-bg)")
-                    }
+        {/* Edit Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Modifier la Tâche</DialogTitle>
+              <DialogDescription>Mettez à jour les détails de la tâche.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-titre" className="text-right">Titre</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-titre"
+                    value={formData.titre}
+                    onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
+                    className={errors.titre ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.titre && <p className="text-red-500 text-sm mt-1">{errors.titre}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-description" className="text-right">Description</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className={errors.description ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-id_projet" className="text-right">Projet</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-id_projet"
+                    value={formData.id_projet}
+                    onChange={(e) => setFormData({ ...formData, id_projet: e.target.value })}
+                    className={errors.id_projet ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.id_projet && <p className="text-red-500 text-sm mt-1">{errors.id_projet}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-start_date" className="text-right">Date de début</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className={errors.start_date ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-echeance" className="text-right">Échéance</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-echeance"
+                    type="number"
+                    value={formData.echeance}
+                    onChange={(e) => setFormData({ ...formData, echeance: e.target.value })}
+                    className={errors.echeance ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.echeance && <p className="text-red-500 text-sm mt-1">{errors.echeance}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-precedence" className="text-right">Précédence</Label>
+                <div className="col-span-3">
+                  <Select
+                    value={formData.precedence}
+                    onValueChange={(value) => setFormData({ ...formData, precedence: value })}
                   >
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </Button>
-                ))}
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        backgroundColor: "var(--task-card-bg)",
+                        color: "var(--body-text-dark)",
+                      }}
+                    >
+                      <SelectValue placeholder="Choisir une précédence" />
+                    </SelectTrigger>
+                    <SelectContent
+                      style={{
+                        backgroundColor: "var(--card-bg)",
+                        color: "var(--body-text-dark)",
+                      }}
+                    >
+                      <SelectItem value="1">Basse (1)</SelectItem>
+                      <SelectItem value="2">Moyenne (2)</SelectItem>
+                      <SelectItem value="3">Haute (3)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.precedence && <p className="text-red-500 text-sm mt-1">{errors.precedence}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-asign_to" className="text-right">Assignée à</Label>
+                <div className="col-span-3">
+                  <Select
+                    value={formData.asign_to}
+                    onValueChange={(value) => setFormData({ ...formData, asign_to: value })}
+                  >
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        backgroundColor: "var(--task-card-bg)",
+                        color: "var(--body-text-dark)",
+                      }}
+                    >
+                      <SelectValue placeholder="Choisir un utilisateur" />
+                    </SelectTrigger>
+                    <SelectContent
+                      style={{
+                        backgroundColor: "var(--card-bg)",
+                        color: "var(--body-text-dark)",
+                      }}
+                    >
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.nom} {user.prenom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.asign_to && <p className="text-red-500 text-sm mt-1">{errors.asign_to}</p>}
+                </div>
               </div>
             </div>
-
-            {/* Views */}
-            {viewMode === "table" && (
-              <div
-                className="p-6 rounded-xl shadow-lg"
+            <DialogFooter>
+              <Button
+                onClick={handleEditTask}
                 style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F5F7FA)",
-                  transition: "all 0.3s ease",
+                  backgroundColor: "var(--header-bg)",
+                  color: "var(--header-text)",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
               >
-                <h2
-                  className="text-xl font-semibold mb-4"
-                  style={{ color: "var(--title-text)" }}
-                >
-                  Liste des Tâches
-                </h2>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow
-                        style={{ background: "linear-gradient(135deg, #E0E7FF, #D1E9FF)" }}
-                      >
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Titre
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Description
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Projet
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Date de début
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Échéance
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Précédence
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Assignée à
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Statut
-                        </TableHead>
-                        <TableHead
-                          className="font-bold text-sm"
-                          style={{ color: "#4B5EAA" }}
-                        >
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredTasks.length > 0 ? (
-                        filteredTasks.map((task) => {
-                          const startDate = task.start_date ? new Date(task.start_date) : null;
-                          let endDate = "";
-                          if (startDate && !isNaN(startDate) && task.echeance) {
-                            const end = new Date(startDate);
-                            end.setDate(startDate.getDate() + Number(task.echeance));
-                            endDate = convertDate(end);
-                          }
-                          return (
-                            <TableRow
-                              key={task.id}
-                              className="hover:bg-gray-50 transition-all duration-200"
-                              style={{ borderRadius: "8px" }}
-                            >
-                              <TableCell
-                                className="text-sm"
-                                style={{ color: "var(--body-text-dark)" }}
-                              >
-                                {task.titre || ""}
-                              </TableCell>
-                              <TableCell
-                                className="text-sm line-clamp-2"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {task.description || ""}
-                              </TableCell>
-                              <TableCell
-                                className="text-sm"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {task.id_projet || "aucun"}
-                              </TableCell>
-                              <TableCell
-                                className="text-sm"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {task.start_date || "-"}
-                              </TableCell>
-                              <TableCell
-                                className="text-sm"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {endDate || "N/A"}
-                              </TableCell>
-                              <TableCell
-                                className="text-sm"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {task.precedence || "-"}
-                              </TableCell>
-                              <TableCell
-                                className="text-sm"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {users.find(u => u.id === task.asign_to)?.nom || "-"}
-                              </TableCell>
-                              <TableCell>
-                                <span
-                                  className="px-3 py-1 rounded-full text-sm font-medium"
-                                  style={{
-                                    color: "#FFFFFF",
-                                    background:
-                                      task.state === "done"
-                                        ? "linear-gradient(135deg, #4CAF50, #81C784)"
-                                        : task.state === "in_progress"
-                                        ? "linear-gradient(135deg, #FFCA28, #FFD54F)"
-                                        : "linear-gradient(135deg, #F44336, #EF9A9A)",
-                                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                                  }}
-                                >
-                                  {getStatusName(task.state) || "N/A"}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => openViewModal(task)}
-                                        className="h-10 w-10 rounded-full"
-                                        style={{
-                                          color: "#4B5EAA",
-                                          borderColor: "#4B5EAA",
-                                          transition: "all 0.3s ease",
-                                        }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                                      >
-                                        <Eye className="h-5 w-5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Voir</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => openEditModal(task)}
-                                        className="h-10 w-10 rounded-full"
-                                        style={{
-                                          color: "#4B5EAA",
-                                          borderColor: "#4B5EAA",
-                                          transition: "all 0.3s ease",
-                                        }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                                      >
-                                        <Edit className="h-5 w-5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Modifier</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => openDeleteModal(task)}
-                                        className="h-10 w-10 rounded-full"
-                                        style={{
-                                          color: "#F44336",
-                                          borderColor: "#F44336",
-                                          transition: "all 0.3s ease",
-                                        }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                                      >
-                                        <Trash2 className="h-5 w-5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Supprimer</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={9}
-                            className="text-center"
-                            style={{ color: "var(--body-text)", fontSize: "16px" }}
-                          >
-                            Aucune tâche disponible
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-            {viewMode === "calendar" && (
-              <div
-                className="p-6 rounded-xl shadow-lg"
+        {/* Delete Dialog */}
+        <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmer la Suppression</DialogTitle>
+              <DialogDescription>Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteOpen(false)}
                 style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F5F7FA)",
-                  transition: "all 0.3s ease",
+                  borderColor: "var(--border-accent)",
+                  color: "var(--border-accent)",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
               >
-                <h2
-                  className="text-xl font-semibold mb-4"
-                  style={{ color: "var(--title-text)" }}
-                >
-                  Vue Calendrier
-                </h2>
-                <Calendar
-                  className="border-none rounded-lg shadow-md"
-                  style={{ background: "linear-gradient(135deg, #E0E7FF, #D1E9FF)" }}
-                  tileClassName={({ date, view }) =>
-                    view === "month" && filteredTasks.some((task) => {
-                      const taskDate = new Date(task.start_date);
-                      return taskDate.toDateString() === date.toDateString();
-                    })
-                      ? "bg-yellow-200 text-white rounded-full"
-                      : ""
-                  }
-                  tileContent={({ date, view }) =>
-                    view === "month" && filteredTasks.some((task) => {
-                      const taskDate = new Date(task.start_date);
-                      return taskDate.toDateString() === date.toDateString();
-                    }) ? (
-                      <div
-                        className="text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                        style={{
-                          backgroundColor: "var(--accent-yellow)",
-                          color: "#FFFFFF",
-                        }}
-                      >
-                        {filteredTasks.filter((task) => {
-                          const taskDate = new Date(task.start_date);
-                          return taskDate.toDateString() === date.toDateString();
-                        }).length}
-                      </div>
-                    ) : null
-                  }
-                />
-              </div>
-            )}
-
-            {viewMode === "kanban" && (
-              <div
-                className="p-6 rounded-xl shadow-lg"
+                Annuler
+              </Button>
+              <Button
+                onClick={handleDeleteTask}
                 style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F5F7FA)",
-                  transition: "all 0.3s ease",
+                  backgroundColor: "var(--accent-red, #ef4444)",
+                  color: "var(--header-text)",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-red, #ef4444)")}
               >
-                <h2
-                  className="text-xl font-semibold mb-4"
-                  style={{ color: "var(--title-text)" }}
-                >
-                  Vue Kanban
-                </h2>
-                <div className="flex gap-4 overflow-x-auto">
-                  {["pending", "in_progress", "done"].map((status) => (
-                    <div
-                      key={status}
-                      className="flex-1 min-w-[300px] p-4 rounded-lg"
-                      style={{
-                        background: "linear-gradient(135deg, #E0E7FF, #D1E9FF)",
-                        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleKanbanDrop(null, status)}
-                    >
-                      <h3
-                        className="text-md font-semibold mb-3"
-                        style={{ color: "#4B5EAA" }}
-                      >
-                        {getStatusName(status)}
-                      </h3>
-                      {filteredTasks
-                        .filter((task) => task.state === status)
-                        .map((task) => (
-                          <Draggable key={task.id}>
-                            <div
-                              className="p-3 mb-3 rounded-lg shadow-md cursor-move"
-                              style={{
-                                background: "linear-gradient(135deg, #FFFFFF, #F0F4F8)",
-                                transition: "all 0.3s ease",
-                              }}
-                              draggable
-                              onDragEnd={() => handleKanbanDrop(task.id, status)}
-                            >
-                              <p
-                                className="font-medium"
-                                style={{ color: "var(--body-text-dark)" }}
-                              >
-                                {task.titre}
-                              </p>
-                              <p
-                                className="text-xs mt-1"
-                                style={{ color: "var(--body-text)" }}
-                              >
-                                {task.description}
-                              </p>
-                              <div className="flex gap-2 mt-2">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => openViewModal(task)}
-                                      className="h-8 w-8 rounded-full"
-                                      style={{ color: "#4B5EAA", borderColor: "#4B5EAA" }}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Voir</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => openEditModal(task)}
-                                      className="h-8 w-8 rounded-full"
-                                      style={{ color: "#4B5EAA", borderColor: "#4B5EAA" }}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Modifier</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => openDeleteModal(task)}
-                                      className="h-8 w-8 rounded-full"
-                                      style={{ color: "#F44336", borderColor: "#F44336" }}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Supprimer</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </div>
-                          </Draggable>
-                        ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {viewMode === "pert" && (
-              <div
-                className="p-6 rounded-xl shadow-lg"
-                style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F5F7FA)",
-                  transition: "all 0.3s ease",
-                }}
-              >
-                <h2
-                  className="text-xl font-semibold mb-4"
-                  style={{ color: "var(--title-text)" }}
-                >
-                  Vue PERT
-                </h2>
-                {filteredTasks.length > 0 ? (
-                  renderPertDiagram()
-                ) : (
-                  <p style={{ color: "var(--body-text)", fontSize: "16px" }}>Aucune tâche disponible</p>
-                )}
-              </div>
-            )}
-
-            {viewMode === "gantt" && (
-              <div
-                className="p-6 rounded-xl shadow-lg"
-                style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F5F7FA)",
-                  transition: "all 0.3s ease",
-                }}
-              >
-                <h2
-                  className="text-xl font-semibold mb-4"
-                  style={{ color: "var(--title-text)" }}
-                >
-                  Vue Gantt
-                </h2>
-                {filteredTasks.length > 0 ? (
-                  renderGanttChart()
-                ) : (
-                  <p style={{ color: "var(--body-text)", fontSize: "16px" }}>Aucune tâche disponible</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Floating Action Button */}
-          <DialogTrigger asChild>
-            <Button
-              className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #4B5EAA, #8A9BFF)",
-                color: "#FFFFFF",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-            </Button>
-          </DialogTrigger>
-
-          {/* View Dialog */}
-          <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-            <DialogContent className="sm:max-w-[500px] rounded-xl">
-              <DialogHeader>
-                <DialogTitle
-                  className="text-2xl font-bold"
-                  style={{ color: "#4B5EAA" }}
-                >
-                  Détails de la Tâche
-                </DialogTitle>
-                <DialogDescription
-                  className="text-md"
-                  style={{ color: "var(--body-text)" }}
-                >
-                  Informations complètes sur la tâche sélectionnée.
-                </DialogDescription>
-              </DialogHeader>
-              {selectedTask && (
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      ID
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.id}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Titre
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.titre}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Description
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.description}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Projet
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.id_projet || "aucun"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Date de début
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.start_date || "-"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Échéance
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.echeance || "0"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Précédence
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {selectedTask.precedence || "-"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Assignée à
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {users.find(u => u.id === selectedTask.asign_to)?.nom || "-"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      className="text-right font-semibold"
-                      style={{ color: "#4B5EAA" }}
-                    >
-                      Statut
-                    </Label>
-                    <span
-                      className="col-span-3"
-                      style={{ color: "var(--body-text)" }}
-                    >
-                      {getStatusName(selectedTask.state) || "N/A"}
-                    </span>
-                  </div>
-                </div>
-              )}
-              <DialogFooter>
-                <Button
-                  onClick={() => setIsViewOpen(false)}
-                  className="rounded-full px-6 py-2"
-                  style={{
-                    background: "linear-gradient(135deg, #4B5EAA, #8A9BFF)",
-                    color: "#FFFFFF",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #3A4E89, #6F87E0)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #4B5EAA, #8A9BFF)")}
-                >
-                  Fermer
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Edit Dialog */}
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent className="sm:max-w-[500px] rounded-xl">
-              <DialogHeader>
-                <DialogTitle
-                  className="text-2xl font-bold"
-                  style={{ color: "#4B5EAA" }}
-                >
-                  Modifier la Tâche
-                </DialogTitle>
-                <DialogDescription
-                  className="text-md"
-                  style={{ color: "var(--body-text)" }}
-                >
-                  Mettez à jour les détails de la tâche.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-titre"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Titre
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="edit-titre"
-                      value={formData.titre}
-                      onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                      className={`rounded-lg ${errors.titre ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.titre && <p className="text-red-500 text-sm mt-1">{errors.titre}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-description"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Description
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="edit-description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={`rounded-lg ${errors.description ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-id_projet"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Projet
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="edit-id_projet"
-                      value={formData.id_projet}
-                      onChange={(e) => setFormData({ ...formData, id_projet: e.target.value })}
-                      className={`rounded-lg ${errors.id_projet ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.id_projet && <p className="text-red-500 text-sm mt-1">{errors.id_projet}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-start_date"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Date de début
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="edit-start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className={`rounded-lg ${errors.start_date ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-echeance"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Échéance
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="edit-echeance"
-                      type="number"
-                      value={formData.echeance}
-                      onChange={(e) => setFormData({ ...formData, echeance: e.target.value })}
-                      className={`rounded-lg ${errors.echeance ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.echeance && <p className="text-red-500 text-sm mt-1">{errors.echeance}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-precedence"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Précédence
-                  </Label>
-                  <div className="col-span-3">
-                    <Select
-                      value={formData.precedence}
-                      onValueChange={(value) => setFormData({ ...formData, precedence: value })}
-                      className="rounded-lg"
-                      style={{ backgroundColor: "#F9FAFB", borderColor: "#D1D5DB" }}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        style={{ color: "var(--body-text-dark)" }}
-                      >
-                        <SelectValue placeholder="Choisir une précédence" />
-                      </SelectTrigger>
-                      <SelectContent
-                        style={{
-                          backgroundColor: "#FFFFFF",
-                          color: "var(--body-text-dark)",
-                        }}
-                      >
-                        <SelectItem value="1">Basse (1)</SelectItem>
-                        <SelectItem value="2">Moyenne (2)</SelectItem>
-                        <SelectItem value="3">Haute (3)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.precedence && <p className="text-red-500 text-sm mt-1">{errors.precedence}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-asign_to"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Assignée à
-                  </Label>
-                  <div className="col-span-3">
-                    <Select
-                      value={formData.asign_to}
-                      onValueChange={(value) => setFormData({ ...formData, asign_to: value })}
-                      className="rounded-lg"
-                      style={{ backgroundColor: "#F9FAFB", borderColor: "#D1D5DB" }}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        style={{ color: "var(--body-text-dark)" }}
-                      >
-                        <SelectValue placeholder="Choisir un utilisateur" />
-                      </SelectTrigger>
-                      <SelectContent
-                        style={{
-                          backgroundColor: "#FFFFFF",
-                          color: "var(--body-text-dark)",
-                        }}
-                      >
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.nom} {user.prenom}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.asign_to && <p className="text-red-500 text-sm mt-1">{errors.asign_to}</p>}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={handleEditTask}
-                  className="rounded-full px-6 py-2"
-                  style={{
-                    background: "linear-gradient(135deg, #4B5EAA, #8A9BFF)",
-                    color: "#FFFFFF",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #3A4E89, #6F87E0)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #4B5EAA, #8A9BFF)")}
-                >
-                  Enregistrer
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Delete Dialog */}
-          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-            <DialogContent className="sm:max-w-[500px] rounded-xl">
-              <DialogHeader>
-                <DialogTitle
-                  className="text-2xl font-bold"
-                  style={{ color: "#F44336" }}
-                >
-                  Confirmer la Suppression
-                </DialogTitle>
-                <DialogDescription
-                  className="text-md"
-                  style={{ color: "var(--body-text)" }}
-                >
-                  Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDeleteOpen(false)}
-                  className="rounded-full px-6 py-2"
-                  style={{
-                    borderColor: "#D1D5DB",
-                    color: "#4B5EAA",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#F0F4F8")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={handleDeleteTask}
-                  className="rounded-full px-6 py-2"
-                  style={{
-                    background: "linear-gradient(135deg, #F44336, #EF9A9A)",
-                    color: "#FFFFFF",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #D32F2F, #E57373)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #F44336, #EF9A9A)")}
-                >
-                  Supprimer
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Add Dialog */}
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogContent className="sm:max-w-[500px] rounded-xl">
-              <DialogHeader>
-                <DialogTitle
-                  className="text-2xl font-bold"
-                  style={{ color: "#4B5EAA" }}
-                >
-                  Ajouter une Tâche
-                </DialogTitle>
-                <DialogDescription
-                  className="text-md"
-                  style={{ color: "var(--body-text)" }}
-                >
-                  Remplissez les détails de la nouvelle tâche.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="titre"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Titre
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="titre"
-                      value={formData.titre}
-                      onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                      className={`rounded-lg ${errors.titre ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.titre && <p className="text-red-500 text-sm mt-1">{errors.titre}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="description"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Description
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={`rounded-lg ${errors.description ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="id_projet"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Projet
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="id_projet"
-                      value={formData.id_projet}
-                      onChange={(e) => setFormData({ ...formData, id_projet: e.target.value })}
-                      className={`rounded-lg ${errors.id_projet ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.id_projet && <p className="text-red-500 text-sm mt-1">{errors.id_projet}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="start_date"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Date de début
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className={`rounded-lg ${errors.start_date ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="echeance"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Échéance
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="echeance"
-                      type="number"
-                      value={formData.echeance}
-                      onChange={(e) => setFormData({ ...formData, echeance: e.target.value })}
-                      className={`rounded-lg ${errors.echeance ? "border-red-500" : ""}`}
-                      style={{ color: "var(--body-text-dark)", borderColor: "#D1D5DB" }}
-                    />
-                    {errors.echeance && <p className="text-red-500 text-sm mt-1">{errors.echeance}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="precedence"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Précédence
-                  </Label>
-                  <div className="col-span-3">
-                    <Select
-                      value={formData.precedence}
-                      onValueChange={(value) => setFormData({ ...formData, precedence: value })}
-                      className="rounded-lg"
-                      style={{ backgroundColor: "#F9FAFB", borderColor: "#D1D5DB" }}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        style={{ color: "var(--body-text-dark)" }}
-                      >
-                        <SelectValue placeholder="Choisir une précédence" />
-                      </SelectTrigger>
-                      <SelectContent
-                        style={{
-                          backgroundColor: "#FFFFFF",
-                          color: "var(--body-text-dark)",
-                        }}
-                      >
-                        <SelectItem value="1">Basse (1)</SelectItem>
-                        <SelectItem value="2">Moyenne (2)</SelectItem>
-                        <SelectItem value="3">Haute (3)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.precedence && <p className="text-red-500 text-sm mt-1">{errors.precedence}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="asign_to"
-                    className="text-right font-semibold"
-                    style={{ color: "#4B5EAA" }}
-                  >
-                    Assignée à
-                  </Label>
-                  <div className="col-span-3">
-                    <Select
-                      value={formData.asign_to}
-                      onValueChange={(value) => setFormData({ ...formData, asign_to: value })}
-                      className="rounded-lg"
-                      style={{ backgroundColor: "#F9FAFB", borderColor: "#D1D5DB" }}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        style={{ color: "var(--body-text-dark)" }}
-                      >
-                        <SelectValue placeholder="Choisir un utilisateur" />
-                      </SelectTrigger>
-                      <SelectContent
-                        style={{
-                          backgroundColor: "#FFFFFF",
-                          color: "var(--body-text-dark)",
-                        }}
-                      >
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.nom} {user.prenom}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.asign_to && <p className="text-red-500 text-sm mt-1">{errors.asign_to}</p>}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={handleAddTask}
-                  className="rounded-full px-6 py-2"
-                  style={{
-                    background: "linear-gradient(135deg, #4B5EAA, #8A9BFF)",
-                    color: "#FFFFFF",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #3A4E89, #6F87E0)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, #4B5EAA, #8A9BFF)")}
-                >
-                  Ajouter
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+                Supprimer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </TooltipProvider>
+    </div>
   );
 };
 
