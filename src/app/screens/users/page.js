@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import { z } from "zod";
@@ -30,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Eye, Plus } from "lucide-react";
+import { Trash2, Edit, Eye, Plus, ArrowLeft } from "lucide-react";
 
 // Define Zod schema for user validation
 const userSchema = z.object({
@@ -72,9 +73,7 @@ export default function Users() {
       const response = await fetch(`http://alphatek.fr:3110/api/users/`, {
         method: "GET",
       });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
+      if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       setUsers(data.data);
     } catch (error) {
@@ -125,9 +124,7 @@ export default function Users() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
       });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
+      if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       setUsers(data.data);
       toast.success("Utilisateur ajouté avec succès !");
@@ -168,9 +165,7 @@ export default function Users() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userToEdit),
       });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
+      if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message);
       setUsers(
@@ -212,9 +207,7 @@ export default function Users() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userToDelete),
       });
-      if (!response.ok) {
-        throw new Error("Erreur de réseau");
-      }
+      if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message);
       setUsers(users.filter((u) => u.id !== selectedUser.id));
@@ -252,163 +245,175 @@ export default function Users() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64">
-      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
-        <h1 className="text-2xl font-bold">Utilisateurs</h1>
-      </div>
-      <Toaster />
-      <div className="flex-1 flex flex-col p-6 pt-20">
-        <div className="flex justify-end mb-4">
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button
-                className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 text-sm"
-                aria-label="Ajouter un nouvel utilisateur"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un Utilisateur
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Ajouter un Utilisateur</DialogTitle>
-                <DialogDescription>
-                  Remplissez les détails du nouvel utilisateur.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nom" className="text-right">
-                    Nom
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="nom"
-                      value={formData.nom}
-                      onChange={(e) =>
-                        setFormData({ ...formData, nom: e.target.value })
-                      }
-                      className={errors.nom ? "border-red-500" : ""}
-                    />
-                    {errors.nom && <p className="text-red-500 text-sm mt-1">{errors.nom}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="prenom" className="text-right">
-                    Prénom
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="prenom"
-                      value={formData.prenom}
-                      onChange={(e) =>
-                        setFormData({ ...formData, prenom: e.target.value })
-                      }
-                      className={errors.prenom ? "border-red-500" : ""}
-                    />
-                    {errors.prenom && <p className="text-red-500 text-sm mt-1">{errors.prenom}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="telephone" className="text-right">
-                    Téléphone
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="telephone"
-                      type="tel"
-                      value={formData.telephone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, telephone: e.target.value })
-                      }
-                      className={errors.telephone ? "border-red-500" : ""}
-                    />
-                    {errors.telephone && <p className="text-red-500 text-sm mt-1">{errors.telephone}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="mail" className="text-right">
-                    Email
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="mail"
-                      type="email"
-                      value={formData.mail}
-                      onChange={(e) =>
-                        setFormData({ ...formData, mail: e.target.value })
-                      }
-                      className={errors.mail ? "border-red-500" : ""}
-                    />
-                    {errors.mail && <p className="text-red-500 text-sm mt-1">{errors.mail}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="password" className="text-right">
-                    Mot de passe
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      className={errors.password ? "border-red-500" : ""}
-                    />
-                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">
-                    Rôle
-                  </Label>
-                  <div className="col-span-3">
-                    <Select
-                      value={formData.role}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, role: value })
-                      }
-                    >
-                      <SelectTrigger className={errors.role ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Choisir un rôle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Administrateur</SelectItem>
-                        <SelectItem value="user">Employé(e)</SelectItem>
-                        <SelectItem value="guest">Invité</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
+    <div className="min-h-screen bg-background p-6 md:ml-64 lg:ml-64 xl:ml-64">
+      <div className="max-w-7xl mx-auto">
+        <Toaster />
+        {/* En-tête */}
+        <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md flex justify-between items-center z-10">
+          <button
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <h1 className="text-2xl font-bold">Utilisateurs</h1>
+          <div className="flex items-center gap-2">
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
                 <Button
-                  type="submit"
-                  onClick={handleAddUser}
-                  className="bg-sky-500 hover:bg-sky-600"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2"
+                  aria-label="Ajouter un nouvel utilisateur"
                 >
-                  Ajouter
+                  <Plus className="w-4 h-4" />
+                  Ajouter un Utilisateur
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Ajouter un Utilisateur</DialogTitle>
+                  <DialogDescription>
+                    Remplissez les détails du nouvel utilisateur.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="nom" className="text-right">
+                      Nom
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="nom"
+                        value={formData.nom}
+                        onChange={(e) =>
+                          setFormData({ ...formData, nom: e.target.value })
+                        }
+                        className={errors.nom ? "border-destructive" : ""}
+                      />
+                      {errors.nom && <p className="text-destructive text-sm mt-1">{errors.nom}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="prenom" className="text-right">
+                      Prénom
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="prenom"
+                        value={formData.prenom}
+                        onChange={(e) =>
+                          setFormData({ ...formData, prenom: e.target.value })
+                        }
+                        className={errors.prenom ? "border-destructive" : ""}
+                      />
+                      {errors.prenom && <p className="text-destructive text-sm mt-1">{errors.prenom}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="telephone" className="text-right">
+                      Téléphone
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="telephone"
+                        type="tel"
+                        value={formData.telephone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, telephone: e.target.value })
+                        }
+                        className={errors.telephone ? "border-destructive" : ""}
+                      />
+                      {errors.telephone && <p className="text-destructive text-sm mt-1">{errors.telephone}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="mail" className="text-right">
+                      Email
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="mail"
+                        type="email"
+                        value={formData.mail}
+                        onChange={(e) =>
+                          setFormData({ ...formData, mail: e.target.value })
+                        }
+                        className={errors.mail ? "border-destructive" : ""}
+                      />
+                      {errors.mail && <p className="text-destructive text-sm mt-1">{errors.mail}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="password" className="text-right">
+                      Mot de passe
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        className={errors.password ? "border-destructive" : ""}
+                      />
+                      {errors.password && <p className="text-destructive text-sm mt-1">{errors.password}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="role" className="text-right">
+                      Rôle
+                    </Label>
+                    <div className="col-span-3">
+                      <Select
+                        value={formData.role}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, role: value })
+                        }
+                      >
+                        <SelectTrigger className={errors.role ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Choisir un rôle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrateur</SelectItem>
+                          <SelectItem value="user">Employé(e)</SelectItem>
+                          <SelectItem value="guest">Invité</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.role && <p className="text-destructive text-sm mt-1">{errors.role}</p>}
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="submit"
+                    onClick={handleAddUser}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    Ajouter
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-        <div className="flex-1 bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="w-full h-full overflow-auto">
+
+        {/* Tableau des utilisateurs */}
+        <div className="mt-8 bg-card border border-border rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-xl font-semibold text-foreground">Liste des Utilisateurs</h2>
+          </div>
+          <div className="p-6 overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-sky-50">
-                  <TableHead className="w-[100px] font-bold text-sky-700">ID</TableHead>
-                  <TableHead className="font-bold text-sky-700">Nom</TableHead>
-                  <TableHead className="font-bold text-sky-700">Prénom</TableHead>
-                  <TableHead className="font-bold text-sky-700">Téléphone</TableHead>
-                  <TableHead className="font-bold text-sky-700">Email</TableHead>
-                  <TableHead className="font-bold text-sky-700">Rôle</TableHead>
-                  <TableHead className="font-bold text-sky-700">Date de création</TableHead>
-                  <TableHead className="text-right font-bold text-sky-700">Actions</TableHead>
+                <TableRow className="bg-muted">
+                  <TableHead className="w-[100px] font-semibold text-foreground">ID</TableHead>
+                  <TableHead className="font-semibold text-foreground">Nom</TableHead>
+                  <TableHead className="font-semibold text-foreground">Prénom</TableHead>
+                  <TableHead className="font-semibold text-foreground">Téléphone</TableHead>
+                  <TableHead className="font-semibold text-foreground">Email</TableHead>
+                  <TableHead className="font-semibold text-foreground">Rôle</TableHead>
+                  <TableHead className="font-semibold text-foreground">Date de création</TableHead>
+                  <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -416,22 +421,22 @@ export default function Users() {
                   users.map((user) => (
                     <TableRow
                       key={user.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
-                      <TableCell className="font-medium">{user.id}</TableCell>
-                      <TableCell>{user.nom}</TableCell>
-                      <TableCell>{user.prenom}</TableCell>
-                      <TableCell>{user.telephone}</TableCell>
-                      <TableCell>{user.mail}</TableCell>
-                      <TableCell>{user.role}</TableCell>
-                      <TableCell>{user.created_at}</TableCell>
+                      <TableCell className="font-medium text-foreground">{user.id}</TableCell>
+                      <TableCell className="text-foreground">{user.nom}</TableCell>
+                      <TableCell className="text-foreground">{user.prenom}</TableCell>
+                      <TableCell className="text-foreground">{user.telephone}</TableCell>
+                      <TableCell className="text-foreground">{user.mail}</TableCell>
+                      <TableCell className="text-foreground">{user.role}</TableCell>
+                      <TableCell className="text-foreground">{user.created_at}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
                             size="icon"
                             onClick={() => openViewModal(user)}
-                            className="text-sky-500 hover:text-sky-700"
+                            className="text-primary hover:text-primary/80"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -439,7 +444,7 @@ export default function Users() {
                             variant="outline"
                             size="icon"
                             onClick={() => openEditModal(user)}
-                            className="text-sky-500 hover:text-sky-700"
+                            className="text-primary hover:text-primary/80"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -447,7 +452,7 @@ export default function Users() {
                             variant="outline"
                             size="icon"
                             onClick={() => openDeleteModal(user)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-destructive hover:text-destructive/80"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -457,7 +462,7 @@ export default function Users() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-4">
+                    <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                       Aucun utilisateur trouvé
                     </TableCell>
                   </TableRow>
@@ -466,212 +471,215 @@ export default function Users() {
             </Table>
           </div>
         </div>
-      </div>
 
-      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Détails de l’Utilisateur</DialogTitle>
-            <DialogDescription>
-              Informations complètes sur l’utilisateur sélectionné.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
+        {/* Modal de visualisation */}
+        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Détails de l’Utilisateur</DialogTitle>
+              <DialogDescription>
+                Informations complètes sur l’utilisateur sélectionné.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedUser && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">ID</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.id}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">Nom</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.nom}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">Prénom</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.prenom}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">Téléphone</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.telephone}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">Email</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.mail}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">Rôle</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.role}</span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-medium text-muted-foreground">Date de création</Label>
+                  <span className="col-span-3 text-foreground">{selectedUser.created_at}</span>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                onClick={() => setIsViewOpen(false)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Fermer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de modification */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Modifier l’Utilisateur</DialogTitle>
+              <DialogDescription>
+                Mettez à jour les détails de l’utilisateur.
+              </DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">ID</Label>
-                <span className="col-span-3">{selectedUser.id}</span>
+                <Label htmlFor="edit-nom" className="text-right">
+                  Nom
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-nom"
+                    value={formData.nom}
+                    onChange={(e) =>
+                      setFormData({ ...formData, nom: e.target.value })
+                    }
+                    className={errors.nom ? "border-destructive" : ""}
+                  />
+                  {errors.nom && <p className="text-destructive text-sm mt-1">{errors.nom}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Nom</Label>
-                <span className="col-span-3">{selectedUser.nom}</span>
+                <Label htmlFor="edit-prenom" className="text-right">
+                  Prénom
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-prenom"
+                    value={formData.prenom}
+                    onChange={(e) =>
+                      setFormData({ ...formData, prenom: e.target.value })
+                    }
+                    className={errors.prenom ? "border-destructive" : ""}
+                  />
+                  {errors.prenom && <p className="text-destructive text-sm mt-1">{errors.prenom}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Prénom</Label>
-                <span className="col-span-3">{selectedUser.prenom}</span>
+                <Label htmlFor="edit-telephone" className="text-right">
+                  Téléphone
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-telephone"
+                    type="tel"
+                    value={formData.telephone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, telephone: e.target.value })
+                    }
+                    className={errors.telephone ? "border-destructive" : ""}
+                  />
+                  {errors.telephone && <p className="text-destructive text-sm mt-1">{errors.telephone}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Téléphone</Label>
-                <span className="col-span-3">{selectedUser.telephone}</span>
+                <Label htmlFor="edit-mail" className="text-right">
+                  Email
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-mail"
+                    type="email"
+                    value={formData.mail}
+                    onChange={(e) =>
+                      setFormData({ ...formData, mail: e.target.value })
+                    }
+                    className={errors.mail ? "border-destructive" : ""}
+                  />
+                  {errors.mail && <p className="text-destructive text-sm mt-1">{errors.mail}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Email</Label>
-                <span className="col-span-3">{selectedUser.mail}</span>
+                <Label htmlFor="edit-password" className="text-right">
+                  Mot de passe
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    placeholder="Laissez vide pour ne pas modifier"
+                    className={errors.password ? "border-destructive" : ""}
+                  />
+                  {errors.password && <p className="text-destructive text-sm mt-1">{errors.password}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Rôle</Label>
-                <span className="col-span-3">{selectedUser.role}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Date de création</Label>
-                <span className="col-span-3">{selectedUser.created_at}</span>
+                <Label htmlFor="edit-role" className="text-right">
+                  Rôle
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, role: value })
+                    }
+                  >
+                    <SelectTrigger className={errors.role ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Choisir un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrateur</SelectItem>
+                      <SelectItem value="user">Employé(e)</SelectItem>
+                      <SelectItem value="guest">Invité</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.role && <p className="text-destructive text-sm mt-1">{errors.role}</p>}
+                </div>
               </div>
             </div>
-          )}
-          <DialogFooter>
-            <Button
-              onClick={() => setIsViewOpen(false)}
-              className="bg-sky-500 hover:bg-sky-600"
-            >
-              Fermer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button
+                onClick={handleEditUser}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Modifier l’Utilisateur</DialogTitle>
-            <DialogDescription>
-              Mettez à jour les détails de l’utilisateur.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-nom" className="text-right">
-                Nom
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-nom"
-                  value={formData.nom}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nom: e.target.value })
-                  }
-                  className={errors.nom ? "border-red-500" : ""}
-                />
-                {errors.nom && <p className="text-red-500 text-sm mt-1">{errors.nom}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-prenom" className="text-right">
-                Prénom
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-prenom"
-                  value={formData.prenom}
-                  onChange={(e) =>
-                    setFormData({ ...formData, prenom: e.target.value })
-                  }
-                  className={errors.prenom ? "border-red-500" : ""}
-                />
-                {errors.prenom && <p className="text-red-500 text-sm mt-1">{errors.prenom}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-telephone" className="text-right">
-                Téléphone
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-telephone"
-                  type="tel"
-                  value={formData.telephone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, telephone: e.target.value })
-                  }
-                  className={errors.telephone ? "border-red-500" : ""}
-                />
-                {errors.telephone && <p className="text-red-500 text-sm mt-1">{errors.telephone}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-mail" className="text-right">
-                Email
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-mail"
-                  type="email"
-                  value={formData.mail}
-                  onChange={(e) =>
-                    setFormData({ ...formData, mail: e.target.value })
-                  }
-                  className={errors.mail ? "border-red-500" : ""}
-                />
-                {errors.mail && <p className="text-red-500 text-sm mt-1">{errors.mail}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-password" className="text-right">
-                Mot de passe
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  placeholder="Laissez vide pour ne pas modifier"
-                  className={errors.password ? "border-red-500" : ""}
-                />
-                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-role" className="text-right">
-                Rôle
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, role: value })
-                  }
-                >
-                  <SelectTrigger className={errors.role ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Choisir un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                    <SelectItem value="user">Employé(e)</SelectItem>
-                    <SelectItem value="guest">Invité</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={handleEditUser}
-              className="bg-sky-500 hover:bg-sky-600"
-            >
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmer la Suppression</DialogTitle>
-            <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteOpen(false)}
-              className="border-sky-500 text-sky-500 hover:bg-sky-50"
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleDeleteUser}
-              className="bg-red-500 hover:bg-red-600 text-white"
-            >
-              Supprimer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Modal de suppression */}
+        <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmer la Suppression</DialogTitle>
+              <DialogDescription>
+                Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteOpen(false)}
+                className="border-primary text-primary hover:bg-primary/10"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleDeleteUser}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              >
+                Supprimer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
