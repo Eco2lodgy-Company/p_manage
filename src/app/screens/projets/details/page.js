@@ -253,7 +253,7 @@ function ProjectDetailsContent() {
         });
         if (!response.ok) throw new Error("Erreur de réseau");
         const data = await response.json();
-        const tasksArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+        const tasksArray = Array.isArray(data.data) ? data.data[0] : Array.isArray(data.data[0]) ? data.data[0] : [];
         if (tasksArray.length > 0) setTasks(tasksArray);
         else {
           setTasks([]);
