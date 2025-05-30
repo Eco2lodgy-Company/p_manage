@@ -399,9 +399,9 @@ const ProjectsPage = () => {
                       id="title"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className={errors.title ? "border-red-500" : ""}
+                      className={errors.title ? "border-green-500" : ""}
                     />
-                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                    {errors.title && <p className="text-green-500 text-sm mt-1">{errors.title}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -411,9 +411,9 @@ const ProjectsPage = () => {
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={errors.description ? "border-red-500" : ""}
+                      className={errors.description ? "border-green-500" : ""}
                     />
-                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                    {errors.description && <p className="text-green-500 text-sm mt-1">{errors.description}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -424,9 +424,9 @@ const ProjectsPage = () => {
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className={errors.start_date ? "border-red-500" : ""}
+                      className={errors.start_date ? "border-green-500" : ""}
                     />
-                    {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                    {errors.start_date && <p className="text-green-500 text-sm mt-1">{errors.start_date}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -437,9 +437,9 @@ const ProjectsPage = () => {
                       type="date"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className={errors.end_date ? "border-red-500" : ""}
+                      className={errors.end_date ? "border-green-500" : ""}
                     />
-                    {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                    {errors.end_date && <p className="text-green-500 text-sm mt-1">{errors.end_date}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
