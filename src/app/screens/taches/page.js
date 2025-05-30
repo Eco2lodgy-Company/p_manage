@@ -36,33 +36,36 @@ const taskSchema = z.object({
 const staticTasks = [
   {
     id: 1,
-    titre: "Tâche A",
-    description: "Préparer la présentation pour le client.",
+    titre: "Plan réunion",
+    description: "Préparer l'agenda et les notes pour la réunion de l'équipe.",
     id_projet: "1",
-    start_date: "2025-05-28",
-    echeance: "5",
+    start_date: "2025-05-29",
+    echeance: "2",
     precedence: "1",
     asign_to: "1",
+    state: "pending",
   },
   {
     id: 2,
-    titre: "Tâche B",
-    description: "Mettre à jour la base de données.",
+    titre: "Développer API",
+    description: "Implémenter les endpoints pour l'API de gestion des tâches.",
     id_projet: "2",
-    start_date: "2025-05-27",
+    start_date: "2025-05-28",
     echeance: "3",
     precedence: "2",
     asign_to: "2",
+    state: "in_progress",
   },
   {
     id: 3,
-    titre: "Tâche C",
-    description: "Tester la nouvelle fonctionnalité.",
+    titre: "Tester application",
+    description: "Effectuer les tests unitaires et d'intégration.",
     id_projet: "3",
-    start_date: "2025-05-26",
-    echeance: "7",
+    start_date: "2025-05-27",
+    echeance: "1",
     precedence: "3",
     asign_to: "3",
+    state: "done",
   },
 ];
 
@@ -87,6 +90,7 @@ const Tasks = () => {
   });
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table"); // "table" or "calendar"
   const [loading, setLoading] = useState(true);
 
@@ -298,7 +302,32 @@ const Tasks = () => {
     setIsDeleteOpen(true);
   };
 
-  // Filter tasks by search term
+  // Convert a date to "AAAA-MM-DD" format
+  const convertDate = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d)) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Get status name in French
+  const getStatusName = (state) => {
+    switch (state) {
+      case "done":
+        return "Terminé";
+      case "in_progress":
+        return "En cours";
+      case "pending":
+        return "En attente";
+      default:
+        return "En attente";
+    }
+  };
+
+  // Filter and search tasks
   useEffect(() => {
     let updatedTasks = [...tasks];
 
@@ -311,8 +340,15 @@ const Tasks = () => {
       );
     }
 
+    // Apply status filter
+    if (statusFilter !== "all") {
+      updatedTasks = updatedTasks.filter(
+        (task) => task.state === statusFilter
+      );
+    }
+
     setFilteredTasks(updatedTasks);
-  }, [searchTerm, tasks]);
+  }, [searchTerm, statusFilter, tasks]);
 
   if (loading) {
     return (
@@ -329,6 +365,7 @@ const Tasks = () => {
 
   return (
     <div className="flex">
+      {/* <Sidebar /> */}
       <div
         className="flex-1 md:ml-64 min-h-screen flex flex-col"
         style={{ backgroundColor: "var(--primary-bg)" }}
@@ -376,7 +413,7 @@ const Tasks = () => {
 
         {/* Main Content */}
         <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
-          {/* Search and Add Task Button */}
+          {/* Search, Filters, and Add Task Button */}
           <div
             className="p-4 rounded-lg shadow-md mb-4"
             style={{ backgroundColor: "var(--card-bg)" }}
@@ -399,6 +436,28 @@ const Tasks = () => {
                     style={{ color: "var(--body-text)" }}
                   />
                 </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger
+                    className="w-full md:w-1/4"
+                    style={{
+                      backgroundColor: "var(--task-card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  >
+                    <SelectValue placeholder="Filtrer par statut" />
+                  </SelectTrigger>
+                  <SelectContent
+                    style={{
+                      backgroundColor: "var(--card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  >
+                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="pending">En attente</SelectItem>
+                    <SelectItem value="in_progress">En cours</SelectItem>
+                    <SelectItem value="done">Terminé</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   onClick={() => setViewMode(viewMode === "table" ? "calendar" : "table")}
                   className="rounded-md"
@@ -645,113 +704,144 @@ const Tasks = () => {
                         className="font-bold text-xs"
                         style={{ color: "var(--title-text)" }}
                       >
+                        Statut
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
                         Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTasks.length > 0 ? (
-                      filteredTasks.map((task) => (
-                        <TableRow
-                          key={task.id}
-                          className="transition-colors"
-                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                        >
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "var(--body-text-dark)" }}
+                      filteredTasks.map((task) => {
+                        const startDate = task.start_date ? new Date(task.start_date) : null;
+                        let endDate = "";
+                        if (startDate && !isNaN(startDate) && task.echeance) {
+                          const end = new Date(startDate);
+                          end.setDate(end.getDate() + Number(task.echeance));
+                          endDate = convertDate(end);
+                        }
+                        return (
+                          <TableRow
+                            key={task.id}
+                            className="transition-colors"
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                           >
-                            {task.titre || ""}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs line-clamp-2"
-                            style={{ color: "var(--body-text)" }}
-                          >
-                            {task.description || ""}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "var(--body-text)" }}
-                          >
-                            {task.id_projet || "aucun"}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "var(--body-text)" }}
-                          >
-                            {task.start_date || "-"}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "var(--body-text)" }}
-                          >
-                            {task.echeance || "0"}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "var(--body-text)" }}
-                          >
-                            {task.precedence || "-"}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs"
-                            style={{ color: "var(--body-text)" }}
-                          >
-                            {users.find(u => u.id === task.asign_to)?.nom || "-"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openViewModal(task)}
-                                className="h-8 w-8"
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text-dark)" }}
+                            >
+                              {task.titre || ""}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs line-clamp-2"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.description || ""}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.id_projet || "aucun"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.start_date || "-"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {endDate || "N/A"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {task.precedence || "-"}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {users.find(u => u.id === task.asign_to)?.nom || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className="px-2 py-1 rounded-full text-xs"
                                 style={{
-                                  color: "var(--border-accent)",
-                                  borderColor: "var(--border-accent)",
+                                  color: "var(--header-text)",
+                                  backgroundColor:
+                                    task.state === "done"
+                                      ? "var(--accent-green)"
+                                      : task.state === "in_progress"
+                                      ? "var(--accent-yellow)"
+                                      : "var(--accent-orange)",
                                 }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
                               >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openEditModal(task)}
-                                className="h-8 w-8"
-                                style={{
-                                  color: "var(--border-accent)",
-                                  borderColor: "var(--border-accent)",
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openDeleteModal(task)}
-                                className="h-8 w-8"
-                                style={{
-                                  color: "var(--accent-red, #ef4444)",
-                                  borderColor: "var(--accent-red, #ef4444)",
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--accent-red, #ef4444)")}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                                {getStatusName(task.state) || "N/A"}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openViewModal(task)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openEditModal(task)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openDeleteModal(task)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--accent-red, #ef4444)",
+                                    borderColor: "var(--accent-red, #ef4444)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--accent-red, #ef4444)")}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={8}
+                          colSpan={9}
                           className="text-center"
                           style={{ color: "var(--body-text)" }}
                         >
@@ -871,6 +961,14 @@ const Tasks = () => {
                   </Label>
                   <span className="col-span-3" style={{ color: "var(--body-text)" }}>
                     {users.find(u => u.id === selectedTask.asign_to)?.nom || "-"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Statut
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {getStatusName(selectedTask.state) || "N/A"}
                   </span>
                 </div>
               </div>
