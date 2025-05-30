@@ -1,15 +1,19 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
-import crypto from "crypto";
+import { Search, Calendar as CalendarIcon, Trash2, Edit, Share2, Eye, Archive } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Share2, Eye, Archive } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Calendar from "react-calendar";
+import Sidebar from "@/components/Sidebar";
+import { z } from "zod";
+import crypto from "crypto";
 
 // Define Zod schema for project validation
 const projectSchema = z.object({
@@ -21,7 +25,36 @@ const projectSchema = z.object({
   email: z.string().email("Veuillez entrer une adresse email valide").optional(),
 });
 
-export default function Projects() {
+// Static fallback data
+const staticProjects = [
+  {
+    id: 1,
+    title: "Projet A",
+    description: "Développement d'une nouvelle application mobile.",
+    start_date: "2025-05-28",
+    end_date: "2025-06-10",
+    assign_to: "1",
+  },
+  {
+    id: 2,
+    title: "Projet B",
+    description: "Mise à jour du site web d'entreprise.",
+    start_date: "2025-05-27",
+    end_date: "2025-06-05",
+    assign_to: "2",
+  },
+  {
+    id: 3,
+    title: "Projet C",
+    description: "Analyse des données marketing.",
+    start_date: "2025-05-26",
+    end_date: "2025-06-02",
+    assign_to: "3",
+  },
+];
+
+const Projects = () => {
+  const router = useRouter();
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -44,72 +77,109 @@ export default function Projects() {
   });
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Tous");
-  const router = useRouter();
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("table"); // "table" or "calendar"
+  const [loading, setLoading] = useState(true);
 
-  // Fetch projects from API
+  // Fetch projects
   const fetchProjects = async () => {
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/`, {
+      const response = await fetch("http://alphatek.fr:3110/api/projects/", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
-      setProjects(data.data);
-      setFilteredProjects(data.data);
+      const projectsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+      if (projectsArray.length > 0) {
+        setProjects(projectsArray);
+        setFilteredProjects(projectsArray);
+      } else {
+        setProjects(staticProjects); // Fallback to static data
+        setFilteredProjects(staticProjects);
+        toast.warning("Aucun projet récupéré, données statiques affichées.");
+      }
     } catch (error) {
       console.error("Erreur lors de la récupération des projets:", error);
-      toast.error("Erreur lors de la récupération des projets");
+      setProjects(staticProjects); // Fallback to static data
+      setFilteredProjects(staticProjects);
+      toast.error("Erreur lors de la récupération des projets, données statiques affichées.");
     }
   };
 
-  // Fetch employees from API
+  // Fetch employees
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/users/emp`, {
+      const response = await fetch("http://alphatek.fr:3110/api/users/emp", {
         method: "GET",
       });
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       const employeeArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
       setEmployees(employeeArray.length > 0 ? employeeArray : []);
-      if (employeeArray.length === 0) toast.error("Tâches non trouvées ou format incorrect");
+      if (employeeArray.length === 0) toast.error("Aucun employé trouvé.");
     } catch (error) {
-      console.error("Erreur lors de la récupération des tâches:", error);
+      console.error("Erreur lors de la récupération des employés:", error);
       setEmployees([]);
-      toast.error("Erreur lors de la récupération des tâches");
+      toast.error("Erreur lors de la récupération des employés");
     }
   };
 
   useEffect(() => {
-    fetchProjects();
-    fetchEmployees();
+    const loadData = async () => {
+      await fetchProjects();
+      await fetchEmployees();
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
-  // Filter and search projects
-  useEffect(() => {
-    let updatedProjects = [...projects];
-    
-    // Apply status filter
-    if (statusFilter !== "Tous") {
-      updatedProjects = updatedProjects.filter((project) => {
-        const status = getStatus(project.start_date, project.end_date);
-        return status === statusFilter;
-      });
-    }
+  // Convert a date to "AAAA-MM-DD" format
+  const convertDate = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d)) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
-    // Apply search filter
-    if (searchTerm) {
-      updatedProjects = updatedProjects.filter(
-        (project) =>
-          project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  // Get status name in French
+  const getStatusName = (status) => {
+    switch (status) {
+      case "Terminé":
+        return "Terminé";
+      case "En cours":
+        return "En cours";
+      case "Non démarré":
+        return "Non démarré";
+      default:
+        return "Non démarré";
     }
+  };
 
-    setFilteredProjects(updatedProjects);
-  }, [searchTerm, statusFilter, projects]);
+  // Calculate progress based on dates
+  const calculateProgress = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const now = new Date();
+    if (now < start) return 0;
+    if (now > end) return 100;
+    const totalDuration = end - start;
+    const elapsed = now - start;
+    return Math.round((elapsed / totalDuration) * 100);
+  };
+
+  // Determine status based on dates
+  const getStatus = (startDate, endDate) => {
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (now < start) return "Non démarré";
+    if (now > end) return "Terminé";
+    return "En cours";
+  };
 
   // Validate form data
   const validateForm = (data, isSharing = false) => {
@@ -129,21 +199,22 @@ export default function Projects() {
 
   // Add project
   const handleAddProject = async () => {
-    if (!validateForm(formData)) {
+    const projectData = {
+      title: formData.title,
+      description: formData.description,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      assign_to: formData.assign_to,
+    };
+    if (!validateForm(projectData)) {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/add`, {
+      const response = await fetch("http://alphatek.fr:3110/api/projects/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          assign_to: formData.assign_to,
-        }),
+        body: JSON.stringify(projectData),
       });
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
@@ -159,22 +230,23 @@ export default function Projects() {
 
   // Edit project
   const handleEditProject = async () => {
-    if (!validateForm(formData)) {
+    const projectData = {
+      id: formData.id,
+      title: formData.title,
+      description: formData.description,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      assign_to: formData.assign_to,
+    };
+    if (!validateForm(projectData)) {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
       return;
     }
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/edit`, {
+      const response = await fetch("http://alphatek.fr:3110/api/projects/edit", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: formData.id,
-          title: formData.title,
-          description: formData.description,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          assign_to: formData.assign_to,
-        }),
+        body: JSON.stringify(projectData),
       });
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
@@ -207,7 +279,7 @@ export default function Projects() {
     };
     setIsSharing(true);
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/invitations/add`, {
+      const response = await fetch("http://alphatek.fr:3110/api/invitations/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(shareData),
@@ -230,7 +302,7 @@ export default function Projects() {
   // Delete project
   const handleDeleteProject = async () => {
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/delete`, {
+      const response = await fetch("http://alphatek.fr:3110/api/projects/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: selectedProject.id }),
@@ -250,7 +322,7 @@ export default function Projects() {
   // Archive project
   const handleArchiveProject = async () => {
     try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects/archive`, {
+      const response = await fetch("http://alphatek.fr:3110/api/projects/archive", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: selectedProject.id }),
@@ -294,10 +366,7 @@ export default function Projects() {
   // Open view modal
   const openViewModal = (project) => {
     setSelectedProject(project);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("projectId", project.id);
-    }
-    router.push(`projets/details?id=${project.id}`);
+    setIsViewOpen(true);
   };
 
   // Open delete modal
@@ -312,430 +381,807 @@ export default function Projects() {
     setIsArchiveOpen(true);
   };
 
-  // Calculate progress based on dates
-  const calculateProgress = (startDate, endDate) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const now = new Date();
-    if (now < start) return 0;
-    if (now > end) return 100;
-    const totalDuration = end - start;
-    const elapsed = now - start;
-    return Math.round((elapsed / totalDuration) * 100);
-  };
+  // Filter and search projects
+  useEffect(() => {
+    let updatedProjects = [...projects];
 
-  // Determine status based on progress
-  const getStatus = (startDate, endDate) => {
-    const now = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (now < start) return "Non démarré";
-    if (now > end) return "Terminé";
-    return "En cours";
-  };
+    // Apply status filter
+    if (statusFilter !== "all") {
+      updatedProjects = updatedProjects.filter((project) => {
+        const status = getStatus(project.start_date, project.end_date);
+        return status.toLowerCase().replace(" ", "_") === statusFilter;
+      });
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      updatedProjects = updatedProjects.filter(
+        (project) =>
+          project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredProjects(updatedProjects);
+  }, [searchTerm, statusFilter, projects]);
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen flex flex-col md:ml-64 items-center justify-center"
+        style={{ backgroundColor: "var(--primary-bg)" }}
+      >
+        <h1 style={{ color: "var(--title-text)", fontWeight: "bold", fontSize: "1.5rem" }}>
+          Chargement...
+        </h1>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:ml-64 lg:ml-64 xl:ml-64 p-6">
-      <Toaster />
-      <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md text-center z-10">
-        <h1 className="text-2xl font-bold">Projets</h1>
-      </div>
-      <div className="mt-20 w-full max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Input
-              placeholder="Rechercher par titre ou description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-64"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Filtrer par statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Tous">Tous</SelectItem>
-                <SelectItem value="Non démarré">Non démarré</SelectItem>
-                <SelectItem value="En cours">En cours</SelectItem>
-                <SelectItem value="Terminé">Terminé</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-sky-500 hover:bg-sky-600 text-white">Ajouter un Projet</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Ajouter un Projet</DialogTitle>
-                <DialogDescription>Remplissez les détails du nouveau projet.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">Titre</Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className={errors.title ? "border-red-500" : ""}
-                    />
-                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="description" className="text-right">Description</Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={errors.description ? "border-red-500" : ""}
-                    />
-                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="start_date" className="text-right">Date de début</Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className={errors.start_date ? "border-red-500" : ""}
-                    />
-                    {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="end_date" className="text-right">Date de fin</Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className={errors.end_date ? "border-red-500" : ""}
-                    />
-                    {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="assign_to" className="text-right">Responsable</Label>
-                  <div className="col-span-3">
-                    <Select
-                      value={formData.assign_to}
-                      onValueChange={(value) => setFormData({ ...formData, assign_to: value })}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Responsable" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.nom} {employee.prenom}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleAddProject} className="bg-sky-500 hover:bg-sky-600">Ajouter</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+    <div className="flex">
+      <Sidebar />
+      <div
+        className="flex-1 md:ml-64 min-h-screen flex flex-col"
+        style={{ backgroundColor: "var(--primary-bg)" }}
+      >
+        <Toaster />
+        {/* Header */}
+        <div
+          className="fixed top-0 left-0 md:left-64 right-0 p-4 shadow-md flex justify-between items-center z-10"
+          style={{
+            backgroundColor: "var(--header-bg)",
+            color: "var(--header-text)",
+          }}
+        >
+          <Button
+            className="rounded-md"
+            style={{
+              backgroundColor: "var(--card-bg)",
+              color: "var(--header-bg)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--card-bg)")}
+            onClick={() => router.push("/dashboard")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Retour
+          </Button>
+          <h1
+            className="text-xl font-bold"
+            style={{ color: "var(--header-text)" }}
+          >
+            Gestion des Projets
+          </h1>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-          {filteredProjects.length > 0 ? (
-            filteredProjects.map((project) => {
-              const progress = calculateProgress(project.start_date, project.end_date);
-              const status = getStatus(project.start_date, project.end_date);
-              return (
-                <div
-                  key={project.id}
-                  className="bg-white shadow-md rounded-lg p-4 flex flex-col gap-2 hover:shadow-lg transition-shadow w-full"
-                >
-                  <h2 className="text-lg font-bold text-sky-700">{project.title}</h2>
-                  <p className="text-gray-600 line-clamp-2 text-sm">{project.description}</p>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-medium text-gray-700">Échéance</span>
-                      <span className="text-xs text-gray-600">{project.end_date}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-medium text-gray-700">Statut</span>
-                      <span
-                        className={`text-xs font-semibold ${
-                          status === "Terminé"
-                            ? "text-green-500"
-                            : status === "En cours"
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                        }`}
-                      >
-                        {status}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${
-                          status === "Terminé"
-                            ? "bg-green-500"
-                            : status === "En cours"
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                        }`}
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openViewModal(project)}
-                      className="text-sky-500 hover:text-sky-700 border-sky-500 h-8 w-8"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openEditModal(project)}
-                      className="text-sky-500 hover:text-sky-700 border-sky-500 h-8 w-8"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openShareModal(project)}
-                      className="text-sky-500 hover:text-sky-700 border-sky-500 h-8 w-8"
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openArchiveModal(project)}
-                      className="text-purple-500 hover:text-purple-700 border-purple-500 h-8 w-8"
-                    >
-                      <Archive className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openDeleteModal(project)}
-                      className="text-red-500 hover:text-red-700 border-red-500 h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
+          {/* Search, Filters, and Add Project Button */}
+          <div
+            className="p-4 rounded-lg shadow-md mb-4"
+            style={{ backgroundColor: "var(--card-bg)" }}
+          >
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-col md:flex-row gap-4 items-center w-full md:w-auto">
+                <div className="relative w-full md:w-1/3">
+                  <Input
+                    placeholder="Rechercher un projet..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                    style={{
+                      backgroundColor: "var(--task-card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  />
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
+                    style={{ color: "var(--body-text)" }}
+                  />
                 </div>
-              );
-            })
-          ) : (
-            <div className="col-span-2 text-center text-gray-600">Aucun projet trouvé.</div>
-          )}
-        </div>
-      </div>
-
-      {/* View Dialog */}
-      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Détails du Projet</DialogTitle>
-            <DialogDescription>Informations complètes sur le projet sélectionné.</DialogDescription>
-          </DialogHeader>
-          {selectedProject && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">ID</Label>
-                <span className="col-span-3">{selectedProject.id}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Titre</Label>
-                <span className="col-span-3">{selectedProject.title}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Description</Label>
-                <span className="col-span-3">{selectedProject.description}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Responsable</Label>
-                <span className="col-span-3">{selectedProject.assign_to}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Date de début</Label>
-                <span className="col-span-3">{selectedProject.start_date}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Date de fin</Label>
-                <span className="col-span-3">{selectedProject.end_date}</span>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setIsViewOpen(false)} className="bg-sky-500 hover:bg-sky-600">Fermer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Modifier le Projet</DialogTitle>
-            <DialogDescription>Mettez à jour les détails du projet.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-title" className="text-right">Titre</Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className={errors.title ? "border-red-500" : ""}
-                />
-                {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-description" className="text-right">Description</Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={errors.description ? "border-red-500" : ""}
-                />
-                {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-start_date" className="text-right">Date de début</Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-start_date"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className={errors.start_date ? "border-red-500" : ""}
-                />
-                {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-end_date" className="text-right">Date de fin</Label>
-              <div className="col-span-3">
-                <Input
-                  id="edit-end_date"
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className={errors.end_date ? "border-red-500" : ""}
-                />
-                {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-assign_to" className="text-right">Responsable</Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.assign_to}
-                  onValueChange={(value) => setFormData({ ...formData, assign_to: value })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Responsable" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger
+                    className="w-full md:w-1/4"
+                    style={{
+                      backgroundColor: "var(--task-card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  >
+                    <SelectValue placeholder="Filtrer par statut" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.nom} {employee.prenom}
-                      </SelectItem>
-                    ))}
+                  <SelectContent
+                    style={{
+                      backgroundColor: "var(--card-bg)",
+                      color: "var(--body-text-dark)",
+                    }}
+                  >
+                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="non_démarré">Non démarré</SelectItem>
+                    <SelectItem value="en_cours">En cours</SelectItem>
+                    <SelectItem value="terminé">Terminé</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
+                <Button
+                  onClick={() => setViewMode(viewMode === "table" ? "calendar" : "table")}
+                  className="rounded-md"
+                  style={{
+                    backgroundColor: "var(--header-bg)",
+                    color: "var(--header-text)",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+                >
+                  <CalendarIcon className="w-5 h-5 mr-2" />
+                  {viewMode === "table" ? "Vue Calendrier" : "Vue Tableau"}
+                </Button>
               </div>
+              <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="rounded-md"
+                    style={{
+                      backgroundColor: "var(--header-bg)",
+                      color: "var(--header-text)",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+                  >
+                    Ajouter un Projet
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Ajouter un Projet</DialogTitle>
+                    <DialogDescription>Remplissez les détails du nouveau projet.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="title" className="text-right">Titre</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          className={errors.title ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="description" className="text-right">Description</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className={errors.description ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="start_date" className="text-right">Date de début</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="start_date"
+                          type="date"
+                          value={formData.start_date}
+                          onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                          className={errors.start_date ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="end_date" className="text-right">Date de fin</Label>
+                      <div className="col-span-3">
+                        <Input
+                          id="end_date"
+                          type="date"
+                          value={formData.end_date}
+                          onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                          className={errors.end_date ? "border-red-500" : ""}
+                          style={{ color: "var(--body-text-dark)" }}
+                        />
+                        {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="assign_to" className="text-right">Responsable</Label>
+                      <div className="col-span-3">
+                        <Select
+                          value={formData.assign_to}
+                          onValueChange={(value) => setFormData({ ...formData, assign_to: value })}
+                        >
+                          <SelectTrigger
+                            className="w-full"
+                            style={{
+                              backgroundColor: "var(--task-card-bg)",
+                              color: "var(--body-text-dark)",
+                            }}
+                          >
+                            <SelectValue placeholder="Responsable" />
+                          </SelectTrigger>
+                          <SelectContent
+                            style={{
+                              backgroundColor: "var(--card-bg)",
+                              color: "var(--body-text-dark)",
+                            }}
+                          >
+                            {employees.map((employee) => (
+                              <SelectItem key={employee.id} value={employee.id}>
+                                {employee.nom} {employee.prenom}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={handleAddProject}
+                      style={{
+                        backgroundColor: "var(--header-bg)",
+                        color: "var(--header-text)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+                    >
+                      Ajouter
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleEditProject} className="bg-sky-500 hover:bg-sky-600">Enregistrer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Share Dialog */}
-      <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Invitez</DialogTitle>
-            <DialogDescription>Ceci lui donnera un accès total à ce projet.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="share-email" className="text-right">Email</Label>
-              <div className="col-span-3">
-                <Input
-                  id="share-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={errors.email ? "border-red-500" : ""}
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+          {/* Table or Calendar View */}
+          {viewMode === "table" ? (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Liste des Projets
+              </h2>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow
+                      style={{ backgroundColor: "var(--tabs-bg)" }}
+                    >
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Titre
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Description
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Échéance
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Statut
+                      </TableHead>
+                      <TableHead
+                        className="font-bold text-xs"
+                        style={{ color: "var(--title-text)" }}
+                      >
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProjects.length > 0 ? (
+                      filteredProjects.map((project) => {
+                        const status = getStatus(project.start_date, project.end_date);
+                        return (
+                          <TableRow
+                            key={project.id}
+                            className="transition-colors"
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text-dark)" }}
+                            >
+                              {project.title || ""}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs line-clamp-2"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {project.description || ""}
+                            </TableCell>
+                            <TableCell
+                              className="text-xs"
+                              style={{ color: "var(--body-text)" }}
+                            >
+                              {project.end_date || "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className="px-2 py-1 rounded-full text-xs"
+                                style={{
+                                  color: "var(--header-text)",
+                                  backgroundColor:
+                                    status === "Terminé"
+                                      ? "var(--accent-green)"
+                                      : status === "En cours"
+                                      ? "var(--accent-yellow)"
+                                      : "var(--accent-orange)",
+                                }}
+                              >
+                                {getStatusName(status) || "N/A"}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openViewModal(project)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openEditModal(project)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openShareModal(project)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--border-accent)",
+                                    borderColor: "var(--border-accent)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--title-text)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border-accent)")}
+                                >
+                                  <Share2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openArchiveModal(project)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--accent-purple, #a855f7)",
+                                    borderColor: "var(--accent-purple, #a855f7)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "#7c3aed")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--accent-purple, #a855f7)")}
+                                >
+                                  <Archive className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openDeleteModal(project)}
+                                  className="h-8 w-8"
+                                  style={{
+                                    color: "var(--accent-red, #ef4444)",
+                                    borderColor: "var(--accent-red, #ef4444)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--accent-red, #ef4444)")}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-center"
+                          style={{ color: "var(--body-text)" }}
+                        >
+                          Aucun projet disponible
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleShareProject} className="bg-sky-500 hover:bg-sky-600" disabled={isSharing}>
-              {isSharing ? "Envoi..." : "Partager"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          ) : (
+            <div
+              className="p-4 rounded-lg shadow-md"
+              style={{ backgroundColor: "var(--card-bg)" }}
+            >
+              <h2
+                className="text-lg font-bold mb-4"
+                style={{ color: "var(--title-text)" }}
+              >
+                Vue Calendrier
+              </h2>
+              <Calendar
+                value={new Date()}
+                tileContent={({ date, view }) =>
+                  view === "month" && filteredProjects.some((project) => {
+                    const projectDate = new Date(project.start_date);
+                    return projectDate.toDateString() === date.toDateString();
+                  }) ? (
+                    <div
+                      className="text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                      style={{
+                        backgroundColor: "var(--accent-yellow)",
+                        color: "var(--header-text)",
+                      }}
+                    >
+                      {filteredProjects.filter((project) => {
+                        const projectDate = new Date(project.start_date);
+                        return projectDate.toDateString() === date.toDateString();
+                      }).length}
+                    </div>
+                  ) : null
+                }
+              />
+            </div>
+          )}
+        </div>
 
-      {/* Delete Dialog */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmer la Suppression</DialogTitle>
-            <DialogDescription>Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="border-sky-500 text-sky-500 hover:bg-sky-50">
-              Annuler
-            </Button>
-            <Button onClick={handleDeleteProject} className="bg-red-500 hover:bg-red-600 text-white">
-              Supprimer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* View Dialog */}
+        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Détails du Projet</DialogTitle>
+              <DialogDescription>Informations complètes sur le projet sélectionné.</DialogDescription>
+            </DialogHeader>
+            {selectedProject && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    ID
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedProject.id}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Titre
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedProject.title}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Description
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedProject.description}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Responsable
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {employees.find(emp => emp.id === selectedProject.assign_to)?.nom || "N/A"} {employees.find(emp => emp.id === selectedProject.assign_to)?.prenom || ""}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Date de début
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedProject.start_date}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Date de fin
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {selectedProject.end_date}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right font-bold" style={{ color: "var(--body-text-dark)" }}>
+                    Statut
+                  </Label>
+                  <span className="col-span-3" style={{ color: "var(--body-text)" }}>
+                    {getStatusName(getStatus(selectedProject.start_date, selectedProject.end_date))}
+                  </span>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                onClick={() => setIsViewOpen(false)}
+                style={{
+                  backgroundColor: "var(--header-bg)",
+                  color: "var(--header-text)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+              >
+                Fermer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Archive Dialog */}
-      <Dialog open={isArchiveOpen} onOpenChange={setIsArchiveOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmer l'Archivage</DialogTitle>
-            <DialogDescription>Êtes-vous sûr de vouloir archiver ce projet ?</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsArchiveOpen(false)} className="border-sky-500 text-sky-500 hover:bg-sky-50">
-              Annuler
-            </Button>
-            <Button onClick={handleArchiveProject} className="bg-purple-500 hover:bg-purple-600 text-white">
-              Archiver
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Edit Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Modifier le Projet</DialogTitle>
+              <DialogDescription>Mettez à jour les détails du projet.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-title" className="text-right">Titre</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className={errors.title ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-description" className="text-right">Description</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className={errors.description ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-start_date" className="text-right">Date de début</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className={errors.start_date ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-end_date" className="text-right">Date de fin</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    className={errors.end_date ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-assign_to" className="text-right">Responsable</Label>
+                <div className="col-span-3">
+                  <Select
+                    value={formData.assign_to}
+                    onValueChange={(value) => setFormData({ ...formData, assign_to: value })}
+                  >
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        backgroundColor: "var(--task-card-bg)",
+                        color: "var(--body-text-dark)",
+                      }}
+                    >
+                      <SelectValue placeholder="Responsable" />
+                    </SelectTrigger>
+                    <SelectContent
+                      style={{
+                        backgroundColor: "var(--card-bg)",
+                        color: "var(--body-text-dark)",
+                      }}
+                    >
+                      {employees.map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.nom} {employee.prenom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.assign_to && <p className="text-red-500 text-sm mt-1">{errors.assign_to}</p>}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleEditProject}
+                style={{
+                  backgroundColor: "var(--header-bg)",
+                  color: "var(--header-text)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+              >
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Share Dialog */}
+        <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Invitez</DialogTitle>
+              <DialogDescription>Ceci lui donnera un accès total à ce projet.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="share-email" className="text-right">Email</Label>
+                <div className="col-span-3">
+                  <Input
+                    id="share-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={errors.email ? "border-red-500" : ""}
+                    style={{ color: "var(--body-text-dark)" }}
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleShareProject}
+                disabled={isSharing}
+                style={{
+                  backgroundColor: "var(--header-bg)",
+                  color: "var(--header-text)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+              >
+                {isSharing ? "Envoi..." : "Partager"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Dialog */}
+        <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmer la Suppression</DialogTitle>
+              <DialogDescription>Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteOpen(false)}
+                style={{
+                  borderColor: "var(--border-accent)",
+                  color: "var(--border-accent)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleDeleteProject}
+                style={{
+                  backgroundColor: "var(--accent-red, #ef4444)",
+                  color: "var(--header-text)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-red, #ef4444)")}
+              >
+                Supprimer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Archive Dialog */}
+        <Dialog open={isArchiveOpen} onOpenChange={setIsArchiveOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmer l'Archivage</DialogTitle>
+              <DialogDescription>Êtes-vous sûr de vouloir archiver ce projet ?</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsArchiveOpen(false)}
+                style={{
+                  borderColor: "var(--border-accent)",
+                  color: "var(--border-accent)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleArchiveProject}
+                style={{
+                  backgroundColor: "var(--accent-purple, #a855f7)",
+                  color: "var(--header-text)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#7c3aed")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-purple, #a855f7)")}
+              >
+                Archiver
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
-}
+};
+
+export default Projects;
