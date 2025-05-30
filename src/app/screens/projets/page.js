@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Calendar from "react-calendar";
-import Sidebar from "@/components/Sidebar";
+// import Sidebar from "@/components/Sidebar";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -420,7 +420,7 @@ const Projects = () => {
 
   return (
     <div className="flex">
-      <Sidebar />
+      {/* <Sidebar /> */}
       <div
         className="flex-1 md:ml-64 min-h-screen flex flex-col"
         style={{ backgroundColor: "var(--primary-bg)" }}
