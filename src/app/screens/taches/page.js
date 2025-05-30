@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Calendar from "react-calendar";
-import Draggable from "react-draggable";
 import { z } from "zod";
 
 // Define Zod schema for task validation
@@ -92,7 +91,7 @@ const Tasks = () => {
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("table"); // "table", "calendar", "kanban", "pert", "gantt"
+  const [viewMode, setViewMode] = useState("table"); // "table" or "calendar"
   const [loading, setLoading] = useState(true);
 
   // Fetch tasks
@@ -351,17 +350,6 @@ const Tasks = () => {
     setFilteredTasks(updatedTasks);
   }, [searchTerm, statusFilter, tasks]);
 
-  // Kanban drag-and-drop handler
-  const handleKanbanDrop = (taskId, newStatus) => {
-    const updatedTasks = tasks.map((task) =>
-      task.id === taskId ? { ...task, state: newStatus } : task
-    );
-    setTasks(updatedTasks);
-    setFilteredTasks(updatedTasks);
-    toast.success(`Tâche déplacée vers ${getStatusName(newStatus)}`);
-    // Note: You may want to update the backend here with an API call
-  };
-
   if (loading) {
     return (
       <div
@@ -375,122 +363,9 @@ const Tasks = () => {
     );
   }
 
-  // PERT Diagram Rendering
-  const renderPertDiagram = () => {
-    const nodes = filteredTasks.map((task, index) => ({
-      id: task.id,
-      x: 100 + index * 150,
-      y: 100 + (task.precedence === "1" ? 0 : task.precedence === "2" ? 50 : 100),
-      label: task.titre,
-    }));
-
-    const edges = [];
-    filteredTasks.forEach((task, index) => {
-      if (index < filteredTasks.length - 1) {
-        const nextTask = filteredTasks[index + 1];
-        if (parseInt(task.precedence) <= parseInt(nextTask.precedence)) {
-          edges.push({
-            from: task.id,
-            to: nextTask.id,
-          });
-        }
-      }
-    });
-
-    return (
-      <svg width="100%" height="400">
-        {nodes.map((node) => (
-          <g key={node.id}>
-            <circle cx={node.x} cy={node.y} r="30" fill="var(--accent-yellow)" stroke="var(--border-accent)" />
-            <text x={node.x} y={node.y} textAnchor="middle" dy=".3em" style={{ fill: "var(--header-text)" }}>
-              {node.label}
-            </text>
-          </g>
-        ))}
-        {edges.map((edge, idx) => {
-          const fromNode = nodes.find((n) => n.id === edge.from);
-          const toNode = nodes.find((n) => n.id === edge.to);
-          return (
-            <line
-              key={idx}
-              x1={fromNode.x + 30}
-              y1={fromNode.y}
-              x2={toNode.x - 30}
-              y2={toNode.y}
-              stroke="var(--border-accent)"
-              strokeWidth="2"
-              markerEnd="url(#arrow)"
-            />
-          );
-        })}
-        <defs>
-          <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto">
-            <polygon points="0 0, 10 3, 0 6" fill="var(--border-accent)" />
-          </marker>
-        </defs>
-      </svg>
-    );
-  };
-
-  // Gantt Chart Rendering
-  const renderGanttChart = () => {
-    const startDate = new Date("2025-05-26");
-    const endDate = new Date("2025-06-01");
-    const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
-    const pixelsPerDay = 800 / totalDays;
-
-    return (
-      <div>
-        <div className="flex">
-          {Array.from({ length: totalDays + 1 }).map((_, idx) => {
-            const date = new Date(startDate);
-            date.setDate(date.getDate() + idx);
-            return (
-              <div key={idx} style={{ width: `${pixelsPerDay}px`, textAlign: "center", color: "var(--body-text)" }}>
-                {date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-              </div>
-            );
-          })}
-        </div>
-        <svg width="100%" height={filteredTasks.length * 50 + 20}>
-          {filteredTasks.map((task, idx) => {
-            const taskStart = new Date(task.start_date);
-            const taskEnd = new Date(taskStart);
-            taskEnd.setDate(taskStart.getDate() + Number(task.echeance));
-            const startOffset = (taskStart - startDate) / (1000 * 60 * 60 * 24);
-            const duration = (taskEnd - taskStart) / (1000 * 60 * 60 * 24);
-            return (
-              <g key={task.id}>
-                <rect
-                  x={startOffset * pixelsPerDay}
-                  y={idx * 50 + 10}
-                  width={duration * pixelsPerDay}
-                  height="30"
-                  fill={
-                    task.state === "done"
-                      ? "var(--accent-green)"
-                      : task.state === "in_progress"
-                      ? "var(--accent-yellow)"
-                      : "var(--accent-orange)"
-                  }
-                />
-                <text
-                  x={startOffset * pixelsPerDay + 5}
-                  y={idx * 50 + 25}
-                  style={{ fill: "var(--header-text)" }}
-                >
-                  {task.titre}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-    );
-  };
-
   return (
     <div className="flex">
+      {/* <Sidebar /> */}
       <div
         className="flex-1 md:ml-64 min-h-screen flex flex-col"
         style={{ backgroundColor: "var(--primary-bg)" }}
@@ -538,7 +413,7 @@ const Tasks = () => {
 
         {/* Main Content */}
         <div className="flex-1 p-4 mt-16 max-w-7xl mx-auto w-full">
-          {/* Search, Filters, Tabs, and Add Task Button */}
+          {/* Search, Filters, and Add Task Button */}
           <div
             className="p-4 rounded-lg shadow-md mb-4"
             style={{ backgroundColor: "var(--card-bg)" }}
@@ -583,26 +458,19 @@ const Tasks = () => {
                     <SelectItem value="done">Terminé</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="flex gap-2">
-                  {["table", "calendar", "kanban", "pert", "gantt"].map((mode) => (
-                    <Button
-                      key={mode}
-                      onClick={() => setViewMode(mode)}
-                      className="rounded-md"
-                      style={{
-                        backgroundColor: viewMode === mode ? "var(--header-bg)" : "var(--tabs-bg)",
-                        color: viewMode === mode ? "var(--header-text)" : "var(--body-text-dark)",
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor =
-                          viewMode === mode ? "var(--header-bg)" : "var(--tabs-bg)")
-                      }
-                    >
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </Button>
-                  ))}
-                </div>
+                <Button
+                  onClick={() => setViewMode(viewMode === "table" ? "calendar" : "table")}
+                  className="rounded-md"
+                  style={{
+                    backgroundColor: "var(--header-bg)",
+                    color: "var(--header-text)",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--header-bg)")}
+                >
+                  <CalendarIcon className="w-5 h-5 mr-2" />
+                  {viewMode === "table" ? "Vue Calendrier" : "Vue Tableau"}
+                </Button>
               </div>
               <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                 <DialogTrigger asChild>
@@ -772,8 +640,8 @@ const Tasks = () => {
             </div>
           </div>
 
-          {/* Views */}
-          {viewMode === "table" && (
+          {/* Table or Calendar View */}
+          {viewMode === "table" ? (
             <div
               className="p-4 rounded-lg shadow-md"
               style={{ backgroundColor: "var(--card-bg)" }}
@@ -853,7 +721,7 @@ const Tasks = () => {
                         let endDate = "";
                         if (startDate && !isNaN(startDate) && task.echeance) {
                           const end = new Date(startDate);
-                          end.setDate(startDate.getDate() + Number(task.echeance));
+                          end.setDate(end.getDate() + Number(task.echeance));
                           endDate = convertDate(end);
                         }
                         return (
@@ -985,9 +853,7 @@ const Tasks = () => {
                 </Table>
               </div>
             </div>
-          )}
-
-          {viewMode === "calendar" && (
+          ) : (
             <div
               className="p-4 rounded-lg shadow-md"
               style={{ backgroundColor: "var(--card-bg)" }}
@@ -1020,130 +886,6 @@ const Tasks = () => {
                   ) : null
                 }
               />
-            </div>
-          )}
-
-          {viewMode === "kanban" && (
-            <div
-              className="p-4 rounded-lg shadow-md"
-              style={{ backgroundColor: "var(--card-bg)" }}
-            >
-              <h2
-                className="text-lg font-bold mb-4"
-                style={{ color: "var(--title-text)" }}
-              >
-                Vue Kanban
-              </h2>
-              <div className="flex gap-4">
-                {["pending", "in_progress", "done"].map((status) => (
-                  <div
-                    key={status}
-                    className="flex-1 p-4 rounded-lg"
-                    style={{ backgroundColor: "var(--tabs-bg)" }}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => handleKanbanDrop(null, status)}
-                  >
-                    <h3
-                      className="text-md font-bold mb-2"
-                      style={{ color: "var(--title-text)" }}
-                    >
-                      {getStatusName(status)}
-                    </h3>
-                    {filteredTasks
-                      .filter((task) => task.state === status)
-                      .map((task) => (
-                        <Draggable key={task.id}>
-                          <div
-                            className="p-2 mb-2 rounded-lg shadow-sm"
-                            style={{ backgroundColor: "var(--task-card-bg)" }}
-                            onDragEnd={() => handleKanbanDrop(task.id, status)}
-                          >
-                            <p style={{ color: "var(--body-text-dark)" }}>{task.titre}</p>
-                            <p className="text-xs" style={{ color: "var(--body-text)" }}>
-                              {task.description}
-                            </p>
-                            <div className="flex gap-1 mt-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openViewModal(task)}
-                                className="h-8 w-8"
-                                style={{
-                                  color: "var(--border-accent)",
-                                  borderColor: "var(--border-accent)",
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openEditModal(task)}
-                                className="h-8 w-8"
-                                style={{
-                                  color: "var(--border-accent)",
-                                  borderColor: "var(--border-accent)",
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openDeleteModal(task)}
-                                className="h-8 w-8"
-                                style={{
-                                  color: "var(--accent-red, #ef4444)",
-                                  borderColor: "var(--accent-red, #ef4444)",
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </Draggable>
-                      ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {viewMode === "pert" && (
-            <div
-              className="p-4 rounded-lg shadow-md"
-              style={{ backgroundColor: "var(--card-bg)" }}
-            >
-              <h2
-                className="text-lg font-bold mb-4"
-                style={{ color: "var(--title-text)" }}
-              >
-                Vue PERT
-              </h2>
-              {filteredTasks.length > 0 ? (
-                renderPertDiagram()
-              ) : (
-                <p style={{ color: "var(--body-text)" }}>Aucune tâche disponible</p>
-              )}
-            </div>
-          )}
-
-          {viewMode === "gantt" && (
-            <div
-              className="p-4 rounded-lg shadow-md"
-              style={{ backgroundColor: "var(--card-bg)" }}
-            >
-              <h2
-                className="text-lg font-bold mb-4"
-                style={{ color: "var(--title-text)" }}
-              >
-                Vue Gantt
-              </h2>
-              {filteredTasks.length > 0 ? (
-                renderGanttChart()
-              ) : (
-                <p style={{ color: "var(--body-text)" }}>Aucune tâche disponible</p>
-              )}
             </div>
           )}
         </div>
