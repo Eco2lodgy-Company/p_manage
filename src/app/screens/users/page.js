@@ -284,9 +284,9 @@ export default function Users() {
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             onClick={() => window.history.back()}
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
+            <ArrowLeft className="w-5 h-5 text-black" />
           </button>
-          <h1 className="text-2xl font-bold">Utilisateurs</h1>
+          <h1 className="text-2xl text-black font-bold">Utilisateurs</h1>
           <div className="flex items-center gap-2">
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
@@ -428,7 +428,7 @@ export default function Users() {
         </div>
 
         {/* Champ de recherche */}
-        <div className="mt-8 mb-4 flex items-center gap-4">
+        <div className="mt-18 mb-4 flex items-center gap-4">
           <div className="relative w-64">
             <Input
               placeholder="Rechercher un utilisateur..."
