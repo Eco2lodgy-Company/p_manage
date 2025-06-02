@@ -120,7 +120,7 @@ const Sidebar = () => {
           </li>
           <li>
             <button
-              onClick={() => router.push("/screens/taches")}
+              onClick={() => router.push("/screens/tools")}
               className="flex items-center w-full p-2 text-left rounded-md transition-colors"
               style={{
                 color: "var(--header-text)",
