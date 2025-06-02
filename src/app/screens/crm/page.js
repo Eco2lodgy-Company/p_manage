@@ -280,16 +280,24 @@ export default function Clients() {
     setSelectedClient(client);
     setIsDeleteOpen(true);
   };
+  const formattedDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 md:ml-64 lg:ml-64 xl:ml-64">
       <div className="max-w-7xl mx-auto">
         <Toaster />
         {/* En-tête */}
-        <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-sky-500 text-white p-4 shadow-md flex justify-between items-center z-10">
+        <div className="fixed top-0 left-0 md:left-64 lg:left-64 xl:left-64 right-0 bg-background text-white p-4 shadow-md flex justify-between items-center z-10">
           <button
             className="p-2 hover:bg-muted rounded-lg transition-colors"
-            onClick={() => router.push("/dashboard")} // Remplacez par la route souhaitée
+            onClick={() => router.back()} // Remplacez par la route souhaitée
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
@@ -496,7 +504,7 @@ export default function Clients() {
                       <TableCell className="text-foreground">{client.email}</TableCell>
                       <TableCell className="text-foreground">{client.societe}</TableCell>
                       <TableCell className="text-foreground">{client.statut}</TableCell>
-                      <TableCell className="text-foreground">{client.created_at}</TableCell>
+                      <TableCell className="text-foreground">{formattedDate(client.created_at)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
