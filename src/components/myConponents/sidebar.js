@@ -27,7 +27,7 @@ const Sidebar = () => {
           className="text-2xl font-bold"
           style={{ color: "var(--header-text)" }}
         >
-          MyApp
+          PLAMA
         </h1>
       </div>
 
@@ -36,7 +36,7 @@ const Sidebar = () => {
         <ul className="space-y-2">
           <li>
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/screens/dashboard")}
               className="flex items-center w-full p-2 text-left rounded-md transition-colors"
               style={{
                 color: "var(--header-text)",
@@ -92,7 +92,7 @@ const Sidebar = () => {
           </li>
           <li>
             <button
-              onClick={() => router.push("/screens/taches")}
+              onClick={() => router.push("/screens/comptabilite")}
               className="flex items-center w-full p-2 text-left rounded-md transition-colors"
               style={{
                 color: "var(--header-text)",
