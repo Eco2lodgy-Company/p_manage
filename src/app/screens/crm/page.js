@@ -450,7 +450,7 @@ export default function Clients() {
         </div>
 
         {/* Recherche */}
-        <div className="mt-8 mb-4 flex items-center mt-10 gap-4">
+        <div className="mt-18 mb-4 flex items-center gap-4">
           <div className="relative w-64">
             <Input
               placeholder="Rechercher un client..."
