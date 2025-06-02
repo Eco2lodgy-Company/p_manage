@@ -327,6 +327,15 @@ const Tasks = () => {
     }
   };
 
+  const formattedDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   // Filter and search tasks
   useEffect(() => {
     let updatedTasks = [...tasks];
@@ -753,13 +762,13 @@ const Tasks = () => {
                               className="text-xs"
                               style={{ color: "var(--body-text)" }}
                             >
-                              {task.start_date || "-"}
+                              {formattedDate(task.start_date) || "-"}
                             </TableCell>
                             <TableCell
                               className="text-xs"
                               style={{ color: "var(--body-text)" }}
                             >
-                              {endDate || "N/A"}
+                              {formattedDate(endDate) || "N/A"}
                             </TableCell>
                             <TableCell
                               className="text-xs"

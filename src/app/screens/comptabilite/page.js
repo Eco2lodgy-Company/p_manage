@@ -237,6 +237,14 @@ export default function Comptabilite() {
     setIsDeleteOpen(true);
   };
 
+  const formattedDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
   return (
     <div className="min-h-screen bg-background p-6 md:ml-64 lg:ml-64 xl:ml-64">
       <div className="max-w-7xl mx-auto">
@@ -397,7 +405,7 @@ export default function Comptabilite() {
                       <TableCell className="text-foreground">{transaction.description}</TableCell>
                       <TableCell className="text-foreground">{transaction.type}</TableCell>
                       <TableCell className="text-foreground">{transaction.montant}</TableCell>
-                      <TableCell className="text-foreground">{transaction.date}</TableCell>
+                      <TableCell className="text-foreground">{formattedDate(transaction.date)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

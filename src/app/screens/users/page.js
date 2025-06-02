@@ -273,6 +273,14 @@ export default function Users() {
     setSelectedUser(user);
     setIsDeleteOpen(true);
   };
+  const formattedDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 md:ml-64 lg:ml-64 xl:ml-64">
@@ -472,7 +480,7 @@ export default function Users() {
                       <TableCell className="text-foreground">{user.telephone}</TableCell>
                       <TableCell className="text-foreground">{user.mail}</TableCell>
                       <TableCell className="text-foreground">{user.role}</TableCell>
-                      <TableCell className="text-foreground">{user.created_at}</TableCell>
+                      <TableCell className="text-foreground">{formattedDate(user.created_at)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

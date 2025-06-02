@@ -230,6 +230,14 @@ export default function Materiels() {
     setSelectedMateriel(materiel);
     setIsViewOpen(true);
   };
+  const formattedDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   const openDeleteModal = (materiel) => {
     setSelectedMateriel(materiel);
@@ -390,7 +398,7 @@ export default function Materiels() {
                       <TableCell className="text-foreground">{materiel.nom}</TableCell>
                       <TableCell className="text-foreground">{materiel.type}</TableCell>
                       <TableCell className="text-foreground">{materiel.quantite}</TableCell>
-                      <TableCell className="text-foreground">{materiel.dateAcquisition}</TableCell>
+                      <TableCell className="text-foreground">{ formattedDate(materiel.dateAcquisition)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
