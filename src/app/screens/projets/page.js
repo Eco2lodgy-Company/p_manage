@@ -284,6 +284,8 @@ const ProjectsPage = () => {
 
   // Open view modal
   const handleOpen = (project) => {
+    router.push(`/screens/projets/details?id=${project.id}`);
+    localStorage.setItem("selectedProject", JSON.stringify(project));
     setSelectedProject(project);
     setIsViewOpen(true);
   };
