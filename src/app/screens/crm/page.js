@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import { z } from "zod";
@@ -42,7 +43,7 @@ const clientSchema = z.object({
     "Le numéro de téléphone doit contenir exactement 10 chiffres"
   ),
   email: z.string().email("L'email doit être valide").min(1, "L'email est requis"),
-  societe: z.string().optional().max(100, "La société ne doit pas dépasser 100 caractères"),
+  societe: z.string().max(100, "La société ne doit pas dépasser 100 caractères").optional(),
   statut: z.enum(["prospect", "client_actif", "inactif"], {
     errorMap: () => ({ message: "Le statut doit être 'prospect', 'client_actif' ou 'inactif'" }),
   }),
