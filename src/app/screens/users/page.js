@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Edit, Eye, Plus, ArrowLeft } from "lucide-react";
+import { Trash2, Edit, Eye, Plus, ArrowLeft, Search } from "lucide-react";
 
 // Define Zod schema for user validation
 const userSchema = z.object({
@@ -53,6 +53,7 @@ const userSchema = z.object({
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]); // Nouvel état pour les utilisateurs filtrés
   const [selectedUser, setSelectedUser] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -67,6 +68,7 @@ export default function Users() {
     role: "",
   });
   const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState(""); // Nouvel état pour la recherche
 
   const handleGetUsers = async () => {
     try {
@@ -76,6 +78,7 @@ export default function Users() {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       setUsers(data.data);
+      setFilteredUsers(data.data); // Initialise les utilisateurs filtrés
     } catch (error) {
       console.error("Erreur lors de la récupération des utilisateurs:", error);
       toast.error("Erreur lors de la récupération des utilisateurs");
@@ -85,6 +88,16 @@ export default function Users() {
   useEffect(() => {
     handleGetUsers();
   }, []);
+
+  useEffect(() => {
+    // Filtrer les utilisateurs en fonction du terme de recherche
+    const filtered = users.filter(
+      (user) =>
+        user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.mail.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [searchTerm, users]);
 
   const validateForm = (data) => {
     const result = userSchema.safeParse(data);
@@ -127,6 +140,7 @@ export default function Users() {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       setUsers(data.data);
+      setFilteredUsers(data.data); // Mettre à jour les utilisateurs filtrés
       toast.success("Utilisateur ajouté avec succès !");
       setFormData({
         nom: "",
@@ -183,6 +197,21 @@ export default function Users() {
             : u
         )
       );
+      setFilteredUsers(
+        filteredUsers.map((u) =>
+          u.id === selectedUser.id
+            ? {
+                ...u,
+                nom: formData.nom,
+                prenom: formData.prenom,
+                telephone: formData.telephone,
+                mail: formData.mail,
+                password: formData.password || u.password,
+                role: formData.role,
+              }
+            : u
+        )
+      );
       setIsEditOpen(false);
       setFormData({
         nom: "",
@@ -211,6 +240,7 @@ export default function Users() {
       const data = await response.json();
       toast.success(data.message);
       setUsers(users.filter((u) => u.id !== selectedUser.id));
+      setFilteredUsers(filteredUsers.filter((u) => u.id !== selectedUser.id));
       setIsDeleteOpen(false);
       setSelectedUser(null);
     } catch (error) {
@@ -397,6 +427,19 @@ export default function Users() {
           </div>
         </div>
 
+        {/* Champ de recherche */}
+        <div className="mt-8 mb-4 flex items-center gap-4">
+          <div className="relative w-64">
+            <Input
+              placeholder="Rechercher un utilisateur..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          </div>
+        </div>
+
         {/* Tableau des utilisateurs */}
         <div className="mt-8 bg-card border border-border rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-border">
@@ -417,8 +460,8 @@ export default function Users() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users && users.length > 0 ? (
-                  users.map((user) => (
+                {filteredUsers && filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
                     <TableRow
                       key={user.id}
                       className="hover:bg-muted/50 transition-colors"
