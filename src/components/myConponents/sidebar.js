@@ -1,11 +1,71 @@
 
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Folder, List, Users, DollarSign, Package, Settings, LogOut } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  Folder,
+  List,
+  Users,
+  DollarSign,
+  Package,
+  Settings,
+  LogOut,
+  Plus,
+} from "lucide-react";
 
 const Sidebar = () => {
   const router = useRouter();
+  const [entreprises, setEntreprises] = useState([
+    { value: "plama", label: "Plama" },
+    { value: "eco", label: "Eco2lodgy" },
+    { value: "eco2", label: "Ecotech" },
+    { value: "iccoi", label: "ICCOI" },
+  ]);
+  const [selectedEntreprise, setSelectedEntreprise] = useState("");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newEntrepriseName, setNewEntrepriseName] = useState("");
+
+  const handleAddEntreprise = () => {
+    if (!newEntrepriseName.trim()) {
+      alert("Le nom de l'entreprise est requis.");
+      return;
+    }
+
+    const newEntreprise = {
+      value: newEntrepriseName.toLowerCase().replace(/\s+/g, ""),
+      label: newEntrepriseName,
+    };
+
+    setEntreprises([...entreprises, newEntreprise]);
+    setNewEntrepriseName("");
+    setIsAddOpen(false);
+  };
+
+  const handleEntrepriseChange = (value) => {
+    setSelectedEntreprise(value);
+    // Ajoutez ici la logique pour charger les données de l'entreprise sélectionnée
+    console.log(`Chargement des données pour l'entreprise : ${value}`);
+  };
 
   return (
     <div
@@ -18,17 +78,66 @@ const Sidebar = () => {
     >
       {/* Logo/Title */}
       <div
-        className="p-4"
+        className="p-4 flex items-center gap-2"
         style={{
           borderBottom: "1px solid var(--sidebar-border)",
         }}
       >
-        <h1
-          className="text-2xl font-bold"
-          style={{ color: "var(--header-text)" }}
-        >
-          PLAMA
-        </h1>
+        <Select onValueChange={handleEntrepriseChange} value={selectedEntreprise}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Choisir une entreprise" />
+          </SelectTrigger>
+          <SelectContent>
+            {entreprises.map((entreprise) => (
+              <SelectItem key={entreprise.value} value={entreprise.value}>
+                {entreprise.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="text-primary hover:text-primary/80"
+              aria-label="Ajouter une nouvelle entreprise"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Ajouter une Entreprise</DialogTitle>
+              <DialogDescription>
+                Entrez le nom de la nouvelle entreprise.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="nom-entreprise" className="text-right">
+                  Nom
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="nom-entreprise"
+                    value={newEntrepriseName}
+                    onChange={(e) => setNewEntrepriseName(e.target.value)}
+                    placeholder="Nom de l'entreprise"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleAddEntreprise}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Ajouter
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Navigation Links */}
