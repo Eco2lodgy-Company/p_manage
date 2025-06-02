@@ -450,7 +450,7 @@ export default function Clients() {
         </div>
 
         {/* Recherche */}
-        <div className="mt-8 mb-4 flex items-center gap-4">
+        <div className="mt-8 mb-4 flex items-center mt-10 gap-4">
           <div className="relative w-64">
             <Input
               placeholder="Rechercher un client..."
@@ -476,6 +476,7 @@ export default function Clients() {
                   <TableHead className="font-semibold text-foreground">Prénom</TableHead>
                   <TableHead className="font-semibold text-foreground">Téléphone</TableHead>
                   <TableHead className="font-semibold text-foreground">Email</TableHead>
+                  <TableHead className="font-semibold text-foreground">Societé</TableHead>
                   <TableHead className="font-semibold text-foreground">Statut</TableHead>
                   <TableHead className="font-semibold text-foreground">Date de création</TableHead>
                   <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
@@ -493,6 +494,7 @@ export default function Clients() {
                       <TableCell className="text-foreground">{client.prenom}</TableCell>
                       <TableCell className="text-foreground">{client.telephone}</TableCell>
                       <TableCell className="text-foreground">{client.email}</TableCell>
+                      <TableCell className="text-foreground">{client.societe}</TableCell>
                       <TableCell className="text-foreground">{client.statut}</TableCell>
                       <TableCell className="text-foreground">{client.created_at}</TableCell>
                       <TableCell className="text-right">
