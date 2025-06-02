@@ -283,11 +283,9 @@ const ProjectsPage = () => {
   };
 
   // Open view modal
+  // Ouvre la page de détails du projet
   const handleOpen = (project) => {
-    router.push(`/screens/projets/details?id=${project.id}`);
-    localStorage.setItem("selectedProject", JSON.stringify(project));
-    setSelectedProject(project);
-    setIsViewOpen(true);
+    window.location.href = `/screens/projets/details?id=${project.id}`;
   };
 
   // Open edit modal
