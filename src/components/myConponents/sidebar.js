@@ -36,7 +36,7 @@ import {
 const Sidebar = () => {
   const router = useRouter();
   const [entreprises, setEntreprises] = useState([
-    { value: "plama", label: "Plama" },
+    { id: "plama", nom: "Plama" },
    
   ]);
   const [selectedEntreprise, setSelectedEntreprise] = useState("");
@@ -107,8 +107,8 @@ const Sidebar = () => {
           </SelectTrigger>
           <SelectContent>
             {entreprises.map((entreprise) => (
-              <SelectItem key={entreprise.value} value={entreprise.value}>
-                {entreprise.label}
+              <SelectItem key={entreprise.id} value={entreprise.id}>
+                {entreprise.nom}
               </SelectItem>
             ))}
           </SelectContent>
