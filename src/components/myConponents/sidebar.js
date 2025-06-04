@@ -37,13 +37,31 @@ const Sidebar = () => {
   const router = useRouter();
   const [entreprises, setEntreprises] = useState([
     { value: "plama", label: "Plama" },
-    { value: "eco", label: "Eco2lodgy" },
-    { value: "eco2", label: "Ecotech" },
-    { value: "iccoi", label: "ICCOI" },
+   
   ]);
   const [selectedEntreprise, setSelectedEntreprise] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newEntrepriseName, setNewEntrepriseName] = useState("");
+
+  const fetchEntreprises = async () => {
+      try {
+      const response = await fetch("http://alphatek.fr:3110/api/entreprises/", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      const firmsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+      if (firmsArray.length > 0) {
+        setEntreprises(firmsArray);
+      } else {
+        toast.warning("Aucune entreprise récupérée.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des entreprises:", error);
+      toast.error("Erreur lors de la récupération des entreprises.");
+    }
+  }
 
   const handleAddEntreprise = () => {
     if (!newEntrepriseName.trim()) {
