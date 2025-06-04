@@ -1,12 +1,14 @@
 import connectionPool from "@/lib/db"
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
 
     try{
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
         const client = await connectionPool.connect();
         console.log("connected!")
-        const result = await client.query("SELECT * FROM projets ORDER BY id;")
+        const result = await client.query("SELECT * FROM projets WHERE firmId=$1 ORDER BY id;", [id]);
         const data = result.rows;
         console.log("data",data);
         client.release();
