@@ -47,26 +47,7 @@ const ProjectsPage = () => {
   const [errors, setErrors] = useState({});
 
   // Fetch projects
-  const fetchProjects = async () => {
-    try {
-      const fId= localStorage.getItem("firm");
-      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${fId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Erreur de réseau");
-      const data = await response.json();
-      const projectsArray = Array.isArray(data.data) ? data.data[0] : Array.isArray(data.data[0]) ? data.data[0] : [];
-      if (projectsArray.length > 0) {
-        setProjects(projectsArray);
-      } else {
-        toast.warning("Aucun projet récupéré.");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des projets:", error);
-      toast.error("Erreur lors de la récupération des projets.");
-    }
-  };
+ 
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -89,6 +70,26 @@ const ProjectsPage = () => {
   useEffect(() => {
     const id = localStorage.getItem("firm");
     console.log("Firm ID:", id);
+     const fetchProjects = async () => {
+    try {
+      const fId= localStorage.getItem("firm");
+      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${fId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      const projectsArray = Array.isArray(data.data) ? data.data[0] : Array.isArray(data.data[0]) ? data.data[0] : [];
+      if (projectsArray.length > 0) {
+        setProjects(projectsArray);
+      } else {
+        toast.warning("Aucun projet récupéré.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des projets:", error);
+      toast.error("Erreur lors de la récupération des projets.");
+    }
+  };
     const loadData = async () => {
       await fetchProjects();
       await fetchEmployees();
