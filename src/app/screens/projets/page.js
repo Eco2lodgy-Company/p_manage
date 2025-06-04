@@ -50,7 +50,7 @@ const ProjectsPage = () => {
   const fetchProjects = async () => {
     try {
       const fId= localStorage.getItem("firm");
-      const response = await fetch(`http://alphatek.fr:3110/api/projects?firmId=${fId}`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${fId}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
