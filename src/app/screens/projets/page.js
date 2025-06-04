@@ -86,6 +86,8 @@ const ProjectsPage = () => {
   };
 
   useEffect(() => {
+    const id = localStorage.getItem("firm");
+    console.log("Firm ID:", id);
     const loadData = async () => {
       await fetchProjects();
       await fetchEmployees();

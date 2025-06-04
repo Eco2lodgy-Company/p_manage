@@ -85,6 +85,7 @@ const Sidebar = () => {
   const handleEntrepriseChange = (value) => {
     setSelectedEntreprise(value);
     // Ajoutez ici la logique pour charger les données de l'entreprise sélectionnée
+    localStorage.setItem("firm", value);
     console.log(`Chargement des données pour l'entreprise : ${value}`);
   };
 
