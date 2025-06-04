@@ -34,7 +34,7 @@ const ProjectsPage = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [localId, setLocalId] = useState(localStorage.getItem("firm") || "");
+  const [localId, setLocalId] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -49,6 +49,7 @@ const ProjectsPage = () => {
 
   // Fetch projects
   const fetchProjects = async (firmId) => {
+    if (!firmId) return; // Skip if no firmId
     try {
       const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${firmId}`, {
         method: "GET",
@@ -90,28 +91,44 @@ const ProjectsPage = () => {
 
   // Load initial data and handle localId changes
   useEffect(() => {
-    // Listen for storage changes (e.g., if firm ID changes in another tab)
+    // Set localId on client side
+    if (typeof window !== "undefined") {
+      const firmId = localStorage.getItem("firm") || "";
+      setLocalId(firmId);
+    }
+
+    // Listen for storage changes
     const handleStorageChange = () => {
-      const newFirmId = localStorage.getItem("firm") || "";
-      if (newFirmId !== localId) {
-        setLocalId(newFirmId);
+      if (typeof window !== "undefined") {
+        const newFirmId = localStorage.getItem("firm") || "";
+        if (newFirmId !== localId) {
+          setLocalId(newFirmId);
+        }
       }
     };
 
-    window.addEventListener("storage", handleStorageChange);
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorageChange);
+    }
 
     // Fetch employees (only needs to happen once)
     fetchEmployees();
 
-    // Fetch projects if localId exists
-    if (localId) {
-      fetchProjects(localId);
-    }
-
     // Cleanup event listener
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorageChange);
+      }
     };
+  }, []); // Empty dependency array for initial load
+
+  // Fetch projects when localId changes
+  useEffect(() => {
+    if (localId) {
+      fetchProjects(localId);
+    } else {
+      setProjects([]); // Clear projects if no firmId
+    }
   }, [localId]);
 
   // Calculate status based on dates
@@ -184,8 +201,8 @@ const ProjectsPage = () => {
       const data = await response.json();
       toast.success(data.message);
       await fetchProjects(localId);
-      setFormData({ id: "", title: "", description: "", start_date: "", end_date: "", assign_to: "", email: "" });
       setIsAddOpen(false);
+      setFormData({ title: "", description: "", start_date: "", end_date: "", assign_to: "" });
     } catch (error) {
       console.error("Erreur lors de l'ajout du projet:", error);
       toast.error("Erreur lors de l'ajout du projet");
