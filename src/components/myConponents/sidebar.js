@@ -53,6 +53,7 @@ const Sidebar = () => {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       const firmsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+      console.log("Firms Array:", firmsArray);
       if (firmsArray.length > 0) {
         setEntreprises(firmsArray);
       } else {
