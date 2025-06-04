@@ -34,7 +34,7 @@ const ProjectsPage = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [localId,setLocalId] = useState("");
+  const [localId, setLocalId] = useState(localStorage.getItem("firm") || "");
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -48,7 +48,27 @@ const ProjectsPage = () => {
   const [errors, setErrors] = useState({});
 
   // Fetch projects
- 
+  const fetchProjects = async (firmId) => {
+    try {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${firmId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      const projectsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data) ? data.data : [];
+      if (projectsArray.length > 0) {
+        setProjects(projectsArray);
+      } else {
+        setProjects([]);
+        toast.warning("Aucun projet récupéré.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des projets:", error);
+      setProjects([]);
+      toast.error("Erreur lors de la récupération des projets.");
+    }
+  };
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -68,35 +88,30 @@ const ProjectsPage = () => {
     }
   };
 
+  // Load initial data and handle localId changes
   useEffect(() => {
-    const id = localStorage.getItem("firm");
-    setLocalId(id);
-    console.log("Firm ID:", id);
-     const fetchProjects = async () => {
-    try {
-      const fId= localStorage.getItem("firm");
-      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${fId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Erreur de réseau");
-      const data = await response.json();
-      const projectsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data) ? data.data : [];
-      if (projectsArray.length > 0) {
-        setProjects(projectsArray);
-      } else {
-        toast.warning("Aucun projet récupéré.");
+    // Listen for storage changes (e.g., if firm ID changes in another tab)
+    const handleStorageChange = () => {
+      const newFirmId = localStorage.getItem("firm") || "";
+      if (newFirmId !== localId) {
+        setLocalId(newFirmId);
       }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des projets:", error);
-      toast.error("Erreur lors de la récupération des projets.");
-    }
-  };
-    const loadData = async () => {
-      await fetchProjects();
-      await fetchEmployees();
     };
-    loadData();
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Fetch employees (only needs to happen once)
+    fetchEmployees();
+
+    // Fetch projects if localId exists
+    if (localId) {
+      fetchProjects(localId);
+    }
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [localId]);
 
   // Calculate status based on dates
@@ -168,7 +183,7 @@ const ProjectsPage = () => {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(localId);
       setFormData({ id: "", title: "", description: "", start_date: "", end_date: "", assign_to: "", email: "" });
       setIsAddOpen(false);
     } catch (error) {
@@ -200,7 +215,7 @@ const ProjectsPage = () => {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(localId);
       setIsEditOpen(false);
       setFormData({ id: "", title: "", description: "", start_date: "", end_date: "", assign_to: "", email: "" });
       setSelectedProject(null);
@@ -236,7 +251,7 @@ const ProjectsPage = () => {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(localId);
       setIsShareOpen(false);
       setFormData((prev) => ({ ...prev, email: "" }));
       setSelectedProject(null);
@@ -259,7 +274,7 @@ const ProjectsPage = () => {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message);
-      await fetchProjects();
+      await fetchProjects(localId);
       setIsDeleteOpen(false);
       setSelectedProject(null);
     } catch (error) {
@@ -279,7 +294,7 @@ const ProjectsPage = () => {
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       toast.success(data.message || "Projet archivé avec succès");
-      await fetchProjects();
+      await fetchProjects(localId);
       setIsArchiveOpen(false);
       setSelectedProject(null);
     } catch (error) {
@@ -289,7 +304,6 @@ const ProjectsPage = () => {
   };
 
   // Open view modal
-  // Ouvre la page de détails du projet
   const handleOpen = (project) => {
     window.location.href = `/screens/projets/details?id=${project.id}`;
   };
@@ -405,9 +419,9 @@ const ProjectsPage = () => {
                       id="title"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className={errors.title ? "border-green-500" : ""}
+                      className={errors.title ? "border-red-500" : ""}
                     />
-                    {errors.title && <p className="text-green-500 text-sm mt-1">{errors.title}</p>}
+                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -417,9 +431,9 @@ const ProjectsPage = () => {
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={errors.description ? "border-green-500" : ""}
+                      className={errors.description ? "border-red-500" : ""}
                     />
-                    {errors.description && <p className="text-green-500 text-sm mt-1">{errors.description}</p>}
+                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -430,9 +444,9 @@ const ProjectsPage = () => {
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className={errors.start_date ? "border-green-500" : ""}
+                      className={errors.start_date ? "border-red-500" : ""}
                     />
-                    {errors.start_date && <p className="text-green-500 text-sm mt-1">{errors.start_date}</p>}
+                    {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -443,9 +457,9 @@ const ProjectsPage = () => {
                       type="date"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className={errors.end_date ? "border-green-500" : ""}
+                      className={errors.end_date ? "border-red-500" : ""}
                     />
-                    {errors.end_date && <p className="text-green-500 text-sm mt-1">{errors.end_date}</p>}
+                    {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
