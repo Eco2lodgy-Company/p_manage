@@ -97,7 +97,7 @@ const ProjectsPage = () => {
       await fetchEmployees();
     };
     loadData();
-  }, [id]);
+  }, [localId]);
 
   // Calculate status based on dates
   const getStatus = (startDate, endDate) => {
