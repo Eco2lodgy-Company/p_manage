@@ -3,19 +3,18 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Search, Plus, Edit3, Trash2, Archive, FolderOpen, Calendar, User, Share2,
-  LayoutDashboard, List, Users as UsersIcon, DollarSign, Package, Settings, LogOut
+  Search, Plus, Edit3, Trash2, Archive, FolderOpen, Calendar, User, Share2
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Input, Label, Button
-} from "@/components/ui";
+} from "@/components/ui"; // Adjust path if necessary
 import { z } from "zod";
 import crypto from "crypto";
+import Sidebar from "@/components/myConponents/sidebar";
 
-// Define Zod schema for project validation
 const projectSchema = z.object({
   title: z.string().min(1, "Le titre est requis").max(100, "Le titre ne doit pas dépasser 100 caractères"),
   description: z.string().min(1, "La description est requise").max(500, "La description ne doit pas dépasser 500 caractères"),
@@ -27,8 +26,6 @@ const projectSchema = z.object({
 
 const ProjectsPage = () => {
   const router = useRouter();
-
-  // State for projects
   const [projects, setProjects] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,34 +50,6 @@ const ProjectsPage = () => {
   });
   const [errors, setErrors] = useState({});
 
-  // State for sidebar
-  const [entreprises, setEntreprises] = useState([]);
-  const [selectedEntreprise, setSelectedEntreprise] = useState("");
-  const [isAddEntrepriseOpen, setIsAddEntrepriseOpen] = useState(false);
-  const [newEntrepriseName, setNewEntrepriseName] = useState("");
-
-  // Fetch enterprises
-  const fetchEntreprises = async () => {
-    try {
-      const response = await fetch("http://alphatek.fr:3110/api/entreprises/", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Erreur de réseau");
-      const data = await response.json();
-      const firmsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
-      if (firmsArray.length > 0) {
-        setEntreprises(firmsArray);
-      } else {
-        toast.warning("Aucune entreprise récupérée.");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des entreprises:", error);
-      toast.error("Erreur lors de la récupération des entreprises.");
-    }
-  };
-
-  // Fetch projects
   const fetchProjects = async (firmId) => {
     if (!firmId) return;
     try {
@@ -104,7 +73,6 @@ const ProjectsPage = () => {
     }
   };
 
-  // Fetch employees
   const fetchEmployees = async () => {
     try {
       const response = await fetch("http://alphatek.fr:3110/api/users/emp", {
@@ -122,46 +90,10 @@ const ProjectsPage = () => {
     }
   };
 
-  // Add enterprise
-  const handleAddEntreprise = async () => {
-    if (!newEntrepriseName.trim()) {
-      toast.error("Le nom de l'entreprise est requis.");
-      return;
-    }
-
-    try {
-      const response = await fetch("http://alphatek.fr:3110/api/entreprises/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nom: newEntrepriseName }),
-      });
-      if (!response.ok) throw new Error("Erreur de réseau");
-      const data = await response.json();
-      toast.success(data.message || "Entreprise ajoutée avec succès");
-      await fetchEntreprises();
-      setNewEntrepriseName("");
-      setIsAddEntrepriseOpen(false);
-    } catch (error) {
-      console.error("Erreur lors de l'ajout de l'entreprise:", error);
-      toast.error("Erreur lors de l'ajout de l'entreprise");
-    }
-  };
-
-  // Handle enterprise change
-  const handleEntrepriseChange = (value) => {
-    setSelectedEntreprise(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("firm", value);
-    }
-    setLocalId(value);
-  };
-
-  // Load initial data and handle localId changes
   useEffect(() => {
     if (typeof window !== "undefined") {
       const firmId = localStorage.getItem("firm") || "";
       setLocalId(firmId);
-      setSelectedEntreprise(firmId);
     }
 
     const handleStorageChange = () => {
@@ -169,7 +101,6 @@ const ProjectsPage = () => {
         const newFirmId = localStorage.getItem("firm") || "";
         if (newFirmId !== localId) {
           setLocalId(newFirmId);
-          setSelectedEntreprise(newFirmId);
         }
       }
     };
@@ -178,7 +109,6 @@ const ProjectsPage = () => {
       window.addEventListener("storage", handleStorageChange);
     }
 
-    fetchEntreprises();
     fetchEmployees();
 
     return () => {
@@ -196,7 +126,6 @@ const ProjectsPage = () => {
     }
   }, [localId]);
 
-  // Calculate status based on dates
   const getStatus = (startDate, endDate) => {
     const now = new Date();
     const start = new Date(startDate);
@@ -206,7 +135,6 @@ const ProjectsPage = () => {
     return "in_progress";
   };
 
-  // Get status info for display
   const getStatusInfo = (project) => {
     const state = project.state || getStatus(project.start_date, project.end_date);
     switch (state) {
@@ -221,13 +149,11 @@ const ProjectsPage = () => {
     }
   };
 
-  // Format dates
   const formatDate = (dateString) => {
     if (!dateString) return "Non définie";
     return new Date(dateString).toLocaleDateString("fr-FR");
   };
 
-  // Validate form data
   const validateForm = (data, isSharing = false) => {
     const schema = isSharing ? projectSchema.pick({ email: true }) : projectSchema.omit({ email: true });
     const result = schema.safeParse(data);
@@ -243,7 +169,6 @@ const ProjectsPage = () => {
     return true;
   };
 
-  // Add project
   const handleAddProject = async () => {
     const projectData = {
       title: formData.title,
@@ -274,7 +199,6 @@ const ProjectsPage = () => {
     }
   };
 
-  // Edit project
   const handleEditProject = async () => {
     const projectData = {
       id: formData.id,
@@ -307,7 +231,6 @@ const ProjectsPage = () => {
     }
   };
 
-  // Share project
   const handleShareProject = async () => {
     if (!validateForm({ email: formData.email }, true)) {
       toast.error("Veuillez corriger les erreurs dans le formulaire");
@@ -320,7 +243,7 @@ const ProjectsPage = () => {
     };
     const shareData = {
       email: formData.email,
-      token: generateKeyWithTimestamp(),
+      token: "",
       project_id: selectedProject?.id,
     };
     setIsSharing(true);
@@ -345,7 +268,6 @@ const ProjectsPage = () => {
     }
   };
 
-  // Delete project
   const handleDeleteProject = async () => {
     try {
       const response = await fetch("http://alphatek.fr:3110/api/projects/delete", {
@@ -365,7 +287,6 @@ const ProjectsPage = () => {
     }
   };
 
-  // Archive project
   const handleArchiveProject = async () => {
     try {
       const response = await fetch("http://alphatek.fr:3110/api/projects/archive", {
@@ -385,12 +306,10 @@ const ProjectsPage = () => {
     }
   };
 
-  // Open view modal
   const handleOpen = (project) => {
     router.push(`/screens/projets/details?id=${project.id}`);
   };
 
-  // Open edit modal
   const openEditModal = (project) => {
     setSelectedProject(project);
     setFormData({
@@ -406,7 +325,6 @@ const ProjectsPage = () => {
     setIsEditOpen(true);
   };
 
-  // Open share modal
   const openShareModal = (project) => {
     setSelectedProject(project);
     setFormData({ id: project.id, title: "", description: "", start_date: "", end_date: "", assign_to: "", email: "" });
@@ -414,19 +332,16 @@ const ProjectsPage = () => {
     setIsShareOpen(true);
   };
 
-  // Open delete modal
   const openDeleteModal = (project) => {
     setSelectedProject(project);
     setIsDeleteOpen(true);
   };
 
-  // Open archive modal
   const openArchiveModal = (project) => {
     setSelectedProject(project);
     setIsArchiveOpen(true);
   };
 
-  // Filtered projects
   const filteredProjects = useMemo(() => {
     let filtered = projects.map(project => ({
       ...project,
@@ -456,229 +371,14 @@ const ProjectsPage = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <div
-        className="fixed top-0 left-0 w-64 h-screen flex flex-col shadow-md"
-        style={{
-          backgroundColor: "var(--sidebar-bg)",
-          color: "var(--header-text)",
-          borderRight: "1px solid var(--sidebar-border)",
-        }}
-      >
-        {/* Logo/Title */}
-        <div
-          className="p-4 flex items-center gap-2"
-          style={{
-            borderBottom: "1px solid var(--sidebar-border)",
-          }}
-        >
-          <Select onValueChange={handleEntrepriseChange} value={selectedEntreprise}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Choisir une entreprise" />
-            </SelectTrigger>
-            <SelectContent>
-              {entreprises.map((entreprise) => (
-                <SelectItem key={entreprise.id} value={entreprise.id}>
-                  {entreprise.nom}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Dialog open={isAddEntrepriseOpen} onOpenChange={setIsAddEntrepriseOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="text-primary hover:text-primary/80"
-                aria-label="Ajouter une nouvelle entreprise"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Ajouter une Entreprise</DialogTitle>
-                <DialogDescription>
-                  Entrez le nom de la nouvelle entreprise.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nom-entreprise" className="text-right">
-                    Nom
-                  </Label>
-                  <div className="col-span-3">
-                    <Input
-                      id="nom-entreprise"
-                      value={newEntrepriseName}
-                      onChange={(e) => setNewEntrepriseName(e.target.value)}
-                      placeholder="Nom de l'entreprise"
-                    />
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={handleAddEntreprise}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  Ajouter
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Navigation Links */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            <li>
-              <button
-                onClick={() => router.push("/screens/dashboard")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <LayoutDashboard className="w-5 h-5 mr-2" />
-                Dashboard
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/screens/projets")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <Folder className="w-5 h-5 mr-2" />
-                Projects
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/screens/taches")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <List className="w-5 h-5 mr-2" />
-                Tasks
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/screens/crm")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <UsersIcon className="w-5 h-5 mr-2" />
-                CRM
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/screens/comptabilite")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <DollarSign className="w-5 h-5 mr-2" />
-                Comptabilité
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/screens/users")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <UsersIcon className="w-5 h-5 mr-2" />
-                Ressources Humaines
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/screens/tools")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <Package className="w-5 h-5 mr-2" />
-                Ressources Matérielles
-              </button>
-            </li>
-          </ul>
-        </nav>
-
-        {/* Settings and Logout Section */}
-        <div className="p-4 border-t border-border">
-          <ul className="space-y-2">
-            <li>
-              <button
-                onClick={() => router.push("/settings")}
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <Settings className="w-5 h-5 mr-2" />
-                Settings
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => router.push("/settings")} // Replace with logout route
-                className="flex items-center w-full p-2 text-left rounded-md transition-colors"
-                style={{
-                  color: "var(--header-text)",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--sidebar-hover-bg)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <LogOut className="w-5 h-5 mr-2" />
-                Se déconnecter
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Main Content */}
+      <Sidebar />
       <div className="flex-1 p-6 ml-64">
         <Toaster />
         <div className="max-w-7xl mx-auto">
-          {/* En-tête */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Projets</h1>
             <p className="text-muted-foreground">Gérez vos projets et suivez leur progression</p>
           </div>
-
-          {/* Barre d'actions */}
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -690,7 +390,6 @@ const ProjectsPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
                 <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
@@ -784,8 +483,6 @@ const ProjectsPage = () => {
               </DialogContent>
             </Dialog>
           </div>
-
-          {/* Onglets */}
           <div className="mb-6">
             <div className="border-b border-border">
               <nav className="-mb-px flex space-x-8">
@@ -808,8 +505,6 @@ const ProjectsPage = () => {
               </nav>
             </div>
           </div>
-
-          {/* Grille des projets */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredProjects.map((project) => {
               const statusInfo = getStatusInfo(project);
@@ -883,8 +578,6 @@ const ProjectsPage = () => {
               );
             })}
           </div>
-
-          {/* Message si aucun projet */}
           {filteredProjects.length === 0 && (
             <div className="text-center py-12">
               <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
@@ -905,8 +598,6 @@ const ProjectsPage = () => {
               )}
             </div>
           )}
-
-          {/* View Dialog */}
           <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -954,8 +645,6 @@ const ProjectsPage = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* Edit Dialog */}
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -1042,8 +731,6 @@ const ProjectsPage = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* Share Dialog */}
           <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -1072,8 +759,6 @@ const ProjectsPage = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* Delete Dialog */}
           <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -1090,8 +775,6 @@ const ProjectsPage = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* Archive Dialog */}
           <Dialog open={isArchiveOpen} onOpenChange={setIsArchiveOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
