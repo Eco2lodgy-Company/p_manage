@@ -49,7 +49,8 @@ const ProjectsPage = () => {
   // Fetch projects
   const fetchProjects = async () => {
     try {
-      const response = await fetch("http://alphatek.fr:3110/api/projects/", {
+      const fId= localStorage.getItem("firm");
+      const response = await fetch(`http://alphatek.fr:3110/api/projects?firmId=${fId}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
