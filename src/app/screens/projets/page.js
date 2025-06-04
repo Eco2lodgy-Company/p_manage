@@ -34,6 +34,7 @@ const ProjectsPage = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [localId,setLocalId] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -66,9 +67,10 @@ const ProjectsPage = () => {
       toast.error("Erreur lors de la récupération des employés");
     }
   };
-    const id = localStorage.getItem("firm");
 
   useEffect(() => {
+    const id = localStorage.getItem("firm");
+    setLocalId(id);
     console.log("Firm ID:", id);
      const fetchProjects = async () => {
     try {
