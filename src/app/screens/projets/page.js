@@ -66,9 +66,9 @@ const ProjectsPage = () => {
       toast.error("Erreur lors de la récupération des employés");
     }
   };
+    const id = localStorage.getItem("firm");
 
   useEffect(() => {
-    const id = localStorage.getItem("firm");
     console.log("Firm ID:", id);
      const fetchProjects = async () => {
     try {
