@@ -49,6 +49,7 @@ const Sidebar = () => {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
+      console.log("Response status:", response);
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
       const firmsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
