@@ -1,6 +1,6 @@
 
 "use client";
-import React, { useState } from "react";
+import React, { use, useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -62,6 +62,9 @@ const Sidebar = () => {
       toast.error("Erreur lors de la récupération des entreprises.");
     }
   }
+  useEffect(() => {
+    fetchEntreprises();
+  }, []);
 
   const handleAddEntreprise = () => {
     if (!newEntrepriseName.trim()) {
