@@ -56,7 +56,7 @@ const ProjectsPage = () => {
       });
       if (!response.ok) throw new Error("Erreur de réseau");
       const data = await response.json();
-      const projectsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data[0]) ? data.data[0] : [];
+      const projectsArray = Array.isArray(data.data) ? data.data[0] : Array.isArray(data.data[0]) ? data.data[0] : [];
       if (projectsArray.length > 0) {
         setProjects(projectsArray);
       } else {
