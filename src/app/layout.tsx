@@ -1,10 +1,9 @@
-"use client";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/myConponents/sidebar";
 import { firmContext } from "@/components/EntrepriseContext";
-import { useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,13 +28,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [firmID, setFirmID] = useState(1);
-
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      ><firmContext.Provider value={{ firmID, setFirmID }}>
+      ><firmContext.Provider>
         <Sidebar/>
         {children}
       </firmContext.Provider>
