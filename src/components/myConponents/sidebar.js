@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -34,9 +34,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const firmContext = createContext;
 const Sidebar = () => {
+  const data = useContext(firmContext);
+  const [entreprises, setEntreprises] = useState(1);
   const router = useRouter();
-  const [entreprises, setEntreprises] = useState([]);
   const [selectedEntreprise, setSelectedEntreprise] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newEntrepriseName, setNewEntrepriseName] = useState("");
@@ -95,9 +97,10 @@ const Sidebar = () => {
 
   const handleEntrepriseChange = (value) => {
     setSelectedEntreprise(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("firm", value);
-    }
+    data.setFirmID(value);
+    // if (typeof window !== "undefined") {
+    //   localStorage.setItem("firm", value);
+    // }
   };
 
   return (

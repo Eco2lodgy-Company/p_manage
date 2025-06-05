@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import { Search, Plus, Edit3, Trash2, Archive, FolderOpen, Calendar, User, Share2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import crypto from "crypto";
+import { firmContext } from "@/components/EntrepriseContext";
 
 // Define Zod schema for project validation
 const projectSchema = z.object({
@@ -22,6 +23,7 @@ const projectSchema = z.object({
 });
 
 const ProjectsPage = () => {
+  const data = useContext(firmContext);
   // State management
   const [projects, setProjects] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
@@ -75,7 +77,7 @@ const ProjectsPage = () => {
      const fetchProjects = async () => {
     try {
       const fId= localStorage.getItem("firm");
-      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${fId}`, {
+      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${data.firmID}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
