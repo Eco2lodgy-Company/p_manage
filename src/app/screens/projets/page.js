@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
-import { useEntreprise } from "@/components/EntrepriseContext";
 import crypto from "crypto";
 
 // Define Zod schema for project validation
@@ -23,7 +22,7 @@ const projectSchema = z.object({
 });
 
 const ProjectsPage = () => {
-  const { selectedEntreprise } = useEntreprise();
+  // State management
   const [projects, setProjects] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +34,7 @@ const ProjectsPage = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [localId,setLocalId] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -48,28 +48,7 @@ const ProjectsPage = () => {
   const [errors, setErrors] = useState({});
 
   // Fetch projects
-  const fetchProjects = async () => {
-    if (!selectedEntreprise) return; // Ne rien faire si aucune entreprise n'est sélectionnée
-    try {
-      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${selectedEntreprise}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Erreur de réseau");
-      const data = await response.json();
-      const projectsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data) ? data.data : [];
-      if (projectsArray.length > 0) {
-        setProjects(projectsArray);
-      } else {
-        toast.warning("Aucun projet récupéré.");
-        setProjects([]);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des projets:", error);
-      toast.error("Erreur lors de la récupération des projets.");
-      setProjects([]);
-    }
-  };
+ 
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -90,12 +69,36 @@ const ProjectsPage = () => {
   };
 
   useEffect(() => {
+    const id = localStorage.getItem("firm");
+    setLocalId(id);
+    console.log("Firm ID:", id);
+     const fetchProjects = async () => {
+    try {
+      const fId= localStorage.getItem("firm");
+      const response = await fetch(`http://alphatek.fr:3110/api/projects?firm=${fId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      const projectsArray = Array.isArray(data.data) ? data.data : Array.isArray(data.data) ? data.data : [];
+      if (projectsArray.length > 0) {
+        setProjects(projectsArray);
+      } else {
+        toast.warning("Aucun projet récupéré.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des projets:", error);
+      toast.error("Erreur lors de la récupération des projets.");
+    }
+  };
     const loadData = async () => {
       await fetchProjects();
       await fetchEmployees();
     };
     loadData();
-  }, [selectedEntreprise]); // Déclenche la récupération des projets à chaque changement de selectedEntreprise
+  }, [localId]);
+
   // Calculate status based on dates
   const getStatus = (startDate, endDate) => {
     const now = new Date();
