@@ -1,3 +1,4 @@
+"use client";
 // EntrepriseContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
 
